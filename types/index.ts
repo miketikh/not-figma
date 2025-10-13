@@ -4,4 +4,6 @@
  */
 
 export type * from "./user";
+export type * from "./canvas";
+export type * from "./ai";
 

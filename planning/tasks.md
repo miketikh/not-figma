@@ -173,19 +173,23 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #3: Type Definitions (User Types Only) ✅
+### PR #3: Type Definitions ✅
 **Branch:** `setup/type-definitions`  
-**Goal:** Define User TypeScript interfaces and types
+**Goal:** Define all TypeScript interfaces and types
 
 **Tasks:**
 - [x] Define User and UserSession types
 - [x] Define AuthContextType
 - [x] Define UserPresence type
+- [x] Define canvas object types (Rectangle, Circle, Line, Text)
+- [x] Define base CanvasObject interface with locking fields
+- [x] Define Canvas state types (Viewport, CanvasState, CanvasTool)
+- [x] Define Cursor and Presence types
+- [x] Define Locking system types (LockRequest, LockResponse, LockHelpers)
+- [x] Define Sync types (ObjectUpdate, BatchUpdate, ObjectOperation)
+- [x] Define Selection and History types
+- [x] Define AI command types (AICommand, AIFunction, AIContext)
 - [x] Export all types from index files
-- [ ] Define canvas object types (Rectangle, Circle, Line, Text) - DEFERRED
-- [ ] Define base CanvasObject interface - DEFERRED
-- [ ] Define Canvas state types - DEFERRED
-- [ ] Define AI command types - DEFERRED
 
 **Files Created:**
 - `types/objects.ts` (NEW)
