@@ -173,17 +173,19 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #3: Type Definitions
+### PR #3: Type Definitions (User Types Only) ✅
 **Branch:** `setup/type-definitions`  
-**Goal:** Define all TypeScript interfaces and types
+**Goal:** Define User TypeScript interfaces and types
 
 **Tasks:**
-- [ ] Define canvas object types (Rectangle, Circle, Line, Text)
-- [ ] Define base CanvasObject interface
-- [ ] Define User and UserSession types
-- [ ] Define Canvas state types
-- [ ] Define AI command types
-- [ ] Export all types from index files
+- [x] Define User and UserSession types
+- [x] Define AuthContextType
+- [x] Define UserPresence type
+- [x] Export all types from index files
+- [ ] Define canvas object types (Rectangle, Circle, Line, Text) - DEFERRED
+- [ ] Define base CanvasObject interface - DEFERRED
+- [ ] Define Canvas state types - DEFERRED
+- [ ] Define AI command types - DEFERRED
 
 **Files Created:**
 - `types/objects.ts` (NEW)
@@ -193,21 +195,28 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #4: Authentication System
+### PR #4: Authentication System ✅
 **Branch:** `feature/authentication`  
 **Goal:** Implement complete authentication flow
 
 **Tasks:**
-- [ ] Create auth helper functions (signUp, signIn, signOut)
-- [ ] Create AuthProvider context
-- [ ] Create useAuth hook
-- [ ] Build LoginForm component
-- [ ] Build SignupForm component
-- [ ] Create login page
-- [ ] Create signup page
-- [ ] Create ProtectedRoute component
-- [ ] Add auth state persistence
-- [ ] Test signup, login, logout flow
+- [x] Create auth helper functions (signUp, signIn, signOut)
+- [x] Create AuthProvider context
+- [x] Create useAuth hook
+- [x] Create Button component
+- [x] Create Input component
+- [x] Build LoginForm component
+- [x] Build SignupForm component
+- [x] Create login page
+- [x] Create signup page
+- [x] Create ProtectedRoute component
+- [x] Add auth state persistence (handled by Firebase SDK)
+- [x] Wrap app with AuthProvider
+- [x] Create placeholder canvas page
+- [x] Redirect home to login
+- [x] Add Firebase error code mapping to user-friendly messages
+- [x] Add client-side validation (email, password, display name)
+- [x] Test signup, login, logout flow
 
 **Files Created:**
 - `lib/firebase/auth.ts` (NEW)
