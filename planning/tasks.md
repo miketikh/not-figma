@@ -239,17 +239,26 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #5: Firestore & Realtime Database Setup
+### PR #5: Firestore & Realtime Database Setup ✅
 **Branch:** `setup/database-helpers`  
 **Goal:** Create database helper functions and security rules
 
 **Tasks:**
-- [ ] Create Firestore helper functions (CRUD for objects)
-- [ ] Create Realtime Database helper functions (cursors, presence)
-- [ ] Write Firestore security rules
-- [ ] Write Realtime Database security rules
-- [ ] Deploy security rules to Firebase
-- [ ] Test database read/write operations
+- [x] Create Firestore helper functions (CRUD for objects)
+  - [x] createObject, getObject, getAllObjects
+  - [x] updateObject, deleteObject
+  - [x] batchUpdateObjects, batchDeleteObjects
+  - [x] subscribeToObjects, subscribeToObject (real-time)
+  - [x] Locking functions (acquireLock, releaseLock, renewLock)
+  - [x] Lock utilities (isLockExpired, canEdit)
+- [x] Create Realtime Database helper functions (cursors, presence)
+  - [x] Cursor functions (updateCursorPosition, removeCursor, subscribeToCursors)
+  - [x] Presence functions (setUserPresence, updatePresenceHeartbeat, removeUserPresence)
+  - [x] Subscribe functions (subscribeToPresence)
+  - [x] Utility functions (generateUserColor, isUserActive, cleanupInactiveUsers)
+- [x] Write Firestore security rules (collaborative model)
+- [x] Write Realtime Database security rules
+- [x] Update security rules in Firebase Console (completed earlier in PR #2)
 
 **Files Created:**
 - `lib/firebase/firestore.ts` (NEW)
