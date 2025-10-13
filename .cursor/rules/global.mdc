@@ -1,0 +1,17 @@
+---
+description: General rules and principles to follow
+alwaysApply: true
+---
+
+# NextJS
+
+- When working with NextJS, use the following conventions
+  - Keep things closest to their concern. If there are components ONLY used in [auth]/login/ page, put the component into a _components folder there. If they're used in all auth, like a hook, put them into the [auth] folder, if they're general components, put them at the top level.
+- Keep components clean - Do not put helpers inside of components, put them into the appropriately placed lib folder
+- Always check for existing helpers that do the same thing before re-writing them (example, date conversions or formatters we may have done before, check if we already have them in a lib folder)
+
+# General
+
+- Never make assumptions (assume we have libraries, types, etc), ALWAYS check. Check package.json for libraries, check lib for helpers, check types for types, etc.
+- Focus on clean, maintainable, extensible code
+- If using a checklist or todo document, ALWAYS check off the completed items afterwards before proceeding to the next one

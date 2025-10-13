@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CollabCanvas (Not Figma)
 
-## Getting Started
+A real-time collaborative design canvas built with Next.js, Firebase, and AI. Think Figma-lite with natural language object creation and manipulation.
 
-First, run the development server:
+## 🚀 Features
 
+### MVP (Phase 1)
+- ✨ Real-time collaborative canvas with pan/zoom
+- 🎨 Create and manipulate shapes (rectangles, circles, lines, text)
+- 👥 Live multiplayer cursors with user presence
+- 🔐 User authentication
+- 💾 Persistent object storage
+
+### Phase 2 (Enhanced Editing)
+- 🎯 Multi-select and group operations
+- 📚 Layer management (z-index)
+- ⌨️ Comprehensive keyboard shortcuts
+- 📋 Copy/paste functionality
+- 🔄 Rotation controls
+- 🎨 Advanced styling options
+- 🎛️ Properties panel
+
+### Phase 3 (AI-Powered)
+- 🤖 Natural language object creation
+- 🎯 AI-powered layout commands
+- 🏗️ Complex template generation (forms, navbars, etc.)
+- 🌐 Shared AI state across users
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js 15 with TypeScript
+- **Styling:** Tailwind CSS v4
+- **Database:** Firebase (Firestore + Realtime Database)
+- **Authentication:** Firebase Auth
+- **Canvas Library:** TBD (Fabric.js or Konva.js)
+- **State Management:** Zustand
+- **AI:** OpenAI GPT-4 or Claude (with function calling)
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm or yarn or pnpm
+- Firebase account
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd not-figma
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Add your Firebase credentials to `.env.local`
 
-## Learn More
+5. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Open [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Following Next.js App Router conventions with feature co-location:
 
-## Deploy on Vercel
+```
+app/
+├── (auth)/          # Auth routes with shared logic
+├── canvas/          # Main canvas feature
+│   ├── _components/ # Canvas-specific components
+│   ├── _hooks/      # Canvas-specific hooks
+│   ├── _lib/        # Canvas utilities
+│   ├── _store/      # Canvas state management
+│   └── _types/      # Canvas type definitions
+└── api/             # API routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+components/          # Global shared components only
+lib/                 # Global utilities only
+hooks/               # Global hooks only
+store/               # Global state only
+types/               # Global types only
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🗺️ Development Roadmap
+
+See [planning/tasks.md](planning/tasks.md) for the complete PR-based task list.
+
+## 📝 License
+
+MIT
+
+## 🤝 Contributing
+
+This is a learning project. Feel free to fork and experiment!
+
+---
+
+Built with ❤️ using AI-assisted development
