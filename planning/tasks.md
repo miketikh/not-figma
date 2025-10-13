@@ -150,20 +150,20 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #2: Firebase Configuration
+### PR #2: Firebase Configuration ✅
 **Branch:** `setup/firebase-config`  
 **Goal:** Set up Firebase project and initialize in codebase
 
 **Tasks:**
-- [ ] Create Firebase project in Firebase Console
-- [ ] Enable Email/Password authentication
-- [ ] Create Firestore database (production mode)
-- [ ] Create Realtime Database instance
-- [ ] Copy Firebase config credentials
-- [ ] Install Firebase SDK (`firebase`, `firebase-admin`)
-- [ ] Create Firebase config file
-- [ ] Initialize Firebase app
-- [ ] Test Firebase connection with simple read/write
+- [x] Create Firebase project in Firebase Console
+- [x] Enable Email/Password authentication
+- [x] Create Firestore database (production mode)
+- [x] Create Realtime Database instance
+- [x] Copy Firebase config credentials
+- [x] Install Firebase SDK (`firebase`)
+- [x] Create Firebase config file
+- [x] Initialize Firebase app
+- [x] Test Firebase connection with simple read/write
 
 **Files Created/Modified:**
 - `package.json` (add dependencies)
