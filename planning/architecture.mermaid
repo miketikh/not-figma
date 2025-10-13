@@ -1,0 +1,115 @@
+graph TB
+    subgraph "Client Browser A"
+        UA[User A]
+        
+        subgraph "Next.js Frontend A"
+            CA[Canvas Component<br/>Fabric.js Rendering]
+            TBA[Toolbar]
+            PPA[Properties Panel]
+            AIA[AI Command Input]
+            
+            SA[State Layer<br/>Zustand Store]
+            HA[Hooks Layer<br/>useCanvas, useObjects<br/>useCursors, usePresence]
+            SYCA[Sync Layer<br/>Real-time Listeners]
+            FSA[Firebase SDK]
+        end
+    end
+    
+    subgraph "Client Browser B"
+        UB[User B]
+        
+        subgraph "Next.js Frontend B"
+            CB[Canvas Component<br/>Fabric.js Rendering]
+            TBB[Toolbar]
+            PPB[Properties Panel]
+            AIB[AI Command Input]
+            
+            SB[State Layer<br/>Zustand Store]
+            HB[Hooks Layer<br/>useCanvas, useObjects<br/>useCursors, usePresence]
+            SYNCB[Sync Layer<br/>Real-time Listeners]
+            FSB[Firebase SDK]
+        end
+    end
+    
+    subgraph "Vercel Platform"
+        NEXT[Next.js Server<br/>Static Assets]
+        APIA[API Route<br/>/api/ai-command]
+        AIL[AI Logic<br/>Functions & Handlers]
+    end
+    
+    subgraph "Firebase Google Cloud"
+        AUTH[Firebase Auth<br/>User Management]
+        FS[(Firestore<br/>Objects & Canvas State)]
+        RTDB[(Realtime DB<br/>Cursors & Presence)]
+    end
+    
+    subgraph "AI Service"
+        OPENAI[OpenAI GPT-4<br/>or<br/>Anthropic Claude]
+    end
+    
+    %% User to Components
+    UA --> CA
+    UB --> CB
+    
+    %% Component Flow A
+    CA --> SA
+    TBA --> SA
+    PPA --> SA
+    AIA --> SA
+    SA --> HA
+    HA --> SYCA
+    SYCA --> FSA
+    
+    %% Component Flow B
+    CB --> SB
+    TBB --> SB
+    PPB --> SB
+    AIB --> SB
+    SB --> HB
+    HB --> SYNCB
+    SYNCB --> FSB
+    
+    %% Static Assets
+    NEXT -.-> CA
+    NEXT -.-> CB
+    
+    %% Firebase Connections A
+    FSA -->|Write Objects| FS
+    FSA -->|Write Cursors| RTDB
+    FSA -->|Authenticate| AUTH
+    FS -->|Real-time Updates| FSA
+    RTDB -->|Real-time Updates| FSA
+    
+    %% Firebase Connections B
+    FSB -->|Write Objects| FS
+    FSB -->|Write Cursors| RTDB
+    FSB -->|Authenticate| AUTH
+    FS -->|Real-time Updates| FSB
+    RTDB -->|Real-time Updates| FSB
+    
+    %% Cross-user sync
+    FSA -.->|User A creates object| FS
+    FS -.->|Broadcasts to User B| FSB
+    FSB -.->|User B moves cursor| RTDB
+    RTDB -.->|Updates User A| FSA
+    
+    %% AI Flow
+    AIA -->|HTTP POST| APIA
+    AIB -->|HTTP POST| APIA
+    APIA --> AIL
+    AIL -->|API Call with Key| OPENAI
+    OPENAI -->|Function Calls| AIL
+    AIL -->|Create Objects| FS
+    FS -.->|Syncs to all clients| FSA
+    FS -.->|Syncs to all clients| FSB
+    
+    %% Styling
+    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef serverStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef firebaseStyle fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    classDef aiStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    
+    class UA,UB,CA,CB,TBA,TBB,PPA,PPB,AIA,AIB,SA,SB,HA,HB,SYCA,SYNCB,FSA,FSB clientStyle
+    class NEXT,APIA,AIL serverStyle
+    class AUTH,FS,RTDB firebaseStyle
+    class OPENAI aiStyle
