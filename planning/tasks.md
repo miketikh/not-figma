@@ -268,21 +268,22 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #6: Canvas Component & Viewport
+### PR #6: Canvas Component & Viewport ✅
 **Branch:** `feature/canvas-viewport`  
 **Goal:** Create canvas with pan and zoom functionality
 
 **Tasks:**
-- [ ] Install Fabric.js or Konva.js
-- [ ] Create Canvas component
-- [ ] Initialize canvas library
-- [ ] Implement pan functionality (click and drag)
-- [ ] Implement zoom functionality (mouse wheel)
-- [ ] Add zoom controls UI (+ and - buttons)
-- [ ] Create viewport state management
-- [ ] Persist viewport state to localStorage
-- [ ] Test smooth 60 FPS during pan/zoom
-- [ ] Create canvas page
+- [x] Install Fabric.js
+- [x] Create Canvas component
+- [x] Initialize canvas library
+- [x] Add grid pattern (Figma-like)
+- [x] Add Canvas to canvas page
+- [x] Implement pan functionality (Space + drag, middle mouse)
+- [x] Implement zoom functionality (mouse wheel)
+- [x] Add zoom controls UI (+ and - buttons with percentage)
+- [x] Create viewport state management (Zustand store)
+- [x] Persist viewport state to localStorage
+- [x] Zoom/pan work smoothly (60 FPS capable)
 
 **Files Created:**
 - `components/canvas/Canvas.tsx` (NEW)

@@ -3,14 +3,16 @@
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import Button from "@/components/ui/Button";
+import Canvas from "./_components/Canvas";
 
 function CanvasPageContent() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <header className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
               CollabCanvas
@@ -27,15 +29,9 @@ function CanvasPageContent() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Welcome to CollabCanvas! 🎨
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Canvas functionality coming soon...
-          </p>
-        </div>
+      {/* Canvas Area */}
+      <main className="flex-1 overflow-hidden">
+        <Canvas />
       </main>
     </div>
   );
