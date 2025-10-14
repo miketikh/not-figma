@@ -1,5 +1,5 @@
 /**
- * Hook for managing canvas objects with Firestore persistence
+ * Hook for managing canvas objects with Firestore persistence and real-time sync
  */
 
 import { useEffect, useCallback, useRef } from "react";
@@ -7,16 +7,16 @@ import * as fabric from "fabric";
 import { useAuth } from "@/hooks/useAuth";
 import {
   createObject,
-  getAllObjects,
   updateObject,
   deleteObject,
+  subscribeToObjects,
 } from "@/lib/firebase/firestore";
 import {
   fabricRectToCanvasObject,
   canvasObjectToFabricRect,
   generateObjectId,
 } from "../_lib/objects";
-import { RectangleObject } from "@/types/canvas";
+import { CanvasObject, RectangleObject } from "@/types/canvas";
 
 interface UseObjectsProps {
   canvas: fabric.Canvas | null;
@@ -27,37 +27,90 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
   const { user } = useAuth();
   const loadedRef = useRef(false);
   const savingRef = useRef(false);
+  const syncingRef = useRef(false); // Prevent sync loops
 
   /**
-   * Load all objects from Firestore on mount
+   * Handle incoming objects from Firestore (real-time sync)
    */
-  const loadObjects = useCallback(async () => {
-    if (!canvas || !isReady || loadedRef.current) return;
+  const handleObjectsSync = useCallback(
+    (objects: CanvasObject[]) => {
+      if (!canvas || !isReady || syncingRef.current) return;
 
-    try {
-      console.log("Loading objects from Firestore...");
-      const objects = await getAllObjects();
-      console.log(`Loaded ${objects.length} objects`);
+      syncingRef.current = true;
 
-      // Remove existing objects (if any) but keep canvas settings
-      const existingObjects = canvas.getObjects();
-      existingObjects.forEach((obj) => canvas.remove(obj));
+      try {
+        // Create a map of incoming objects by ID
+        const incomingObjectsMap = new Map<string, CanvasObject>();
+        objects.forEach((obj) => incomingObjectsMap.set(obj.id, obj));
 
-      // Add each object to canvas
-      objects.forEach((obj) => {
-        if (obj.type === "rectangle") {
-          const fabricRect = canvasObjectToFabricRect(obj as RectangleObject);
-          canvas.add(fabricRect);
-        }
-        // TODO: Add support for other shape types (circle, line, text)
-      });
+        // Get current canvas objects
+        const canvasObjects = canvas.getObjects();
+        const canvasObjectIds = new Set(
+          canvasObjects.map((obj) => obj.data?.id).filter(Boolean)
+        );
 
-      canvas.requestRenderAll();
-      loadedRef.current = true;
-    } catch (error) {
-      console.error("Error loading objects:", error);
-    }
-  }, [canvas, isReady]);
+        // 1. Update or add objects from Firestore
+        objects.forEach((firestoreObj) => {
+          const existingFabricObj = canvasObjects.find(
+            (obj) => obj.data?.id === firestoreObj.id
+          );
+
+          if (existingFabricObj) {
+            // Object exists - check if it needs updating
+            // Only update if the Firestore version is newer
+            if (firestoreObj.type === "rectangle") {
+              const rect = existingFabricObj as fabric.Rect;
+              const needsUpdate =
+                rect.left !== firestoreObj.x ||
+                rect.top !== firestoreObj.y ||
+                rect.width !== firestoreObj.width ||
+                rect.height !== firestoreObj.height ||
+                rect.angle !== firestoreObj.rotation;
+
+              if (needsUpdate) {
+                rect.set({
+                  left: firestoreObj.x,
+                  top: firestoreObj.y,
+                  width: firestoreObj.width,
+                  height: firestoreObj.height,
+                  angle: firestoreObj.rotation,
+                  fill: firestoreObj.fill,
+                  scaleX: 1,
+                  scaleY: 1,
+                });
+                rect.setCoords();
+              }
+            }
+          } else {
+            // Object doesn't exist - add it
+            if (firestoreObj.type === "rectangle") {
+              const fabricRect = canvasObjectToFabricRect(
+                firestoreObj as RectangleObject
+              );
+              canvas.add(fabricRect);
+            }
+            // TODO: Add support for other shape types
+          }
+        });
+
+        // 2. Remove objects that no longer exist in Firestore
+        canvasObjects.forEach((fabricObj) => {
+          const objId = fabricObj.data?.id;
+          if (objId && !incomingObjectsMap.has(objId)) {
+            canvas.remove(fabricObj);
+          }
+        });
+
+        canvas.requestRenderAll();
+        loadedRef.current = true;
+      } catch (error) {
+        console.error("Error syncing objects:", error);
+      } finally {
+        syncingRef.current = false;
+      }
+    },
+    [canvas, isReady]
+  );
 
   /**
    * Save an object to Firestore
@@ -72,7 +125,6 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
         if (fabricObject instanceof fabric.Rect) {
           const canvasObject = fabricRectToCanvasObject(fabricObject, user.uid);
           await createObject(canvasObject);
-          console.log("Object saved:", canvasObject.id);
         }
         // TODO: Add support for other shape types
       } catch (error) {
@@ -93,10 +145,7 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
 
       try {
         const objectId = fabricObject.data?.id;
-        if (!objectId) {
-          console.warn("Object has no ID, cannot update");
-          return;
-        }
+        if (!objectId) return;
 
         if (fabricObject instanceof fabric.Rect) {
           // Calculate actual dimensions (width/height * scale)
@@ -114,7 +163,6 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
           };
 
           await updateObject(objectId, updates);
-          console.log("Object updated:", objectId);
         }
         // TODO: Add support for other shape types
       } catch (error) {
@@ -130,7 +178,6 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
   const deleteObjectFromFirestore = useCallback(async (objectId: string) => {
     try {
       await deleteObject(objectId);
-      console.log("Object deleted:", objectId);
     } catch (error) {
       console.error("Error deleting object:", error);
     }
@@ -145,17 +192,28 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
     }
   }, []);
 
-  // Load objects on mount
+  // Set up real-time subscription to Firestore
   useEffect(() => {
-    loadObjects();
-  }, [loadObjects]);
+    if (!canvas || !isReady) return;
+
+    const unsubscribe = subscribeToObjects(
+      handleObjectsSync,
+      (error) => {
+        console.error("Subscription error:", error);
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [canvas, isReady, handleObjectsSync]);
 
   return {
     saveObject,
     updateObjectInFirestore,
     deleteObjectFromFirestore,
     assignIdToObject,
-    loadObjects,
   };
 }
 

@@ -255,8 +255,6 @@ export default function Canvas({ width, height }: CanvasProps) {
       }
     });
 
-    console.log("Canvas initialized:", { width, height });
-
     // Cleanup on unmount
     return () => {
       window.removeEventListener("keydown", handleKeyDown);

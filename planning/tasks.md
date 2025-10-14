@@ -372,23 +372,23 @@ The underscore prefix tells Next.js these are NOT routes.
 **Goal:** Sync objects between multiple users in real-time
 
 **Tasks:**
-- [ ] Set up Firestore real-time listener for objects
-- [ ] Implement optimistic updates for object creation
-- [ ] Broadcast object creation to other users
-- [ ] Render objects created by other users
-- [ ] Implement optimistic updates for object moves
-- [ ] Broadcast object position changes
-- [ ] Sync position changes from other users
-- [ ] Implement optimistic updates for resize
-- [ ] Broadcast and sync resize operations
+- [x] Set up Firestore real-time listener for objects
+- [x] Implement optimistic updates for object creation
+- [x] Broadcast object creation to other users
+- [x] Render objects created by other users
+- [x] Implement optimistic updates for object moves
+- [x] Broadcast object position changes
+- [x] Sync position changes from other users
+- [x] Implement optimistic updates for resize
+- [x] Broadcast and sync resize operations
 - [ ] Implement last-write-wins conflict resolution
 - [ ] Test with 2 users in different browsers
 - [ ] Verify sync latency <100ms
 
 **Files Modified:**
-- `lib/sync/objectSync.ts` (add real-time listeners)
-- `hooks/useObjects.ts` (integrate real-time sync)
-- `components/canvas/Canvas.tsx` (handle remote updates)
+- `app/canvas/_hooks/useObjects.ts` (add real-time sync with subscribeToObjects)
+- `lib/firebase/firestore.ts` (already had subscribeToObjects function)
+- `app/canvas/_components/Canvas.tsx` (already integrated via useObjects hook)
 
 ---
 
