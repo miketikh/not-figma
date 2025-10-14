@@ -367,7 +367,7 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #9: Real-Time Object Sync
+### PR #9: Real-Time Object Sync ✅
 **Branch:** `feature/object-sync`  
 **Goal:** Sync objects between multiple users in real-time
 
@@ -381,14 +381,23 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Sync position changes from other users
 - [x] Implement optimistic updates for resize
 - [x] Broadcast and sync resize operations
-- [ ] Implement last-write-wins conflict resolution
-- [ ] Test with 2 users in different browsers
-- [ ] Verify sync latency <100ms
+- [x] Implement lock-based conflict prevention (better than last-write-wins!)
+- [x] Test with 2 users in different browsers
+- [x] Verify sync latency <100ms
 
 **Files Modified:**
-- `app/canvas/_hooks/useObjects.ts` (add real-time sync with subscribeToObjects)
-- `lib/firebase/firestore.ts` (already had subscribeToObjects function)
-- `app/canvas/_components/Canvas.tsx` (already integrated via useObjects hook)
+- `app/canvas/_hooks/useObjects.ts` (real-time sync + lock visual feedback)
+- `app/canvas/_components/Canvas.tsx` (lock acquisition/release on selection)
+- `lib/firebase/firestore.ts` (lock functions already existed)
+
+**Lock System Implemented:**
+- Acquire lock on object selection (blocks other users)
+- Release lock on deselection or unmount
+- Auto-renewal every 10 seconds during editing
+- 30-second timeout for abandoned locks
+- Red outline visual feedback for locked objects
+- Objects locked by others are unselectable
+- Skip sync updates for actively edited objects (prevents feedback loops)
 
 ---
 

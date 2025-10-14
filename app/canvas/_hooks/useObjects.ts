@@ -10,6 +10,8 @@ import {
   updateObject,
   deleteObject,
   subscribeToObjects,
+  canEdit,
+  isLockExpired,
 } from "@/lib/firebase/firestore";
 import {
   fabricRectToCanvasObject,
@@ -46,39 +48,74 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
         // Get current canvas objects
         const canvasObjects = canvas.getObjects();
         const canvasObjectIds = new Set(
-          canvasObjects.map((obj) => obj.data?.id).filter(Boolean)
+          canvasObjects.map((obj) => (obj as any).data?.id).filter(Boolean)
         );
 
         // 1. Update or add objects from Firestore
         objects.forEach((firestoreObj) => {
           const existingFabricObj = canvasObjects.find(
-            (obj) => obj.data?.id === firestoreObj.id
+            (obj) => (obj as any).data?.id === firestoreObj.id
           );
 
           if (existingFabricObj) {
             // Object exists - check if it needs updating
-            // Only update if the Firestore version is newer
             if (firestoreObj.type === "rectangle") {
               const rect = existingFabricObj as fabric.Rect;
-              const needsUpdate =
-                rect.left !== firestoreObj.x ||
-                rect.top !== firestoreObj.y ||
-                rect.width !== firestoreObj.width ||
-                rect.height !== firestoreObj.height ||
-                rect.angle !== firestoreObj.rotation;
+              
+              // Check if object is locked by another user
+              const isLockedByOther =
+                firestoreObj.lockedBy &&
+                firestoreObj.lockedBy !== user?.uid &&
+                firestoreObj.lockedAt &&
+                !isLockExpired(firestoreObj.lockedAt, firestoreObj.lockTimeout);
 
-              if (needsUpdate) {
+              // Check if WE have this object locked (we're editing it)
+              const isLockedByUs =
+                firestoreObj.lockedBy === user?.uid &&
+                firestoreObj.lockedAt &&
+                !isLockExpired(firestoreObj.lockedAt, firestoreObj.lockTimeout);
+
+              // Apply visual feedback and selectability
+              if (isLockedByOther) {
+                // Locked by another user - red outline, not selectable
                 rect.set({
-                  left: firestoreObj.x,
-                  top: firestoreObj.y,
-                  width: firestoreObj.width,
-                  height: firestoreObj.height,
-                  angle: firestoreObj.rotation,
-                  fill: firestoreObj.fill,
-                  scaleX: 1,
-                  scaleY: 1,
+                  stroke: "#ef4444",
+                  strokeWidth: 2,
+                  selectable: false,
+                  evented: false,
                 });
-                rect.setCoords();
+              } else {
+                // Not locked or locked by us - normal appearance
+                rect.set({
+                  stroke: firestoreObj.stroke,
+                  strokeWidth: firestoreObj.strokeWidth,
+                  selectable: true,
+                  evented: true,
+                });
+              }
+              
+              // Only update position if we DON'T have it locked (avoid fighting our own edits)
+              if (!isLockedByUs) {
+                const needsUpdate =
+                  rect.left !== firestoreObj.x ||
+                  rect.top !== firestoreObj.y ||
+                  rect.width !== firestoreObj.width ||
+                  rect.height !== firestoreObj.height ||
+                  rect.angle !== firestoreObj.rotation;
+
+                if (needsUpdate) {
+                  rect.set({
+                    left: firestoreObj.x,
+                    top: firestoreObj.y,
+                    width: firestoreObj.width,
+                    height: firestoreObj.height,
+                    angle: firestoreObj.rotation,
+                    fill: firestoreObj.fill,
+                    scaleX: 1,
+                    scaleY: 1,
+                  });
+                  rect.setCoords();
+                }
               }
             }
           } else {
@@ -95,7 +132,7 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
 
         // 2. Remove objects that no longer exist in Firestore
         canvasObjects.forEach((fabricObj) => {
-          const objId = fabricObj.data?.id;
+          const objId = (fabricObj as any).data?.id;
           if (objId && !incomingObjectsMap.has(objId)) {
             canvas.remove(fabricObj);
           }
@@ -144,7 +181,7 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
       if (!user) return;
 
       try {
-        const objectId = fabricObject.data?.id;
+        const objectId = (fabricObject as any).data?.id;
         if (!objectId) return;
 
         if (fabricObject instanceof fabric.Rect) {
@@ -187,8 +224,9 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
    * Assign ID to a new object
    */
   const assignIdToObject = useCallback((fabricObject: fabric.Object) => {
-    if (!fabricObject.data?.id) {
-      fabricObject.data = { id: generateObjectId() };
+    const obj = fabricObject as any;
+    if (!obj.data?.id) {
+      obj.data = { id: generateObjectId() };
     }
   }, []);
 

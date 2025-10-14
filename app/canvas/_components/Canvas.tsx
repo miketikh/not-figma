@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
 import { createFabricRectangle } from "../_lib/objects";
 import { useObjects } from "../_hooks/useObjects";
+import { acquireLock, releaseLock, renewLock } from "@/lib/firebase/firestore";
 
 interface CanvasProps {
   width?: number;
@@ -25,6 +26,10 @@ export default function Canvas({ width, height }: CanvasProps) {
   const isDrawingRef = useRef(false);
   const drawingObjectRef = useRef<fabric.Rect | null>(null);
   const drawStartRef = useRef({ x: 0, y: 0 });
+  
+  // Lock management
+  const lockRenewalIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentlyLockedObjectsRef = useRef<Set<string>>(new Set());
   
   // Zustand store
   const { viewport, updateViewport, activeTool } = useCanvasStore();
@@ -66,6 +71,137 @@ export default function Canvas({ width, height }: CanvasProps) {
     }
     
     setIsReady(true);
+
+    // ========================================================================
+    // Lock Management Functions
+    // ========================================================================
+
+    const tryAcquireLock = async (objectId: string): Promise<boolean> => {
+      if (!user) return false;
+      
+      try {
+        const lockResult = await acquireLock(objectId, user.uid);
+        
+        if (lockResult.success) {
+          currentlyLockedObjectsRef.current.add(objectId);
+          return true;
+        } else {
+          // Lock denied - show feedback
+          console.log(`Object locked by another user: ${lockResult.lockedBy}`);
+          return false;
+        }
+      } catch (error) {
+        console.error("Error acquiring lock:", error);
+        return false;
+      }
+    };
+
+    const releaseAllLocks = async () => {
+      if (!user) return;
+      
+      const lockedObjects = Array.from(currentlyLockedObjectsRef.current);
+      for (const objectId of lockedObjects) {
+        try {
+          await releaseLock(objectId, user.uid);
+          currentlyLockedObjectsRef.current.delete(objectId);
+        } catch (error) {
+          console.error("Error releasing lock:", error);
+        }
+      }
+    };
+
+    const startLockRenewal = () => {
+      // Clear any existing interval
+      if (lockRenewalIntervalRef.current) {
+        clearInterval(lockRenewalIntervalRef.current);
+      }
+
+      // Renew locks every 10 seconds
+      lockRenewalIntervalRef.current = setInterval(async () => {
+        if (!user) return;
+
+        const lockedObjects = Array.from(currentlyLockedObjectsRef.current);
+        for (const objectId of lockedObjects) {
+          try {
+            const renewed = await renewLock(objectId, user.uid);
+            if (!renewed) {
+              console.log(`Lost lock on object: ${objectId}`);
+              currentlyLockedObjectsRef.current.delete(objectId);
+            }
+          } catch (error) {
+            console.error("Error renewing lock:", error);
+          }
+        }
+      }, 10000);
+    };
+
+    const stopLockRenewal = () => {
+      if (lockRenewalIntervalRef.current) {
+        clearInterval(lockRenewalIntervalRef.current);
+        lockRenewalIntervalRef.current = null;
+      }
+    };
+
+    // ========================================================================
+    // Selection Event Handlers (for locking)
+    // ========================================================================
+
+    canvas.on("selection:created", async (e) => {
+      const selectedObjects = e.selected;
+      if (!selectedObjects || selectedObjects.length === 0) return;
+
+      // Acquire locks for all selected objects
+      // Note: Objects should only be selectable if unlocked (enforced by sync handler)
+      for (const obj of selectedObjects) {
+        const objectId = (obj as any).data?.id;
+        if (objectId) {
+          await tryAcquireLock(objectId);
+        }
+      }
+
+      // Start lock renewal if we have any locks
+      if (currentlyLockedObjectsRef.current.size > 0) {
+        startLockRenewal();
+      }
+    });
+
+    canvas.on("selection:updated", async (e) => {
+      // Release locks on deselected objects
+      const deselected = e.deselected || [];
+      for (const obj of deselected) {
+        const objectId = (obj as any).data?.id;
+        if (objectId && user) {
+          try {
+            await releaseLock(objectId, user.uid);
+            currentlyLockedObjectsRef.current.delete(objectId);
+          } catch (error) {
+            console.error("Error releasing lock:", error);
+          }
+        }
+      }
+
+      // Acquire locks on newly selected objects
+      const selected = e.selected || [];
+      for (const obj of selected) {
+        const objectId = (obj as any).data?.id;
+        if (objectId) {
+          await tryAcquireLock(objectId);
+        }
+      }
+
+      // Update lock renewal
+      if (currentlyLockedObjectsRef.current.size > 0) {
+        startLockRenewal();
+      } else {
+        stopLockRenewal();
+      }
+    });
+
+    canvas.on("selection:cleared", async () => {
+      // Release all locks
+      await releaseAllLocks();
+      stopLockRenewal();
+    });
 
     // Track space key state
     let spacePressed = false;
@@ -259,6 +395,11 @@ export default function Canvas({ width, height }: CanvasProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      
+      // Release all locks and stop renewal
+      stopLockRenewal();
+      releaseAllLocks();
+      
       canvas.dispose();
       fabricCanvasRef.current = null;
       setIsReady(false);
