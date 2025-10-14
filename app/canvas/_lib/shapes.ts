@@ -167,8 +167,9 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
 
   /**
    * Get draft rectangle data for preview rendering
+   * Accepts optional style overrides to match user's default properties
    */
-  getDraftData: (draft: DrawingBounds) => {
+  getDraftData: (draft: DrawingBounds, styleOverrides = {}) => {
     return {
       type: "rect" as const,
       props: {
@@ -176,8 +177,10 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
         y: draft.y,
         width: draft.width,
         height: draft.height,
-        fill: "rgba(59, 130, 246, 0.3)",
-        stroke: "#3b82f6",
+        fill: styleOverrides.fill ?? "rgba(59, 130, 246, 0.3)",
+        stroke: styleOverrides.stroke ?? "#3b82f6",
+        opacity: styleOverrides.opacity,
+        cornerRadius: styleOverrides.cornerRadius,
       },
     };
   },
@@ -347,8 +350,9 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
 
   /**
    * Get draft circle/ellipse data for preview rendering
+   * Accepts optional style overrides to match user's default properties
    */
-  getDraftData: (draft: DrawingBounds) => {
+  getDraftData: (draft: DrawingBounds, styleOverrides = {}) => {
     const radiusX = draft.width / 2;
     const radiusY = draft.height / 2;
     const centerX = draft.x + draft.width / 2;
@@ -361,8 +365,9 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
         y: centerY,
         radiusX,
         radiusY,
-        fill: "rgba(236, 72, 153, 0.3)",
-        stroke: "#ec4899",
+        fill: styleOverrides.fill ?? "rgba(236, 72, 153, 0.3)",
+        stroke: styleOverrides.stroke ?? "#ec4899",
+        opacity: styleOverrides.opacity,
       },
     };
   },

@@ -73,6 +73,18 @@ export interface PersistedCircle {
 export type PersistedShape = PersistedRect | PersistedCircle;
 
 /**
+ * Style overrides for draft preview rendering
+ * Allows customizing the preview appearance to match user's default properties
+ */
+export interface DraftStyleOverrides {
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  cornerRadius?: number; // for rectangles
+}
+
+/**
  * Generic shape factory interface
  * All shape types should implement this interface
  */
@@ -110,7 +122,11 @@ export interface ShapeFactory<T> {
 
   /**
    * Get draft shape data for preview rendering
+   * Optional styleOverrides allows customizing the preview to match user defaults
    */
-  getDraftData: (draft: DrawingBounds) => any;
+  getDraftData: (
+    draft: DrawingBounds,
+    styleOverrides?: DraftStyleOverrides
+  ) => any;
 }
 

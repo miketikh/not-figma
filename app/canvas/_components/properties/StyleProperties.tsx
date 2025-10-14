@@ -56,8 +56,10 @@ export default function StyleProperties({
     if (checked) {
       onUpdate({ fill: "transparent" });
     } else {
-      // Restore to a default color
-      onUpdate({ fill: getFillColor() });
+      // Restore to a default color - use blue as fallback if currently transparent
+      const currentColor = getFillColor();
+      const restoredColor = object.fill === "transparent" ? "#3b82f6" : currentColor;
+      onUpdate({ fill: restoredColor });
     }
   };
 
@@ -75,8 +77,16 @@ export default function StyleProperties({
           {/* Color preview/button */}
           <button
             type="button"
-            onClick={() => !disabled && setShowFillPicker(!showFillPicker)}
-            disabled={disabled || isTransparent}
+            onClick={() => {
+              if (disabled) return;
+              if (isTransparent) {
+                // If transparent, restore a default color
+                handleNoFillChange(false);
+              } else {
+                setShowFillPicker(!showFillPicker);
+              }
+            }}
+            disabled={disabled}
             className="w-full h-8 rounded border border-gray-300 flex items-center px-2 gap-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div
@@ -91,7 +101,7 @@ export default function StyleProperties({
               }}
             />
             <span className="text-sm flex-1 text-left">
-              {isTransparent ? "No Fill" : getFillColor().toUpperCase()}
+              {isTransparent ? "No Fill (click to restore)" : getFillColor().toUpperCase()}
             </span>
           </button>
 

@@ -578,9 +578,14 @@ export default function Canvas({ width, height }: CanvasProps) {
             const factory = getShapeFactory(activeTool);
             if (!factory) return null;
             
-            const draftData = factory.getDraftData(draftRect);
+            // Get the user's custom defaults for styling the preview
+            const styleDefaults = isShapeTool(activeTool)
+              ? defaultShapeProperties[activeTool]
+              : undefined;
+            
+            const draftData = factory.getDraftData(draftRect, styleDefaults);
             const commonProps = {
-              strokeWidth: 2 / viewport.zoom,
+              strokeWidth: (styleDefaults?.strokeWidth ?? 2) / viewport.zoom,
               listening: false,
             };
             
