@@ -14,6 +14,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./config";
 import { User } from "@/types/user";
+import { generateUserColor } from "./realtime";
 
 /**
  * Convert Firebase User to our User type
@@ -29,6 +30,7 @@ export function mapFirebaseUser(firebaseUser: FirebaseUser): User {
       firebaseUser.metadata.creationTime || new Date().toISOString(),
     lastLoginAt:
       firebaseUser.metadata.lastSignInTime || new Date().toISOString(),
+    color: generateUserColor(firebaseUser.uid), // Deterministic color based on user ID
   };
 }
 

@@ -11,6 +11,7 @@ import {
   updateUserPassword as authUpdatePassword,
   mapFirebaseUser 
 } from "@/lib/firebase/auth";
+import { generateUserColor } from "@/lib/firebase/realtime";
 import { AuthContextType, User } from "@/types/user";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        setUser(mapFirebaseUser(firebaseUser));
+        const mappedUser = mapFirebaseUser(firebaseUser);
+        
+        // Migration: Ensure existing users have a color assigned
+        // This handles users who logged in before the color field was added
+        if (!mappedUser.color) {
+          mappedUser.color = generateUserColor(firebaseUser.uid);
+        }
+        
+        setUser(mappedUser);
       } else {
         setUser(null);
       }

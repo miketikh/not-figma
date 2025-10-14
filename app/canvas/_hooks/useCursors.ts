@@ -12,7 +12,6 @@ import {
   subscribeToCursors,
   subscribeToPresence,
   setUserPresence,
-  generateUserColor,
   generateDisplayName,
 } from "@/lib/firebase/realtime";
 import { CursorMap } from "@/types/canvas";
@@ -35,29 +34,20 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
   const [remoteCursors, setRemoteCursors] = useState<Record<string, CursorData>>({});
   const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
   const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const userColorRef = useRef<string | null>(null);
-  const displayNameRef = useRef<string | null>(null);
 
-  // Initialize user color and display name
+  // Set user presence in Realtime Database
   useEffect(() => {
     if (!user) return;
 
-    // Generate or use existing color (deterministic based on userId)
-    if (!userColorRef.current) {
-      userColorRef.current = generateUserColor(user.uid);
-    }
-
     // Use auth display name or generate a random one
-    if (!displayNameRef.current) {
-      displayNameRef.current = user.displayName || generateDisplayName();
-    }
+    const displayName = user.displayName || generateDisplayName();
 
-    // Set user presence in Realtime Database
+    // Set user presence with color from user profile
     setUserPresence(
       user.uid,
-      displayNameRef.current,
+      displayName,
       user.email || "",
-      userColorRef.current
+      user.color // Use color from user profile
     );
   }, [user]);
 

@@ -10,6 +10,7 @@ export interface User {
   emailVerified: boolean;
   createdAt: string;
   lastLoginAt: string;
+  color: string; // User's assigned color for avatar and cursor
 }
 
 export interface UserSession {

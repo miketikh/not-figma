@@ -47,7 +47,10 @@ function CanvasPageContent() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
                   {/* User Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-medium text-primary-foreground">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                    style={{ backgroundColor: user?.color }}
+                  >
                     {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-muted-foreground">
