@@ -71,7 +71,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   );
   
   // Zustand store
-  const { viewport, updateViewport, activeTool } = useCanvasStore();
+  const { viewport, updateViewport, activeTool, setActiveTool } = useCanvasStore();
   const { user } = useAuth();
   
   // Stable callback for Firestore updates
@@ -141,9 +141,29 @@ export default function Canvas({ width, height }: CanvasProps) {
     });
   }, [selectedIds]);
 
-  // Keyboard handlers for Space key (pan mode) and Delete key
+  // Keyboard handlers for tool shortcuts, Space key (pan mode), and Delete key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore keyboard shortcuts if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Tool shortcuts
+      if (e.key === "v" || e.key === "V") {
+        setActiveTool("select");
+        e.preventDefault();
+      } else if (e.key === "h" || e.key === "H") {
+        setActiveTool("pan");
+        e.preventDefault();
+      } else if (e.key === "r" || e.key === "R") {
+        setActiveTool("rectangle");
+        e.preventDefault();
+      } else if (e.key === "c" || e.key === "C") {
+        setActiveTool("circle");
+        e.preventDefault();
+      }
+
       if (e.code === "Space" && !spacePressed) {
         setSpacePressed(true);
         e.preventDefault(); // Prevent page scroll
@@ -250,14 +270,15 @@ export default function Canvas({ width, height }: CanvasProps) {
       setSelectedIds([]);
     }
 
-    // Start panning on Space+drag or middle mouse button
-    if (e.evt.button === 1 || (e.evt.button === 0 && spacePressed)) {
+    // If stage is draggable (pan tool or space), Konva handles the panning
+    // Just track the state for cursor
+    if (activeTool === "pan" || spacePressed || e.evt.button === 1) {
       setIsPanning(true);
       return;
     }
 
-    // Start drawing shape (left click, drawing tool, not panning)
-    if (e.evt.button === 0 && isDrawingTool(activeTool) && !isPanning) {
+    // Start drawing shape (left click, drawing tool)
+    if (e.evt.button === 0 && isDrawingTool(activeTool)) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
@@ -417,6 +438,15 @@ export default function Canvas({ width, height }: CanvasProps) {
     setGridTransform({ x: center.x, y: center.y, zoom: 1 });
   };
 
+  // Get cursor style based on active tool and state
+  const getCursorStyle = () => {
+    if (isPanning) return 'grabbing';
+    if (activeTool === 'pan' || spacePressed) return 'grab';
+    if (activeTool === 'select') return 'default';
+    if (isDrawingTool(activeTool)) return 'crosshair';
+    return 'default';
+  };
+
   return (
     <div 
       ref={containerRef} 
@@ -426,6 +456,7 @@ export default function Canvas({ width, height }: CanvasProps) {
         backgroundImage: `radial-gradient(circle, var(--color-gray-300) 1px, transparent 1px)`,
         backgroundSize: `${20 * gridTransform.zoom}px ${20 * gridTransform.zoom}px`,
         backgroundPosition: `${gridTransform.x}px ${gridTransform.y}px`,
+        cursor: getCursorStyle(),
       }}
     >
       {/* Konva Stage */}
@@ -437,7 +468,7 @@ export default function Canvas({ width, height }: CanvasProps) {
           x={viewport.x}
           y={viewport.y}
           scale={viewport.zoom}
-          draggable={isPanning}
+          draggable={activeTool === "pan" || spacePressed}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
