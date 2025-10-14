@@ -6,6 +6,7 @@ import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
 import { createFabricRectangle } from "../_lib/objects";
+import { useObjects } from "../_hooks/useObjects";
 
 interface CanvasProps {
   width?: number;
@@ -29,6 +30,14 @@ export default function Canvas({ width, height }: CanvasProps) {
   const { viewport, updateViewport, activeTool } = useCanvasStore();
   const activeToolRef = useRef(activeTool);
   const { user } = useAuth();
+  
+  // Object persistence
+  const {
+    saveObject,
+    updateObjectInFirestore,
+    deleteObjectFromFirestore,
+    assignIdToObject,
+  } = useObjects({ canvas: fabricCanvasRef.current, isReady });
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -72,6 +81,12 @@ export default function Canvas({ width, height }: CanvasProps) {
         const activeObjects = canvas.getActiveObjects();
         if (activeObjects.length > 0) {
           activeObjects.forEach((obj) => {
+            // Delete from Firestore
+            const objectId = (obj as any).data?.id;
+            if (objectId) {
+              deleteObjectFromFirestore(objectId);
+            }
+            // Remove from canvas
             canvas.remove(obj);
           });
           canvas.discardActiveObject();
@@ -186,6 +201,12 @@ export default function Canvas({ width, height }: CanvasProps) {
         if (drawingObjectRef.current.width! < 5 || drawingObjectRef.current.height! < 5) {
           canvas.remove(drawingObjectRef.current);
         } else {
+          // Assign ID to the new object
+          assignIdToObject(drawingObjectRef.current);
+          
+          // Save the object to Firestore
+          saveObject(drawingObjectRef.current);
+          
           // Only make the rectangle selectable if we're in select tool mode
           const isSelectMode = activeToolRef.current === "select";
           drawingObjectRef.current.set({
@@ -225,6 +246,13 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       // Save viewport state
       updateViewport({ zoom: newZoom });
+    });
+
+    // Object modification events (for persistence)
+    canvas.on("object:modified", (e) => {
+      if (e.target) {
+        updateObjectInFirestore(e.target);
+      }
     });
 
     console.log("Canvas initialized:", { width, height });

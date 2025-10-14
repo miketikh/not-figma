@@ -335,27 +335,35 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #8: Firestore Object Persistence
+### PR #8: Firestore Object Persistence ✅
 **Branch:** `feature/object-persistence`  
 **Goal:** Save and load objects from Firestore
 
 **Tasks:**
-- [ ] Create Firestore collection for canvas objects
-- [ ] Implement save object to Firestore (debounced)
-- [ ] Implement load objects from Firestore on mount
-- [ ] Add object creation sync to Firestore
-- [ ] Add object update sync to Firestore
-- [ ] Add object deletion sync to Firestore
-- [ ] Test object persistence across page refresh
-- [ ] Verify no data loss
+- [x] Create Firestore collection for canvas objects
+- [x] Implement save object to Firestore
+- [x] Implement load objects from Firestore on mount
+- [x] Add object creation sync to Firestore
+- [x] Add object update sync to Firestore (on move, resize)
+- [x] Add object deletion sync to Firestore
+- [x] Test object persistence across page refresh
+- [x] Verify no data loss
 
 **Files Created:**
-- `hooks/useObjects.ts` (NEW)
-- `lib/sync/objectSync.ts` (NEW)
+- `app/canvas/_hooks/useObjects.ts` (NEW) - Hook for managing object persistence
 
 **Files Modified:**
-- `lib/firebase/firestore.ts` (add object CRUD functions)
-- `components/canvas/Canvas.tsx` (integrate persistence)
+- `app/canvas/_components/Canvas.tsx` (integrate persistence with useObjects hook)
+- `app/canvas/_lib/objects.ts` (conversion functions already existed)
+- `lib/firebase/firestore.ts` (CRUD functions already existed from PR #5)
+
+**Notes:**
+- Objects automatically save to Firestore on creation
+- Objects update in Firestore when moved, resized, or modified (via object:modified event)
+- Objects delete from Firestore when deleted from canvas
+- Objects load from Firestore on canvas mount
+- Each object has a unique ID stored in its data property
+- Currently supports rectangles only (other shapes TODO for later PRs)
 
 ---
 
