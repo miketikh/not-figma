@@ -9,6 +9,7 @@ import {
   signOut as authSignOut, 
   updateUserDisplayName as authUpdateDisplayName,
   updateUserPassword as authUpdatePassword,
+  signInWithGoogle as authSignInWithGoogle,
   mapFirebaseUser 
 } from "@/lib/firebase/auth";
 import { generateUserColor } from "@/lib/firebase/realtime";
@@ -67,6 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authUpdatePassword(currentPassword, newPassword);
   };
 
+  const signInWithGoogle = async () => {
+    const googleUser = await authSignInWithGoogle();
+    setUser(googleUser);
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -75,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     updateDisplayName,
     updatePassword,
+    signInWithGoogle,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

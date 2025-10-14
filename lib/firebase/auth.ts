@@ -10,6 +10,8 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "./config";
@@ -110,5 +112,17 @@ export async function updateUserPassword(
 
   // Update password after successful reauthentication
   await updatePassword(currentUser, newPassword);
+}
+
+/**
+ * Sign in with Google using popup
+ */
+export async function signInWithGoogle(): Promise<User> {
+  const provider = new GoogleAuthProvider();
+  // Optional: Add scopes if you need additional permissions
+  // provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+  
+  const userCredential = await signInWithPopup(auth, provider);
+  return mapFirebaseUser(userCredential.user);
 }
 
