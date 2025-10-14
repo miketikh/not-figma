@@ -67,7 +67,7 @@ export default function LoginForm() {
           Welcome back
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Sign in to continue to CollabCanvas
+          Sign in to continue to Not-Figma
         </p>
       </div>
 

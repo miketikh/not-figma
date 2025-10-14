@@ -1,4 +1,4 @@
-# CollabCanvas (Not Figma)
+# Not-Figma
 
 A real-time collaborative design canvas built with Next.js, Firebase, and AI. Think Figma-lite with natural language object creation and manipulation.
 

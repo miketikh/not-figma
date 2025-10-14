@@ -86,7 +86,7 @@ export default function SignupForm() {
           Create your account
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Start collaborating on CollabCanvas
+          Start collaborating on Not-Figma
         </p>
       </div>
 

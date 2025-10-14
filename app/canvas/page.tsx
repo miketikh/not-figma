@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import Canvas from "./_components/Canvas";
@@ -23,20 +24,15 @@ function CanvasPageContent() {
         <div className="h-full px-6 flex items-center justify-between">
           {/* Left Side - Logo */}
           <div className="flex items-center gap-2">
-            <svg 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="3" y="3" width="8" height="8" rx="1" fill="#3b82f6" />
-              <rect x="13" y="3" width="8" height="8" rx="1" fill="#60a5fa" />
-              <rect x="3" y="13" width="8" height="8" rx="1" fill="#60a5fa" />
-              <rect x="13" y="13" width="8" height="8" rx="1" fill="#93c5fd" />
-            </svg>
+            <Image
+              src="/favicon/apple-touch-icon.png"
+              alt="Not-Figma Logo"
+              width={32}
+              height={32}
+              className="rounded"
+            />
             <h1 className="text-xl font-semibold text-foreground">
-              CollabCanvas
+              Not-Figma
             </h1>
           </div>
 
