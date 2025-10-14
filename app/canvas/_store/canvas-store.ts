@@ -8,7 +8,7 @@ import { persist } from "zustand/middleware";
 import { Viewport, CanvasTool } from "@/types/canvas";
 
 // Default properties that can be customized per shape type
-interface DefaultShapeProperties {
+export interface DefaultShapeProperties {
   rectangle: {
     fill: string;
     stroke: string;
@@ -18,6 +18,11 @@ interface DefaultShapeProperties {
   };
   circle: {
     fill: string;
+    stroke: string;
+    strokeWidth: number;
+    opacity: number;
+  };
+  line: {
     stroke: string;
     strokeWidth: number;
     opacity: number;
@@ -69,6 +74,11 @@ const DEFAULT_SHAPE_PROPERTIES: DefaultShapeProperties = {
   circle: {
     fill: "rgba(236, 72, 153, 0.3)",
     stroke: "#ec4899",
+    strokeWidth: 2,
+    opacity: 1,
+  },
+  line: {
+    stroke: "#a855f7", // Purple
     strokeWidth: 2,
     opacity: 1,
   },

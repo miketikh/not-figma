@@ -6,6 +6,7 @@
 import { ComponentType } from "react";
 import RectangleProperties from "./RectangleProperties";
 import CircleProperties from "./CircleProperties";
+import LineProperties from "./LineProperties";
 
 /**
  * Registry mapping shape types to their property components
@@ -13,6 +14,7 @@ import CircleProperties from "./CircleProperties";
 export const shapePropertyComponents: Record<string, ComponentType<any>> = {
   rectangle: RectangleProperties,
   circle: CircleProperties,
+  line: LineProperties,
 };
 
 /**

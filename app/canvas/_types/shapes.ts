@@ -68,9 +68,31 @@ export interface PersistedCircle {
 }
 
 /**
+ * Persisted line shape (local representation)
+ * Lines are defined by two points (start and end)
+ * No fill property - lines only have stroke
+ */
+export interface PersistedLine {
+  id: string;
+  type: "line";
+  x: number; // start point x
+  y: number; // start point y
+  x2: number; // end point x
+  y2: number; // end point y
+  stroke: string;
+  strokeWidth: number;
+  opacity: number; // 0-1, affects entire line
+  zIndex: number; // layer order
+  // Lock info
+  lockedBy: string | null;
+  lockedAt: number | null;
+  lockTimeout: number;
+}
+
+/**
  * Union type for all local shape types
  */
-export type PersistedShape = PersistedRect | PersistedCircle;
+export type PersistedShape = PersistedRect | PersistedCircle | PersistedLine;
 
 /**
  * Style overrides for draft preview rendering

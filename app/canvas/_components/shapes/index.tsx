@@ -3,9 +3,10 @@
  * Delegates rendering to the appropriate shape component based on object type
  */
 
-import type { PersistedRect, PersistedCircle } from "../../_types/shapes";
+import type { PersistedRect, PersistedCircle, PersistedLine } from "../../_types/shapes";
 import RectangleShape from "./RectangleShape";
 import CircleShape from "./CircleShape";
+import LineShape from "./LineShape";
 import type Konva from "konva";
 
 /**
@@ -94,6 +95,21 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           onSelect={onSelect}
           onTransform={onTransform}
           shapeRef={shapeRef as (node: Konva.Ellipse | null) => void}
+          onRenewLock={onRenewLock}
+        />
+      );
+
+    case "line":
+      return (
+        <LineShape
+          shape={object as PersistedLine}
+          isSelected={isSelected}
+          isLocked={isLocked}
+          isSelectable={isSelectable}
+          zoom={zoom}
+          onSelect={onSelect}
+          onTransform={onTransform}
+          shapeRef={shapeRef as (node: Konva.Line | null) => void}
           onRenewLock={onRenewLock}
         />
       );

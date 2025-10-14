@@ -9,6 +9,7 @@ import { isLockedByOtherUser } from "../_lib/locks";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { CanvasTool } from "@/types/canvas";
 import { isShapeTool } from "../_constants/tools";
+import { DefaultShapeProperties } from "../_store/canvas-store";
 
 interface PropertiesPanelProps {
   selectedIds: string[];
@@ -16,23 +17,9 @@ interface PropertiesPanelProps {
   onUpdate: (objectId: string, updates: Partial<PersistedShape>) => void;
   currentUserId: string | null;
   activeTool: CanvasTool;
-  defaultShapeProperties: {
-    rectangle: {
-      fill: string;
-      stroke: string;
-      strokeWidth: number;
-      opacity: number;
-      cornerRadius: number;
-    };
-    circle: {
-      fill: string;
-      stroke: string;
-      strokeWidth: number;
-      opacity: number;
-    };
-  };
+  defaultShapeProperties: DefaultShapeProperties;
   onUpdateDefaults: (
-    shapeType: "rectangle" | "circle",
+    shapeType: "rectangle" | "circle" | "line",
     updates: any
   ) => void;
 }
@@ -56,7 +43,7 @@ export default function PropertiesPanel({
 
   // Show default properties when shape tool is active and nothing selected
   if (isShapeTool(activeTool) && !hasSelection) {
-    const shapeType = activeTool; // TypeScript knows this is "rectangle" | "circle" now
+    const shapeType = activeTool; // TypeScript knows this is "rectangle" | "circle" | "line" now
     const ShapePropertiesComponent = getPropertyComponent(shapeType);
 
     // Create a mock shape object with default properties for UI display
@@ -72,7 +59,8 @@ export default function PropertiesPanel({
             width: 100, // Default width for max calculation
             height: 100, // Default height for max calculation
           }
-        : {
+        : shapeType === "circle"
+        ? {
             type: "circle",
             fill: defaultShapeProperties.circle.fill,
             stroke: defaultShapeProperties.circle.stroke,
@@ -80,6 +68,16 @@ export default function PropertiesPanel({
             opacity: defaultShapeProperties.circle.opacity,
             radiusX: 50, // Default radius for display
             radiusY: 50, // Default radius for display
+          }
+        : {
+            type: "line",
+            stroke: defaultShapeProperties.line?.stroke ?? "#a855f7",
+            strokeWidth: defaultShapeProperties.line?.strokeWidth ?? 2,
+            opacity: defaultShapeProperties.line?.opacity ?? 1,
+            x: 0,
+            y: 0,
+            x2: 100,
+            y2: 100,
           };
 
     return (

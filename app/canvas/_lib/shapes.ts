@@ -3,7 +3,7 @@
  * Centralizes shape creation, conversion, and drawing logic
  */
 
-import { CanvasObject, RectangleObject } from "@/types/canvas";
+import { CanvasObject, RectangleObject, LineObject } from "@/types/canvas";
 import { generateObjectId } from "./objects";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import type {
@@ -11,6 +11,7 @@ import type {
   DrawingBounds,
   PersistedRect,
   PersistedCircle,
+  PersistedLine,
   ShapeFactory,
 } from "../_types/shapes";
 
@@ -374,6 +375,165 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
 };
 
 // ============================================================================
+// Line Factory
+// ============================================================================
+
+/**
+ * Line shape factory
+ * Handles creation, conversion, and validation of lines
+ */
+export const lineFactory: ShapeFactory<PersistedLine> = {
+  /**
+   * Create a line with default styling
+   * Optional overrides parameter allows customizing default properties
+   */
+  createDefault: (
+    { x, y, width, height }: DrawingBounds,
+    overrides?: Partial<PersistedLine>
+  ): PersistedLine => {
+    // Convert bounding box to line endpoints
+    const x2 = x + width;
+    const y2 = y + height;
+    
+    return {
+      id: generateObjectId(),
+      type: "line",
+      x,
+      y,
+      x2,
+      y2,
+      stroke: "#a855f7", // Purple
+      strokeWidth: 2,
+      opacity: 1,
+      zIndex: 0,
+      lockedBy: null,
+      lockedAt: null,
+      lockTimeout: LOCK_TIMEOUT_MS,
+      ...overrides, // Apply any custom overrides
+    };
+  },
+
+  /**
+   * Create line from draft drawing bounds
+   */
+  createFromDraft: (draft: DrawingBounds): PersistedLine => {
+    return lineFactory.createDefault(draft);
+  },
+
+  /**
+   * Convert local PersistedLine to Firestore LineObject
+   */
+  toFirestore: (line: PersistedLine, userId: string): LineObject => {
+    const now = Date.now();
+
+    return {
+      id: line.id,
+      type: "line",
+
+      // Ownership & Sync
+      createdBy: userId,
+      createdAt: now,
+      updatedBy: userId,
+      updatedAt: now,
+
+      // Locking
+      lockedBy: line.lockedBy,
+      lockedAt: line.lockedAt,
+      lockTimeout: line.lockTimeout,
+
+      // Transform (lines use x, y, x2, y2 instead of width/height)
+      x: line.x,
+      y: line.y,
+      x2: line.x2,
+      y2: line.y2,
+      rotation: 0, // Lines don't rotate
+
+      // Styling (lines don't have fill)
+      stroke: line.stroke,
+      strokeWidth: line.strokeWidth,
+      strokeOpacity: line.opacity,
+      strokeStyle: "solid",
+
+      // Layer
+      zIndex: line.zIndex,
+
+      // Interaction
+      locked: false,
+      visible: true,
+    };
+  },
+
+  /**
+   * Convert Firestore LineObject to local PersistedLine
+   */
+  fromFirestore: (obj: CanvasObject): PersistedLine | null => {
+    if (obj.type !== "line") return null;
+
+    const lineObj = obj as LineObject;
+    return {
+      id: lineObj.id,
+      type: "line",
+      x: lineObj.x,
+      y: lineObj.y,
+      x2: lineObj.x2,
+      y2: lineObj.y2,
+      stroke: lineObj.stroke,
+      strokeWidth: lineObj.strokeWidth,
+      opacity: lineObj.strokeOpacity ?? 1, // backward compatibility
+      zIndex: lineObj.zIndex ?? 0, // backward compatibility
+      lockedBy: lineObj.lockedBy,
+      lockedAt: lineObj.lockedAt,
+      lockTimeout: lineObj.lockTimeout,
+    };
+  },
+
+  /**
+   * Validate line meets minimum length requirements
+   */
+  validateSize: (line: PersistedLine): boolean => {
+    // Calculate line length using distance formula
+    const dx = line.x2 - line.x;
+    const dy = line.y2 - line.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    return length >= 10; // Minimum 10 pixels
+  },
+
+  /**
+   * Normalize drawing coordinates to handle dragging in any direction
+   * For lines, we DON'T normalize - the start point stays fixed!
+   */
+  normalizeDrawing: (start: Point, current: Point): DrawingBounds => {
+    // For lines, keep the start point FIXED and allow negative width/height
+    // This lets us drag in any direction from the anchor point
+    const width = current.x - start.x;
+    const height = current.y - start.y;
+
+    return { 
+      x: start.x, 
+      y: start.y, 
+      width, 
+      height 
+    };
+  },
+
+  /**
+   * Get draft line data for preview rendering
+   * Accepts optional style overrides to match user's default properties
+   */
+  getDraftData: (draft: DrawingBounds, styleOverrides = {}) => {
+    return {
+      type: "line" as const,
+      props: {
+        points: [draft.x, draft.y, draft.x + draft.width, draft.y + draft.height],
+        stroke: styleOverrides.stroke ?? "#a855f7",
+        strokeWidth: styleOverrides.strokeWidth ?? 2,
+        opacity: styleOverrides.opacity ?? 1,
+      },
+    };
+  },
+};
+
+// ============================================================================
 // Shape Factory Registry
 // ============================================================================
 
@@ -384,6 +544,7 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
 export const shapeFactories: Record<string, ShapeFactory<any>> = {
   rectangle: rectangleFactory,
   circle: circleFactory,
+  line: lineFactory,
 };
 
 /**

@@ -1,0 +1,147 @@
+"use client";
+
+import { Line } from "react-konva";
+import Konva from "konva";
+import { KonvaEventObject } from "konva/lib/Node";
+import type { PersistedLine } from "../../_types/shapes";
+
+/**
+ * Props for LineShape component
+ */
+export interface LineShapeProps {
+  /** The line shape data */
+  shape: PersistedLine;
+  
+  /** Whether this shape is currently selected */
+  isSelected: boolean;
+  
+  /** Whether this shape is locked by another user */
+  isLocked: boolean;
+  
+  /** Whether this shape can be selected (depends on active tool) */
+  isSelectable: boolean;
+  
+  /** Viewport zoom level (for stroke scaling) */
+  zoom: number;
+  
+  /** Callback when shape is selected */
+  onSelect: () => void;
+  
+  /** Callback when shape is transformed (drag/resize) */
+  onTransform: (updates: Partial<PersistedLine>) => void;
+  
+  /** Ref callback for transformer attachment */
+  shapeRef: (node: Konva.Line | null) => void;
+  
+  /** Callback to renew lock during interaction */
+  onRenewLock: () => void;
+}
+
+/**
+ * LineShape Component
+ * Renders a line using Konva with full interaction support
+ */
+export default function LineShape({
+  shape,
+  isSelected,
+  isLocked,
+  isSelectable,
+  zoom,
+  onSelect,
+  onTransform,
+  shapeRef,
+  onRenewLock,
+}: LineShapeProps) {
+  // Determine stroke color based on lock status
+  const strokeColor = isLocked ? "#ef4444" : shape.stroke;
+  const strokeWidth = shape.strokeWidth / zoom;
+
+  /**
+   * Handle click to select
+   */
+  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (!isSelectable) return;
+    e.cancelBubble = true;
+    onSelect();
+  };
+
+  /**
+   * Handle drag end to update position
+   * When dragging a line, both endpoints move together (translation)
+   */
+  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+    const node = e.target as Konva.Line;
+    
+    // Calculate the delta from the drag
+    const dx = node.x();
+    const dy = node.y();
+    
+    // Update both endpoints by the drag delta
+    onTransform({
+      x: shape.x + dx,
+      y: shape.y + dy,
+      x2: shape.x2 + dx,
+      y2: shape.y2 + dy,
+    });
+    
+    // Reset node position to origin (since we've updated the points)
+    node.position({ x: 0, y: 0 });
+    
+    // Renew lock
+    onRenewLock();
+  };
+
+  /**
+   * Handle transform end to update endpoints
+   * This handles when the transformer is used to scale/rotate the line
+   */
+  const handleTransformEnd = (e: KonvaEventObject<Event>) => {
+    const node = e.target as Konva.Line;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    
+    // Get current points
+    const points = node.points();
+    
+    // Apply scale to points
+    const scaledPoints = [
+      points[0] * scaleX,
+      points[1] * scaleY,
+      points[2] * scaleX,
+      points[3] * scaleY,
+    ];
+    
+    // Reset scale
+    node.scaleX(1);
+    node.scaleY(1);
+    
+    // Update line endpoints with scaled values
+    onTransform({
+      x: scaledPoints[0],
+      y: scaledPoints[1],
+      x2: scaledPoints[2],
+      y2: scaledPoints[3],
+    });
+    
+    // Renew lock
+    onRenewLock();
+  };
+
+  return (
+    <Line
+      ref={shapeRef}
+      points={[shape.x, shape.y, shape.x2, shape.y2]}
+      stroke={strokeColor}
+      strokeWidth={strokeWidth}
+      opacity={shape.opacity ?? 1}
+      draggable={isSelectable}
+      listening={isSelectable}
+      onClick={handleClick}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={handleTransformEnd}
+      // Increase hit detection area for thin lines
+      hitStrokeWidth={Math.max(strokeWidth * zoom, 10)}
+    />
+  );
+}
+

@@ -22,6 +22,9 @@ export default function StyleProperties({
 
   // Parse fill color to hex (handle rgba format)
   const getFillColor = () => {
+    // Lines don't have fill
+    if (!("fill" in object)) return "#000000";
+    
     const fill = object.fill;
     if (fill.startsWith("#")) return fill;
     if (fill === "transparent") return "#000000";
@@ -53,6 +56,9 @@ export default function StyleProperties({
   };
 
   const handleNoFillChange = (checked: boolean) => {
+    // Lines don't have fill
+    if (!("fill" in object)) return;
+    
     if (checked) {
       onUpdate({ fill: "transparent" });
     } else {
@@ -63,11 +69,15 @@ export default function StyleProperties({
     }
   };
 
-  const isTransparent = object.fill === "transparent";
+  const isTransparent = ("fill" in object) && object.fill === "transparent";
+  
+  // Lines don't have fill, only stroke
+  const isLine = object.type === "line";
 
   return (
     <div className="space-y-4">
-      {/* Fill Section */}
+      {/* Fill Section - Hidden for lines */}
+      {!isLine && (
       <div>
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
           Fill
@@ -140,6 +150,7 @@ export default function StyleProperties({
           </div>
         </div>
       </div>
+      )}
 
       {/* Stroke Section */}
       <div>

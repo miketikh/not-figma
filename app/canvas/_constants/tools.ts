@@ -8,13 +8,13 @@ import type { CanvasTool } from "@/types/canvas";
 /**
  * Tools that create shapes by dragging
  */
-export const DRAWING_TOOLS: readonly CanvasTool[] = ["rectangle", "circle"] as const;
+export const DRAWING_TOOLS: readonly CanvasTool[] = ["rectangle", "circle", "line"] as const;
 
 /**
  * Shape types that correspond to drawing tools
  * Used for mapping tools to their default properties
  */
-export type ShapeToolType = "rectangle" | "circle";
+export type ShapeToolType = "rectangle" | "circle" | "line";
 
 /**
  * Check if a tool is a drawing tool
@@ -28,6 +28,6 @@ export function isDrawingTool(tool: CanvasTool): boolean {
  * Returns true if the tool creates a shape and can be used as a key for defaultShapeProperties
  */
 export function isShapeTool(tool: CanvasTool): tool is ShapeToolType {
-  return tool === "rectangle" || tool === "circle";
+  return tool === "rectangle" || tool === "circle" || tool === "line";
 }
 

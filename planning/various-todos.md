@@ -4,6 +4,16 @@
     - Add "forgot password"
     
 - User
-    - change displayName / pass etc
-- Locking
-    - ✅ Implemented activity-based lock renewal (30s timeout)
+    - Add sign in with google
+
+
+
+Bugs:
+- selection tool moves object with spacbar
+
+
+
+- fix active user display 
+- maybe add 
+- cmd + r intercept
+- indicator of other users

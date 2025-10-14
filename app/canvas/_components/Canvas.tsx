@@ -22,7 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Transformer, Rect, Circle, Ellipse } from "react-konva";
+import { Transformer, Rect, Circle, Ellipse, Line } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
 import { isDrawingTool, isShapeTool } from "../_constants/tools";
@@ -218,6 +218,9 @@ export default function Canvas({ width, height }: CanvasProps) {
         e.preventDefault();
       } else if (e.key === "c" || e.key === "C") {
         setActiveTool("circle");
+        e.preventDefault();
+      } else if (e.key === "l" || e.key === "L") {
+        setActiveTool("line");
         e.preventDefault();
       }
 
@@ -587,6 +590,8 @@ export default function Canvas({ width, height }: CanvasProps) {
               return <Circle {...draftData.props} {...commonProps} />;
             } else if (draftData.type === "ellipse") {
               return <Ellipse {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "line") {
+              return <Line {...draftData.props} {...commonProps} />;
             }
             return null;
           })()}
