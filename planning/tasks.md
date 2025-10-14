@@ -412,7 +412,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Create RemoteCursor component
 - [x] Render remote cursors on canvas
 - [x] Display user name labels above cursors
-- [x] Assign unique colors to each user
+- [x] Assign unique colors to each useimage.pngr
 - [x] Generate random display names if user doesn't have one
 - [x] Test cursor sync with 2+ users
 - [x] Verify cursor latency <50ms
@@ -436,29 +436,28 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #11: Presence System
+### PR #11: Presence System ✅
 **Branch:** `feature/presence-tracking`  
 **Goal:** Track and display online users
 
 **Tasks:**
-- [ ] Create presence data model
-- [ ] Set up Realtime Database presence tracking
-- [ ] Broadcast user join event
-- [ ] Broadcast user leave event
-- [ ] Implement heartbeat mechanism (every 30s)
-- [ ] Create UserList component
-- [ ] Display active users with names and colors
-- [ ] Auto-cleanup inactive users after 5 minutes
-- [ ] Test presence with multiple users
+- [x] Create presence data model
+- [x] Set up Realtime Database presence tracking
+- [x] Broadcast user join event
+- [x] Broadcast user leave event
+- [x] Implement heartbeat mechanism (every 30s)
+- [x] Create UserList component
+- [x] Display active users with names and colors
+- [x] Auto-cleanup inactive users after 5 minutes
+- [x] Test presence with multiple users
 
 **Files Created:**
-- `components/ui/UserList.tsx` (NEW)
-- `hooks/usePresence.ts` (NEW)
-- `lib/sync/presenceSync.ts` (NEW)
+- `app/canvas/_components/OnlineUsers.tsx` (NEW)
+- `app/canvas/_hooks/usePresence.ts` (NEW)
 
 **Files Modified:**
-- `lib/firebase/realtime.ts` (add presence functions)
-- `app/canvas/page.tsx` (add UserList)
+- `lib/firebase/realtime.ts` (presence functions already existed)
+- `app/canvas/page.tsx` (add OnlineUsers component)
 
 ---
 
@@ -539,25 +538,28 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #15: Additional Shape Types - Circles
+### PR #15: Additional Shape Types - Circles ✅
 **Branch:** `feature/circles`  
 **Goal:** Add circle shape type
 
 **Tasks:**
-- [ ] Extend object types for circles
-- [ ] Add circle to Toolbar
-- [ ] Implement circle creation logic
-- [ ] Implement circle rendering
-- [ ] Add circle selection and manipulation
-- [ ] Test circle creation, move, resize
-- [ ] Sync circles across users
+- [x] Extend object types for circles
+- [x] Add circle to Toolbar
+- [x] Implement circle creation logic
+- [x] Implement circle rendering
+- [x] Add circle selection and manipulation
+- [x] Test circle creation, move, resize
+- [x] Sync circles across users
+
+**Files Created:**
+- `app/canvas/_components/shapes/CircleShape.tsx` (NEW)
+- `app/canvas/_components/properties/shape-properties/CircleProperties.tsx` (NEW)
 
 **Files Modified:**
-- `types/objects.ts` (add Circle type)
-- `lib/canvas/objects.ts` (add circle functions)
-- `components/canvas/Toolbar.tsx` (NEW - create toolbar with circle button)
-- `components/canvas/Canvas.tsx` (handle circle creation)
-- `lib/sync/objectSync.ts` (handle circle sync)
+- `app/canvas/_types/shapes.ts` (add PersistedCircle type)
+- `app/canvas/_lib/shapes.ts` (add circle factory functions)
+- `app/canvas/_components/Toolbar.tsx` (add circle button)
+- `app/canvas/_components/Canvas.tsx` (handle circle creation and rendering)
 
 ---
 
@@ -644,35 +646,37 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #20: Layer Management
+### PR #20: Layer Management ✅
 **Branch:** `feature/layer-management`  
 **Goal:** Implement z-index and layer controls
 
 **Tasks:**
-- [ ] Add z-index to object data model
-- [ ] Implement bring to front (Cmd/Ctrl+])
-- [ ] Implement send to back (Cmd/Ctrl+[)
-- [ ] Implement bring forward one layer
-- [ ] Implement send backward one layer
-- [ ] Update rendering order based on z-index
-- [ ] Test layer operations
-- [ ] Sync layer changes across users
+- [x] Add z-index to object data model
+- [x] Implement bring to front (Cmd/Ctrl+Shift+])
+- [x] Implement send to back (Cmd/Ctrl+Shift+[)
+- [x] Implement bring forward one layer (Cmd/Ctrl+])
+- [x] Implement send backward one layer (Cmd/Ctrl+[)
+- [x] Update rendering order based on z-index
+- [x] Test layer operations
+- [x] Sync layer changes across users
+
+**Files Created:**
+- `app/canvas/_lib/layer-management.ts` (NEW - layer utility functions)
 
 **Files Modified:**
-- `types/objects.ts` (ensure zIndex field)
-- `lib/canvas/objects.ts` (add layer functions)
-- `hooks/useSelection.ts` (add keyboard shortcuts)
-- `components/canvas/Canvas.tsx` (render by z-index)
-- `lib/sync/objectSync.ts` (sync z-index changes)
+- `app/canvas/_types/shapes.ts` (zIndex field already in types)
+- `app/canvas/_components/properties/UniversalProperties.tsx` (layer control buttons)
+- `app/canvas/_components/Canvas.tsx` (keyboard shortcuts for layer operations, render by z-index)
+- `app/canvas/_hooks/useObjects.ts` (sync z-index changes)
 
 ---
 
-### PR #21: Keyboard Shortcuts
+### PR #21: Keyboard Shortcuts (Partial) ⚠️
 **Branch:** `feature/keyboard-shortcuts`  
 **Goal:** Implement comprehensive keyboard shortcuts
 
 **Tasks:**
-- [ ] Implement Delete/Backspace for delete
+- [x] Implement Delete/Backspace for delete
 - [ ] Implement Cmd/Ctrl+D for duplicate
 - [ ] Implement Cmd/Ctrl+A for select all
 - [ ] Implement Cmd/Ctrl+C for copy
@@ -680,15 +684,16 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Implement arrow keys for nudge (1px)
 - [ ] Implement Shift+arrows for nudge (10px)
 - [ ] Implement Escape for deselect
+- [x] Tool shortcuts (V, H, R, C)
+- [x] Space key for pan mode
+- [x] Layer management shortcuts (Cmd/Ctrl + [/])
 - [ ] Create keyboard shortcuts reference
 - [ ] Test all shortcuts
 
-**Files Created:**
-- `hooks/useKeyboardShortcuts.ts` (NEW)
-
 **Files Modified:**
-- `components/canvas/Canvas.tsx` (integrate shortcuts hook)
-- `app/canvas/page.tsx` (add shortcuts help UI)
+- `app/canvas/_components/Canvas.tsx` (integrated keyboard handlers inline)
+
+**Note:** Some keyboard shortcuts are implemented (delete, tool shortcuts, space pan, layer management), but copy/paste, nudge, and select all are not yet implemented.
 
 ---
 
@@ -711,68 +716,83 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #23: Rotation
+### PR #23: Rotation ✅
 **Branch:** `feature/rotation`  
 **Goal:** Add rotation capability
 
 **Tasks:**
-- [ ] Add rotation handle to selected objects
-- [ ] Implement rotation interaction
-- [ ] Display rotation angle during rotation
-- [ ] Add snap to 15° with Shift key
-- [ ] Update object rotation in data model
-- [ ] Sync rotation across users
-- [ ] Test rotation with all shape types
+- [x] Add rotation handle to selected objects
+- [x] Implement rotation interaction
+- [ ] Display rotation angle during rotation (not implemented)
+- [ ] Add snap to 15° with Shift key (not implemented)
+- [x] Update object rotation in data model
+- [x] Sync rotation across users
+- [x] Test rotation with all shape types
 
 **Files Modified:**
-- `components/canvas/Canvas.tsx` (add rotation handle)
-- `lib/canvas/objects.ts` (add rotation logic)
-- `lib/sync/objectSync.ts` (sync rotation)
+- `app/canvas/_components/Canvas.tsx` (uses Konva Transformer with rotation enabled)
+- `app/canvas/_components/shapes/RectangleShape.tsx` (handles rotation in transform)
+- `app/canvas/_components/properties/UniversalProperties.tsx` (rotation input field)
+- `app/canvas/_types/shapes.ts` (rotation field in shape types)
+
+**Note:** Rotation is fully functional via Konva Transformer handles and property panel input. Snap-to-angle and live angle display not yet implemented.
 
 ---
 
-### PR #24: Properties Panel
+### PR #24: Properties Panel ✅
 **Branch:** `feature/properties-panel`  
 **Goal:** Create sidebar for object properties
 
 **Tasks:**
-- [ ] Create PropertiesPanel component
-- [ ] Add position inputs (X, Y)
-- [ ] Add dimension inputs (Width, Height)
-- [ ] Add rotation input (degrees)
-- [ ] Add color picker
-- [ ] Add opacity slider
-- [ ] Implement real-time updates (panel ↔ canvas)
-- [ ] Add input validation
-- [ ] Test with all shape types
+- [x] Create PropertiesPanel component
+- [x] Add position inputs (X, Y)
+- [x] Add dimension inputs (Width, Height)
+- [x] Add rotation input (degrees)
+- [x] Add color picker
+- [x] Add opacity slider
+- [x] Implement real-time updates (panel ↔ canvas)
+- [x] Add input validation
+- [x] Test with all shape types
+- [x] Add layer control buttons
+- [x] Add shape-specific properties
+- [x] Add default property editing for shape tools
 
 **Files Created:**
-- `components/canvas/PropertiesPanel.tsx` (NEW)
+- `app/canvas/_components/PropertiesPanel.tsx` (NEW)
+- `app/canvas/_components/properties/UniversalProperties.tsx` (NEW)
+- `app/canvas/_components/properties/StyleProperties.tsx` (NEW)
+- `app/canvas/_components/properties/shape-properties/RectangleProperties.tsx` (NEW)
+- `app/canvas/_components/properties/shape-properties/CircleProperties.tsx` (NEW)
+- `app/canvas/_components/properties/shape-properties/index.ts` (NEW)
 
 **Files Modified:**
-- `app/canvas/page.tsx` (add PropertiesPanel to layout)
-- `lib/canvas/objects.ts` (add property update functions)
+- `app/canvas/_components/Canvas.tsx` (integrated PropertiesPanel)
+- `app/canvas/page.tsx` (already rendering Canvas with panel)
 
 ---
 
-### PR #25: Advanced Styling
+### PR #25: Advanced Styling (Partial) ⚠️
 **Branch:** `feature/advanced-styling`  
 **Goal:** Add stroke and styling options
 
 **Tasks:**
-- [ ] Add fill color with opacity controls
-- [ ] Add stroke/border color controls
-- [ ] Add stroke width controls
-- [ ] Add stroke style options (solid, dashed, dotted)
-- [ ] Update PropertiesPanel with styling options
-- [ ] Test styling on all shape types
-- [ ] Sync styling changes across users
+- [x] Add fill color with opacity controls
+- [x] Add stroke/border color controls
+- [x] Add stroke width controls
+- [ ] Add stroke style options (solid, dashed, dotted) - not implemented
+- [x] Update PropertiesPanel with styling options
+- [x] Test styling on all shape types
+- [x] Sync styling changes across users
+- [x] Add "No Fill" option (transparent fill)
+- [x] Add corner radius control for rectangles
 
 **Files Modified:**
-- `types/objects.ts` (add styling properties)
-- `components/canvas/PropertiesPanel.tsx` (add styling UI)
-- `lib/canvas/objects.ts` (apply styling)
-- `lib/sync/objectSync.ts` (sync styling)
+- `app/canvas/_types/shapes.ts` (styling properties already in types)
+- `app/canvas/_components/properties/StyleProperties.tsx` (color pickers, opacity slider)
+- `app/canvas/_components/properties/shape-properties/RectangleProperties.tsx` (corner radius)
+- `app/canvas/_hooks/useObjects.ts` (sync styling changes)
+
+**Note:** Fill color, stroke color, stroke width, opacity, and corner radius are fully implemented. Stroke style (dashed/dotted) is not yet implemented.
 
 ---
 
@@ -1121,3 +1141,47 @@ The underscore prefix tells Next.js these are NOT routes.
 **Final Submission:** PR #40 (40 PRs)
 
 Each PR is self-contained, testable, and deployable. Follow the order to build features incrementally.
+
+---
+
+## Current Progress (As of October 2025)
+
+### ✅ Completed PRs (1-11, 15, 20, 23, 24, 25 partial)
+- **PR #1-10:** ✅ All MVP features complete (setup, auth, canvas, shapes, sync, cursors)
+- **PR #11:** ✅ Presence System (OnlineUsers component showing active users)
+- **PR #15:** ✅ Circle Shape (full support with creation, editing, properties)
+- **PR #20:** ✅ Layer Management (z-index controls with UI buttons and keyboard shortcuts)
+- **PR #21:** ⚠️ Keyboard Shortcuts (partial - delete, tool shortcuts, space pan, layer shortcuts working)
+- **PR #23:** ✅ Rotation (via Konva Transformer and properties panel)
+- **PR #24:** ✅ Properties Panel (comprehensive panel with position, size, rotation, styling, layer controls)
+- **PR #25:** ⚠️ Advanced Styling (partial - colors, opacity, stroke width, corner radius working; dashed/dotted strokes not implemented)
+
+### 🚧 Not Yet Implemented
+- **PR #12:** Connection Status & Reconnection (offline handling)
+- **PR #13:** Deployment Setup (needs Vercel deployment)
+- **PR #14:** MVP Testing & Validation
+- **PR #16:** Lines shape type
+- **PR #17:** Text shape type
+- **PR #18:** Multi-Select (shift-click, drag-to-select)
+- **PR #19:** Group Operations
+- **PR #21 remaining:** Copy/paste, select all, nudge with arrows, escape to deselect
+- **PR #22:** Copy/Paste
+- **PR #26:** Undo/Redo (optional)
+- **PR #27:** Performance Optimization
+- **PR #28-36:** AI Features (all not started)
+- **PR #37-40:** Testing, documentation, deployment
+
+### Key Features Working
+✅ Canvas with pan & zoom  
+✅ Rectangle and Circle shapes  
+✅ Real-time collaboration with object sync  
+✅ Multiplayer cursors with user names  
+✅ Online user presence display  
+✅ Locking system (prevents edit conflicts)  
+✅ Comprehensive properties panel  
+✅ Layer management (z-index)  
+✅ Rotation support  
+✅ Color pickers and styling controls  
+✅ Tool shortcuts (V, H, R, C)  
+✅ Delete key support  
+✅ Space+drag pan mode
