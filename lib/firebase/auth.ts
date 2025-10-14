@@ -7,6 +7,9 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "./config";
@@ -66,5 +69,44 @@ export async function signIn(email: string, password: string): Promise<User> {
  */
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+/**
+ * Update the current user's display name
+ */
+export async function updateUserDisplayName(displayName: string): Promise<User> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("No user is currently signed in");
+  }
+
+  await updateProfile(currentUser, { displayName });
+  await currentUser.reload();
+  
+  return mapFirebaseUser(currentUser);
+}
+
+/**
+ * Update the current user's password
+ * Requires reauthentication for security
+ */
+export async function updateUserPassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser || !currentUser.email) {
+    throw new Error("No user is currently signed in");
+  }
+
+  // Reauthenticate user before password change (Firebase best practice)
+  const credential = EmailAuthProvider.credential(
+    currentUser.email,
+    currentPassword
+  );
+  await reauthenticateWithCredential(currentUser, credential);
+
+  // Update password after successful reauthentication
+  await updatePassword(currentUser, newPassword);
 }
 

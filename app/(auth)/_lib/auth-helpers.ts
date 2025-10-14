@@ -55,7 +55,10 @@ export function getAuthErrorMessage(error: unknown): string {
       return "Configuration error. Please contact support.";
 
     case "auth/requires-recent-login":
-      return "Please sign in again to complete this action.";
+      return "For security, please sign out and sign in again to complete this action.";
+    
+    case "auth/wrong-password":
+      return "Incorrect password. Please try again.";
 
     default:
       // Log unknown errors for debugging

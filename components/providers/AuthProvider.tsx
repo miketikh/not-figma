@@ -3,7 +3,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
-import { signUp as authSignUp, signIn as authSignIn, signOut as authSignOut, mapFirebaseUser } from "@/lib/firebase/auth";
+import { 
+  signUp as authSignUp, 
+  signIn as authSignIn, 
+  signOut as authSignOut, 
+  updateUserDisplayName as authUpdateDisplayName,
+  updateUserPassword as authUpdatePassword,
+  mapFirebaseUser 
+} from "@/lib/firebase/auth";
 import { AuthContextType, User } from "@/types/user";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,12 +49,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const updateDisplayName = async (displayName: string) => {
+    const updatedUser = await authUpdateDisplayName(displayName);
+    setUser(updatedUser);
+  };
+
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    await authUpdatePassword(currentPassword, newPassword);
+  };
+
   const value: AuthContextType = {
     user,
     loading,
     signUp,
     signIn,
     signOut,
+    updateDisplayName,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

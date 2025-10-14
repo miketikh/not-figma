@@ -1,11 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
-import { Button } from "@/components/ui/button";
 import Canvas from "./_components/Canvas";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function CanvasPageContent() {
+  const router = useRouter();
   const { user, signOut } = useAuth();
 
   return (
@@ -36,18 +43,27 @@ function CanvasPageContent() {
 
           {/* Right Side - User Info */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              {/* User Avatar */}
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-medium text-primary-foreground">
-                {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
-              </div>
-              <span className="text-sm font-medium text-muted-foreground">
-                {user?.displayName || user?.email}
-              </span>
-            </div>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              Sign out
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                  {/* User Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm font-medium text-primary-foreground">
+                    {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {user?.displayName || user?.email}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  Update profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={signOut}>
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
