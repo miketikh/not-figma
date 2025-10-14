@@ -12,7 +12,7 @@ export default function Toolbar() {
   ];
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
       {tools.map((tool) => (
         <button
           key={tool.id}
@@ -22,7 +22,7 @@ export default function Toolbar() {
             ${
               activeTool === tool.id
                 ? "bg-blue-500 text-white"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "hover:bg-gray-100 text-gray-700"
             }
           `}
           title={tool.label}
@@ -33,5 +33,6 @@ export default function Toolbar() {
     </div>
   );
 }
+
 
 

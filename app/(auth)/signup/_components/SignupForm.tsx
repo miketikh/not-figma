@@ -66,18 +66,18 @@ export default function SignupForm() {
   return (
     <div className="w-full max-w-md space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-3xl font-bold text-gray-900">
           Create your account
         </h2>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-sm text-gray-600">
           Start collaborating on CollabCanvas
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
@@ -133,11 +133,11 @@ export default function SignupForm() {
           {loading ? "Creating account..." : "Sign up"}
         </Button>
 
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+            className="font-medium text-blue-600 hover:text-blue-500"
           >
             Sign in
           </Link>

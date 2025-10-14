@@ -24,6 +24,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const isPanningRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
   const [, forceUpdate] = useState({});
+  const [gridTransform, setGridTransform] = useState({ x: 0, y: 0, zoom: 1 });
   
   // Drawing state
   const isDrawingRef = useRef(false);
@@ -79,7 +80,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: containerWidth,
       height: containerHeight,
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "transparent",
       selection: true,
       preserveObjectStacking: true,
     });
@@ -92,6 +93,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       canvas.viewportTransform[4] = viewport.x;
       canvas.viewportTransform[5] = viewport.y;
       canvas.requestRenderAll();
+      setGridTransform({ x: viewport.x, y: viewport.y, zoom: viewport.zoom });
     }
     
     setIsReady(true);
@@ -308,6 +310,8 @@ export default function Canvas({ width, height }: CanvasProps) {
           vpt[5] += evt.clientY - lastPosRef.current.y;
           canvas.requestRenderAll();
           lastPosRef.current = { x: evt.clientX, y: evt.clientY };
+          // Update grid transform
+          setGridTransform({ x: vpt[4], y: vpt[5], zoom: canvas.getZoom() });
           // Force re-render to update cursor positions
           forceUpdate({});
         }
@@ -409,6 +413,12 @@ export default function Canvas({ width, height }: CanvasProps) {
       // Save viewport state
       updateViewport({ zoom: newZoom });
       
+      // Update grid transform
+      const vpt = canvas.viewportTransform;
+      if (vpt) {
+        setGridTransform({ x: vpt[4], y: vpt[5], zoom: newZoom });
+      }
+      
       // Force re-render to update cursor positions
       forceUpdate({});
     });
@@ -466,6 +476,12 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
     updateViewport({ zoom: newZoom });
+    
+    const vpt = canvas.viewportTransform;
+    if (vpt) {
+      setGridTransform({ x: vpt[4], y: vpt[5], zoom: newZoom });
+    }
+    
     forceUpdate({});
   };
 
@@ -479,6 +495,12 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
     updateViewport({ zoom: newZoom });
+    
+    const vpt = canvas.viewportTransform;
+    if (vpt) {
+      setGridTransform({ x: vpt[4], y: vpt[5], zoom: newZoom });
+    }
+    
     forceUpdate({});
   };
 
@@ -489,11 +511,26 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), 1);
     updateViewport({ zoom: 1 });
+    
+    const vpt = canvas.viewportTransform;
+    if (vpt) {
+      setGridTransform({ x: vpt[4], y: vpt[5], zoom: 1 });
+    }
+    
     forceUpdate({});
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <div 
+      ref={containerRef} 
+      className="relative w-full h-full overflow-hidden"
+      style={{
+        backgroundColor: '#ffffff',
+        backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
+        backgroundSize: `${20 * gridTransform.zoom}px ${20 * gridTransform.zoom}px`,
+        backgroundPosition: `${gridTransform.x}px ${gridTransform.y}px`,
+      }}
+    >
       <canvas ref={canvasRef} />
       
       {/* Toolbar (centered bottom) */}
@@ -501,24 +538,24 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       {/* Zoom Controls (bottom-right) */}
       {isReady && (
-        <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+        <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
           <button
             onClick={handleZoomIn}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-gray-700"
             title="Zoom In"
           >
             <span className="text-lg font-semibold">+</span>
           </button>
           <button
             onClick={handleResetZoom}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-xs"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-xs text-gray-700 font-medium"
             title="Reset Zoom (100%)"
           >
             {Math.round(viewport.zoom * 100)}%
           </button>
           <button
             onClick={handleZoomOut}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-gray-700"
             title="Zoom Out"
           >
             <span className="text-lg font-semibold">−</span>
@@ -543,7 +580,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500">
             Loading canvas...
           </p>
         </div>

@@ -47,18 +47,18 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-3xl font-bold text-gray-900">
           Welcome back
         </h2>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-sm text-gray-600">
           Sign in to continue to CollabCanvas
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
@@ -94,11 +94,11 @@ export default function LoginForm() {
           {loading ? "Signing in..." : "Sign in"}
         </Button>
 
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <Link
             href="/signup"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+            className="font-medium text-blue-600 hover:text-blue-500"
           >
             Sign up
           </Link>
