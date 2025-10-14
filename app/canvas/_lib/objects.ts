@@ -3,7 +3,7 @@
  */
 
 import * as fabric from "fabric";
-import { RectangleObject } from "@/types/canvas";
+import { RectangleObject, FabricObjectData } from "@/types/canvas";
 
 /**
  * Generate a unique ID for canvas objects
@@ -45,9 +45,10 @@ export function fabricRectToCanvasObject(
   userId: string
 ): RectangleObject {
   const now = Date.now();
+  const rectWithData = rect as fabric.Rect & { data?: FabricObjectData };
   
   return {
-    id: rect.data?.id || generateObjectId(),
+    id: rectWithData.data?.id || generateObjectId(),
     type: "rectangle",
     
     // Ownership & Sync
@@ -111,7 +112,7 @@ export function canvasObjectToFabricRect(obj: RectangleObject): fabric.Rect {
   });
   
   // Store ID in data for reference
-  rect.data = { id: obj.id };
+  (rect as any).data = { id: obj.id };
   
   return rect;
 }

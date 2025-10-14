@@ -4,6 +4,19 @@
  */
 
 // ============================================================================
+// Fabric.js Extensions
+// ============================================================================
+
+/**
+ * Extended Fabric object with custom data
+ * Fabric.js allows attaching custom data to objects
+ */
+export interface FabricObjectData {
+  id?: string;
+  [key: string]: any;
+}
+
+// ============================================================================
 // Canvas Objects
 // ============================================================================
 
