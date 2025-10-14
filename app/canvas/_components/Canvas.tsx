@@ -9,7 +9,7 @@ import RemoteCursor from "./RemoteCursor";
 import { createFabricRectangle } from "../_lib/objects";
 import { useObjects } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
-import { acquireLock, releaseLock, renewLock } from "@/lib/firebase/firestore";
+import { LockManager, setupLockRenewalListeners } from "../_lib/locks";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,8 +41,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const drawStartRef = useRef({ x: 0, y: 0 });
   
   // Lock management
-  const lockRenewalIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentlyLockedObjectsRef = useRef<Set<string>>(new Set());
+  const lockManagerRef = useRef<LockManager>(new LockManager());
   
   // Zustand store
   const { viewport, updateViewport, activeTool } = useCanvasStore();
@@ -96,6 +95,16 @@ export default function Canvas({ width, height }: CanvasProps) {
 
     fabricCanvasRef.current = canvas;
     
+    // Initialize lock manager with user and canvas
+    lockManagerRef.current.setUserId(user?.uid || null);
+    lockManagerRef.current.setCanvas(canvas);
+    
+    // Start lock expiration checker
+    lockManagerRef.current.startExpirationChecker();
+    
+    // Setup lock renewal event listeners
+    setupLockRenewalListeners(canvas, lockManagerRef.current);
+    
     // Restore viewport from store
     if (viewport.zoom !== 1 || viewport.x !== 0 || viewport.y !== 0) {
       canvas.setZoom(viewport.zoom);
@@ -108,76 +117,6 @@ export default function Canvas({ width, height }: CanvasProps) {
     setIsReady(true);
 
     // ========================================================================
-    // Lock Management Functions
-    // ========================================================================
-
-    const tryAcquireLock = async (objectId: string): Promise<boolean> => {
-      if (!user) return false;
-      
-      try {
-        const lockResult = await acquireLock(objectId, user.uid);
-        
-        if (lockResult.success) {
-          currentlyLockedObjectsRef.current.add(objectId);
-          return true;
-        } else {
-          // Lock denied - show feedback
-          console.log(`Object locked by another user: ${lockResult.lockedBy}`);
-          return false;
-        }
-      } catch (error) {
-        console.error("Error acquiring lock:", error);
-        return false;
-      }
-    };
-
-    const releaseAllLocks = async () => {
-      if (!user) return;
-      
-      const lockedObjects = Array.from(currentlyLockedObjectsRef.current);
-      for (const objectId of lockedObjects) {
-        try {
-          await releaseLock(objectId, user.uid);
-          currentlyLockedObjectsRef.current.delete(objectId);
-        } catch (error) {
-          console.error("Error releasing lock:", error);
-        }
-      }
-    };
-
-    const startLockRenewal = () => {
-      // Clear any existing interval
-      if (lockRenewalIntervalRef.current) {
-        clearInterval(lockRenewalIntervalRef.current);
-      }
-
-      // Renew locks every 10 seconds
-      lockRenewalIntervalRef.current = setInterval(async () => {
-        if (!user) return;
-
-        const lockedObjects = Array.from(currentlyLockedObjectsRef.current);
-        for (const objectId of lockedObjects) {
-          try {
-            const renewed = await renewLock(objectId, user.uid);
-            if (!renewed) {
-              console.log(`Lost lock on object: ${objectId}`);
-              currentlyLockedObjectsRef.current.delete(objectId);
-            }
-          } catch (error) {
-            console.error("Error renewing lock:", error);
-          }
-        }
-      }, 10000);
-    };
-
-    const stopLockRenewal = () => {
-      if (lockRenewalIntervalRef.current) {
-        clearInterval(lockRenewalIntervalRef.current);
-        lockRenewalIntervalRef.current = null;
-      }
-    };
-
-    // ========================================================================
     // Selection Event Handlers (for locking)
     // ========================================================================
 
@@ -186,17 +125,11 @@ export default function Canvas({ width, height }: CanvasProps) {
       if (!selectedObjects || selectedObjects.length === 0) return;
 
       // Acquire locks for all selected objects
-      // Note: Objects should only be selectable if unlocked (enforced by sync handler)
       for (const obj of selectedObjects) {
         const objectId = (obj as any).data?.id;
         if (objectId) {
-          await tryAcquireLock(objectId);
+          await lockManagerRef.current.tryAcquireLock(objectId);
         }
-      }
-
-      // Start lock renewal if we have any locks
-      if (currentlyLockedObjectsRef.current.size > 0) {
-        startLockRenewal();
       }
     });
 
@@ -205,13 +138,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       const deselected = e.deselected || [];
       for (const obj of deselected) {
         const objectId = (obj as any).data?.id;
-        if (objectId && user) {
-          try {
-            await releaseLock(objectId, user.uid);
-            currentlyLockedObjectsRef.current.delete(objectId);
-          } catch (error) {
-            console.error("Error releasing lock:", error);
-          }
+        if (objectId) {
+          await lockManagerRef.current.releaseLock(objectId);
         }
       }
 
@@ -220,22 +148,14 @@ export default function Canvas({ width, height }: CanvasProps) {
       for (const obj of selected) {
         const objectId = (obj as any).data?.id;
         if (objectId) {
-          await tryAcquireLock(objectId);
+          await lockManagerRef.current.tryAcquireLock(objectId);
         }
-      }
-
-      // Update lock renewal
-      if (currentlyLockedObjectsRef.current.size > 0) {
-        startLockRenewal();
-      } else {
-        stopLockRenewal();
       }
     });
 
     canvas.on("selection:cleared", async () => {
       // Release all locks
-      await releaseAllLocks();
-      stopLockRenewal();
+      await lockManagerRef.current.releaseAllLocks();
     });
 
     // Track space key state
@@ -432,9 +352,16 @@ export default function Canvas({ width, height }: CanvasProps) {
       forceUpdate({});
     });
 
-    // Object modification events (for persistence)
+    // Object modification events (for persistence and lock renewal)
     canvas.on("object:modified", (e) => {
       if (e.target) {
+        // Renew lock on modification
+        const objectId = (e.target as any).data?.id;
+        if (objectId) {
+          lockManagerRef.current.renewLockForObject(objectId);
+        }
+        
+        // Save changes to Firestore
         updateObjectInFirestore(e.target);
       }
     });
@@ -444,9 +371,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       
-      // Release all locks and stop renewal
-      stopLockRenewal();
-      releaseAllLocks();
+      // Cleanup lock manager (releases all locks and stops checker)
+      lockManagerRef.current.cleanup();
       
       canvas.dispose();
       fabricCanvasRef.current = null;
