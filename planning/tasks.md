@@ -297,30 +297,41 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #7: Rectangle Shape Creation
+### PR #7: Rectangle Shape Creation ✅
 **Branch:** `feature/rectangle-shape`  
 **Goal:** Implement rectangle creation, selection, and manipulation
 
 **Tasks:**
-- [ ] Create shape creation logic for rectangles
-- [ ] Implement rectangle rendering on canvas
-- [ ] Add click to create rectangle
-- [ ] Implement rectangle selection (click to select)
-- [ ] Display selection outline and handles
-- [ ] Implement drag to move rectangle
-- [ ] Implement resize handles
-- [ ] Add delete functionality (delete key)
-- [ ] Create object manipulation helpers
-- [ ] Test rectangle creation and manipulation
+- [x] Create shape creation logic for rectangles
+- [x] Implement rectangle rendering on canvas
+- [x] Add drag-to-create rectangle (click and drag)
+- [x] Implement rectangle selection (click to select)
+- [x] Display selection outline and handles (provided by Fabric.js)
+- [x] Implement drag to move rectangle
+- [x] Implement resize handles (provided by Fabric.js)
+- [x] Add delete functionality (delete key)
+- [x] Create object manipulation helpers
+- [x] Test rectangle creation and manipulation
+- [x] Fix: Tool state management (use ref to avoid stale closures)
+- [x] Fix: PointerEvent compatibility (removed strict MouseEvent checks)
+- [x] Fix: Selection behavior respects active tool
+- [x] Fix: Hit-testing cache update (setCoords) for newly selectable objects
 
 **Files Created:**
-- `lib/canvas/objects.ts` (NEW)
-- `components/canvas/CanvasObject.tsx` (NEW)
-- `hooks/useSelection.ts` (NEW)
+- `app/canvas/_lib/objects.ts` (NEW)
+- `app/canvas/_components/Toolbar.tsx` (NEW)
 
 **Files Modified:**
-- `components/canvas/Canvas.tsx` (add rectangle creation)
-- `store/canvasStore.ts` (add objects state)
+- `app/canvas/_components/Canvas.tsx` (add rectangle creation, tool management, selection)
+- `app/canvas/_store/canvas-store.ts` (add tool state and viewport management)
+- `types/canvas.ts` (canvas object types already defined)
+
+**Notes:**
+- Uses Fabric.js for rendering and built-in selection/resize handles
+- Implements tool-based interaction (select tool vs rectangle tool)
+- Rectangles are non-selectable while in rectangle tool mode
+- Switching to select tool makes all objects selectable
+- Pan/zoom functionality integrated with rectangle creation
 
 ---
 

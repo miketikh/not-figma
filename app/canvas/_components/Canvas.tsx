@@ -3,61 +3,48 @@
 import { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
 import { useCanvasStore } from "../_store/canvas-store";
+import { useAuth } from "@/hooks/useAuth";
+import Toolbar from "./Toolbar";
+import { createFabricRectangle } from "../_lib/objects";
 
 interface CanvasProps {
   width?: number;
   height?: number;
 }
 
-export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
+export default function Canvas({ width, height }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const [isReady, setIsReady] = useState(false);
   const isPanningRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
   
+  // Drawing state
+  const isDrawingRef = useRef(false);
+  const drawingObjectRef = useRef<fabric.Rect | null>(null);
+  const drawStartRef = useRef({ x: 0, y: 0 });
+  
   // Zustand store
-  const { viewport, updateViewport } = useCanvasStore();
+  const { viewport, updateViewport, activeTool } = useCanvasStore();
+  const activeToolRef = useRef(activeTool);
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !containerRef.current) return;
+
+    // Get container dimensions
+    const containerWidth = width || containerRef.current.clientWidth;
+    const containerHeight = height || containerRef.current.clientHeight;
 
     // Initialize Fabric.js canvas
     const canvas = new fabric.Canvas(canvasRef.current, {
-      width,
-      height,
+      width: containerWidth,
+      height: containerHeight,
       backgroundColor: "#f5f5f5",
       selection: true,
       preserveObjectStacking: true,
     });
-
-    // Add grid pattern (Figma-like)
-    const gridSize = 20;
-    const gridColor = "#e0e0e0";
-
-    // Create vertical lines
-    for (let i = 0; i < width / gridSize; i++) {
-      canvas.add(
-        new fabric.Line([i * gridSize, 0, i * gridSize, height], {
-          stroke: gridColor,
-          strokeWidth: 1,
-          selectable: false,
-          evented: false,
-        })
-      );
-    }
-
-    // Create horizontal lines
-    for (let i = 0; i < height / gridSize; i++) {
-      canvas.add(
-        new fabric.Line([0, i * gridSize, width, i * gridSize], {
-          stroke: gridColor,
-          strokeWidth: 1,
-          selectable: false,
-          evented: false,
-        })
-      );
-    }
 
     fabricCanvasRef.current = canvas;
     
@@ -79,6 +66,19 @@ export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
         canvas.defaultCursor = "grab";
         e.preventDefault(); // Prevent page scroll
       }
+      
+      // Delete selected objects
+      if ((e.code === "Delete" || e.code === "Backspace") && !e.repeat) {
+        const activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length > 0) {
+          activeObjects.forEach((obj) => {
+            canvas.remove(obj);
+          });
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+          e.preventDefault(); // Prevent browser back navigation on Backspace
+        }
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
@@ -92,21 +92,41 @@ export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
 
-    // Pan functionality (Space + Drag or Middle Mouse Button)
+    // Mouse down handler
     canvas.on("mouse:down", (opt) => {
       const evt = opt.e;
-      // Middle mouse button OR Space key + left click
-      if (evt instanceof MouseEvent && (evt.button === 1 || (evt.button === 0 && spacePressed))) {
+      const pointer = canvas.getPointer(evt);
+      
+      // Pan functionality (Space + Drag or Middle Mouse Button)
+      if ('button' in evt && (evt.button === 1 || (evt.button === 0 && spacePressed))) {
         isPanningRef.current = true;
         canvas.selection = false;
         canvas.defaultCursor = "grabbing";
         lastPosRef.current = { x: evt.clientX, y: evt.clientY };
+        return;
+      }
+      
+      // Rectangle drawing
+      if (activeToolRef.current === "rectangle" && 'button' in evt && evt.button === 0) {
+        isDrawingRef.current = true;
+        drawStartRef.current = { x: pointer.x, y: pointer.y };
+        
+        const rect = createFabricRectangle(pointer.x, pointer.y, 0, 0, {
+          selectable: false,
+          evented: false,
+        });
+        drawingObjectRef.current = rect;
+        canvas.add(rect);
+        canvas.selection = false;
       }
     });
 
     canvas.on("mouse:move", (opt) => {
-      if (isPanningRef.current && opt.e instanceof MouseEvent) {
-        const evt = opt.e;
+      const evt = opt.e;
+      const pointer = canvas.getPointer(evt);
+      
+      // Handle panning
+      if (isPanningRef.current && 'clientX' in evt && 'clientY' in evt) {
         const vpt = canvas.viewportTransform;
         if (vpt) {
           vpt[4] += evt.clientX - lastPosRef.current.x;
@@ -114,19 +134,74 @@ export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
           canvas.requestRenderAll();
           lastPosRef.current = { x: evt.clientX, y: evt.clientY };
         }
+        return;
+      }
+      
+      // Handle rectangle drawing
+      if (isDrawingRef.current && drawingObjectRef.current) {
+        const startX = drawStartRef.current.x;
+        const startY = drawStartRef.current.y;
+        
+        // Calculate width and height
+        const width = pointer.x - startX;
+        const height = pointer.y - startY;
+        
+        // Update rectangle dimensions
+        if (width < 0) {
+          drawingObjectRef.current.set({ left: pointer.x, width: Math.abs(width) });
+        } else {
+          drawingObjectRef.current.set({ width: Math.abs(width) });
+        }
+        
+        if (height < 0) {
+          drawingObjectRef.current.set({ top: pointer.y, height: Math.abs(height) });
+        } else {
+          drawingObjectRef.current.set({ height: Math.abs(height) });
+        }
+        
+        canvas.requestRenderAll();
       }
     });
 
     canvas.on("mouse:up", () => {
-      canvas.setViewportTransform(canvas.viewportTransform);
-      isPanningRef.current = false;
-      canvas.selection = true;
-      canvas.defaultCursor = "default";
+      // Finish panning
+      if (isPanningRef.current) {
+        canvas.setViewportTransform(canvas.viewportTransform);
+        isPanningRef.current = false;
+        canvas.selection = activeToolRef.current === "select";
+        canvas.defaultCursor = "default";
+        
+        // Save viewport state
+        const vpt = canvas.viewportTransform;
+        if (vpt) {
+          updateViewport({ x: vpt[4], y: vpt[5] });
+        }
+      }
       
-      // Save viewport state
-      const vpt = canvas.viewportTransform;
-      if (vpt) {
-        updateViewport({ x: vpt[4], y: vpt[5] });
+      // Finish drawing rectangle
+      if (isDrawingRef.current && drawingObjectRef.current) {
+        isDrawingRef.current = false;
+        
+        // If rectangle is too small, remove it
+        if (drawingObjectRef.current.width! < 5 || drawingObjectRef.current.height! < 5) {
+          canvas.remove(drawingObjectRef.current);
+        } else {
+          // Only make the rectangle selectable if we're in select tool mode
+          const isSelectMode = activeToolRef.current === "select";
+          drawingObjectRef.current.set({
+            selectable: isSelectMode,
+            evented: isSelectMode,
+          });
+          
+          // Only set as active object if in select mode
+          if (isSelectMode) {
+            canvas.setActiveObject(drawingObjectRef.current);
+          }
+        }
+        
+        drawingObjectRef.current = null;
+        canvas.selection = activeToolRef.current === "select";
+        canvas.requestRenderAll();
       }
     });
 
@@ -162,7 +237,28 @@ export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
       fabricCanvasRef.current = null;
       setIsReady(false);
     };
-  }, [width, height, viewport, updateViewport]);
+  }, [width, height]);
+
+  // Keep activeToolRef in sync with the store state
+  useEffect(() => {
+    activeToolRef.current = activeTool;
+  }, [activeTool]);
+
+  // Separate effect to handle tool changes
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    // Update object selectability when tool changes
+    canvas.forEachObject((obj) => {
+      obj.selectable = activeTool === "select";
+      obj.evented = activeTool === "select";
+      obj.setCoords();  // Force update hit-testing cache
+    });
+    
+    canvas.selection = activeTool === "select";
+    canvas.requestRenderAll();
+  }, [activeTool]);
 
   const handleZoomIn = () => {
     const canvas = fabricCanvasRef.current;
@@ -198,10 +294,13 @@ export default function Canvas({ width = 1920, height = 1080 }: CanvasProps) {
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gray-100 dark:bg-gray-900">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900">
       <canvas ref={canvasRef} />
       
-      {/* Zoom Controls */}
+      {/* Toolbar (centered bottom) */}
+      {isReady && <Toolbar />}
+      
+      {/* Zoom Controls (bottom-right) */}
       {isReady && (
         <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 border border-gray-200 dark:border-gray-700">
           <button
