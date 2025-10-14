@@ -12,6 +12,7 @@ import {
   subscribeToCursors,
   subscribeToPresence,
   setUserPresence,
+  updatePresenceHeartbeat,
   generateDisplayName,
 } from "@/lib/firebase/realtime";
 import { CursorMap } from "@/types/canvas";
@@ -35,20 +36,29 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
   const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
   const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Set user presence in Realtime Database
+  // Set user presence in Realtime Database and maintain heartbeat
   useEffect(() => {
     if (!user) return;
 
     // Use auth display name or generate a random one
     const displayName = user.displayName || generateDisplayName();
 
-    // Set user presence with color from user profile
+    // Set initial user presence
     setUserPresence(
       user.uid,
       displayName,
       user.email || "",
       user.color // Use color from user profile
     );
+
+    // Set up heartbeat to update lastSeen every 30 seconds
+    const heartbeatInterval = setInterval(() => {
+      updatePresenceHeartbeat(user.uid);
+    }, 30000); // 30 seconds
+
+    return () => {
+      clearInterval(heartbeatInterval);
+    };
   }, [user]);
 
   // Subscribe to presence data (for display names and colors)
@@ -88,6 +98,9 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
 
       // Update cursor position in Realtime Database
       updateCursorPosition(user.uid, canvasPoint.x, canvasPoint.y);
+      
+      // Update presence heartbeat on activity (debounced via throttle)
+      updatePresenceHeartbeat(user.uid);
     },
     [user, stageRef]
   );

@@ -107,10 +107,9 @@ export async function setUserPresence(
   
   // Set up disconnect handler to mark user as offline
   const disconnectRef = onDisconnect(presenceRef);
-  await disconnectRef.set({
-    ...presence,
+  await disconnectRef.update({
     isOnline: false,
-    lastSeen: Date.now(),
+    lastSeen: serverTimestamp(),
   });
 }
 
