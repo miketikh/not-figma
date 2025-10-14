@@ -13,6 +13,12 @@ import {
   serverTimestamp,
   Unsubscribe,
 } from "firebase/database";
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
 import { realtimeDb } from "./config";
 import { CursorPosition, CursorMap } from "@/types/canvas";
 import { UserPresence } from "@/types/user";
@@ -21,7 +27,7 @@ import { UserPresence } from "@/types/user";
 const SESSION_ID = "canvas-session-default";
 
 // ============================================================================
-// Cursor Functions (High-frequency updates ~50ms)
+// Cursor Functions (High-frequency updates ~30ms / 33 updates per second)
 // ============================================================================
 
 /**
@@ -189,10 +195,23 @@ export async function getAllUsers(): Promise<UserPresence[]> {
 // ============================================================================
 
 /**
- * Generate a random color for user cursor/presence
+ * Generate a random display name (e.g., "Happy Elephant", "Brave Tiger")
  */
-export function generateUserColor(): string {
-  const colors = [
+export function generateDisplayName(): string {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    separator: " ",
+    style: "capital",
+    length: 2,
+  });
+}
+
+/**
+ * Generate a deterministic color for user based on their userId
+ * This ensures the same user always gets the same color and distributes colors evenly
+ */
+export function generateUserColor(userId: string): string {
+  const cursorColors = [
     "#FF6B6B", // Red
     "#4ECDC4", // Teal
     "#45B7D1", // Blue
@@ -205,7 +224,17 @@ export function generateUserColor(): string {
     "#52B788", // Green
   ];
   
-  return colors[Math.floor(Math.random() * colors.length)];
+  // Simple hash function to convert userId to a number
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Use absolute value and modulo to get an index
+  const index = Math.abs(hash) % cursorColors.length;
+  
+  return cursorColors[index];
 }
 
 /**

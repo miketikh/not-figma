@@ -5,8 +5,10 @@ import * as fabric from "fabric";
 import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
+import RemoteCursor from "./RemoteCursor";
 import { createFabricRectangle } from "../_lib/objects";
 import { useObjects } from "../_hooks/useObjects";
+import { useCursors } from "../_hooks/useCursors";
 import { acquireLock, releaseLock, renewLock } from "@/lib/firebase/firestore";
 
 interface CanvasProps {
@@ -21,6 +23,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const [isReady, setIsReady] = useState(false);
   const isPanningRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
+  const [, forceUpdate] = useState({});
   
   // Drawing state
   const isDrawingRef = useRef(false);
@@ -43,6 +46,27 @@ export default function Canvas({ width, height }: CanvasProps) {
     deleteObjectFromFirestore,
     assignIdToObject,
   } = useObjects({ canvas: fabricCanvasRef.current, isReady });
+  
+  // Cursor tracking
+  const { remoteCursors } = useCursors({
+    canvas: fabricCanvasRef.current,
+    isReady,
+  });
+
+  // Transform canvas coordinates to screen coordinates
+  const transformCursorPosition = (canvasX: number, canvasY: number) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return { x: canvasX, y: canvasY };
+
+    const vpt = canvas.viewportTransform;
+    if (!vpt) return { x: canvasX, y: canvasY };
+
+    // Apply viewport transform: screenCoord = canvasCoord * zoom + pan
+    const screenX = canvasX * vpt[0] + vpt[4];
+    const screenY = canvasY * vpt[3] + vpt[5];
+
+    return { x: screenX, y: screenY };
+  };
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -284,6 +308,8 @@ export default function Canvas({ width, height }: CanvasProps) {
           vpt[5] += evt.clientY - lastPosRef.current.y;
           canvas.requestRenderAll();
           lastPosRef.current = { x: evt.clientX, y: evt.clientY };
+          // Force re-render to update cursor positions
+          forceUpdate({});
         }
         return;
       }
@@ -382,6 +408,9 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       // Save viewport state
       updateViewport({ zoom: newZoom });
+      
+      // Force re-render to update cursor positions
+      forceUpdate({});
     });
 
     // Object modification events (for persistence)
@@ -437,6 +466,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
     updateViewport({ zoom: newZoom });
+    forceUpdate({});
   };
 
   const handleZoomOut = () => {
@@ -449,6 +479,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), newZoom);
     updateViewport({ zoom: newZoom });
+    forceUpdate({});
   };
 
   const handleResetZoom = () => {
@@ -458,6 +489,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     const center = canvas.getCenter();
     canvas.zoomToPoint(new fabric.Point(center.left, center.top), 1);
     updateViewport({ zoom: 1 });
+    forceUpdate({});
   };
 
   return (
@@ -493,6 +525,21 @@ export default function Canvas({ width, height }: CanvasProps) {
           </button>
         </div>
       )}
+      
+      {/* Remote Cursors */}
+      {isReady &&
+        Object.entries(remoteCursors).map(([userId, cursor]) => {
+          const screenPos = transformCursorPosition(cursor.x, cursor.y);
+          return (
+            <RemoteCursor
+              key={userId}
+              x={screenPos.x}
+              y={screenPos.y}
+              displayName={cursor.displayName}
+              color={cursor.color}
+            />
+          );
+        })}
       
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
