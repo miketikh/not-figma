@@ -14,4 +14,6 @@ alwaysApply: true
 
 - Never make assumptions (assume we have libraries, types, etc), ALWAYS check. Check package.json for libraries, check lib for helpers, check types for types, etc.
 - Focus on clean, maintainable, extensible code
-- If using a checklist or todo document, ALWAYS check off the completed items afterwards before proceeding to the next one
+- If using a checklist or todo document, ALWAYS check off the completed items afterwards before proceeding to the next one. If the item has groups of checked items, like a PR, NEVER continue to the next PR without approval. Finish the items in the group, check them off, then wait for confirmation.
+- Never modify files that we get from a library like shadcn directly (ie. components/ui). Make a custom one in a different directory if necessary
+- Stay consistent with libraries. Check package.json, and if we have one for a purpose like shadcn or lucide, keep using that

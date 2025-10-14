@@ -117,6 +117,8 @@ export default function RectangleShape({
       stroke={strokeColor}
       strokeWidth={strokeWidth}
       rotation={shape.rotation}
+      opacity={shape.opacity ?? 1}
+      cornerRadius={shape.cornerRadius || 0}
       draggable={isSelectable}
       listening={isSelectable}
       onClick={handleClick}

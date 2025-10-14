@@ -5,6 +5,7 @@ import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
 import RemoteCursor from "./RemoteCursor";
+import PropertiesPanel from "./PropertiesPanel";
 import { useObjects, PersistedRect } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
 import { LockManager, isLockedByOtherUser } from "../_lib/locks";
@@ -25,6 +26,7 @@ import { Transformer, Rect, Circle, Ellipse } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
 import { isDrawingTool } from "../_constants/tools";
+import type { PersistedShape } from "../_types/shapes";
 
 interface CanvasProps {
   width?: number;
@@ -55,7 +57,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const drawStartRef = useRef({ x: 0, y: 0 });
   
   // Persisted shapes
-  const [objects, setObjects] = useState<PersistedRect[]>([]);
+  const [objects, setObjects] = useState<PersistedShape[]>([]);
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -71,12 +73,19 @@ export default function Canvas({ width, height }: CanvasProps) {
   );
   
   // Zustand store
-  const { viewport, updateViewport, activeTool, setActiveTool } = useCanvasStore();
+  const { 
+    viewport, 
+    updateViewport, 
+    activeTool, 
+    setActiveTool,
+    defaultShapeProperties,
+    updateDefaultShapeProperty,
+  } = useCanvasStore();
   const { user } = useAuth();
   
   // Stable callback for Firestore updates
-  const handleObjectsUpdate = useCallback((firestoreRects: PersistedRect[]) => {
-    setObjects(firestoreRects);
+  const handleObjectsUpdate = useCallback((firestoreShapes: PersistedShape[]) => {
+    setObjects(firestoreShapes);
   }, []);
 
   // Object persistence with Firestore
@@ -141,7 +150,72 @@ export default function Canvas({ width, height }: CanvasProps) {
     });
   }, [selectedIds]);
 
-  // Keyboard handlers for tool shortcuts, Space key (pan mode), and Delete key
+  // Helper functions for z-index management
+  const getMaxZIndex = useCallback(() => {
+    if (objects.length === 0) return 0;
+    return Math.max(...objects.map(obj => obj.zIndex || 0));
+  }, [objects]);
+
+  const getMinZIndex = useCallback(() => {
+    if (objects.length === 0) return 0;
+    return Math.min(...objects.map(obj => obj.zIndex || 0));
+  }, [objects]);
+
+  const updateZIndex = useCallback((objectId: string, newZIndex: number) => {
+    const obj = objects.find(o => o.id === objectId);
+    if (!obj) return;
+
+    const updatedObj = { ...obj, zIndex: newZIndex };
+    
+    // Optimistic update
+    setObjects((prev) =>
+      prev.map((o) => (o.id === objectId ? updatedObj : o))
+    );
+    
+    // Persist to Firestore
+    updateObjectInFirestore(updatedObj);
+  }, [objects, updateObjectInFirestore]);
+
+  // Debounced property update handler
+  const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  const handlePropertyUpdate = useCallback((objectId: string, updates: Partial<PersistedShape>) => {
+    const obj = objects.find(o => o.id === objectId);
+    if (!obj) return;
+
+    const updatedObj = { ...obj, ...updates } as PersistedShape;
+    
+    // Optimistic update to local state (immediate)
+    setObjects((prev) =>
+      prev.map((o) => (o.id === objectId ? updatedObj : o))
+    );
+    
+    // Clear existing timer for this object
+    const existingTimer = debounceTimers.current.get(objectId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+    
+    // Debounce Firestore writes (300ms)
+    const timer = setTimeout(() => {
+      updateObjectInFirestore(updatedObj);
+      // Renew lock
+      lockManagerRef.current.renewLockForObject(objectId);
+      debounceTimers.current.delete(objectId);
+    }, 300);
+    
+    debounceTimers.current.set(objectId, timer);
+  }, [objects, updateObjectInFirestore]);
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      debounceTimers.current.forEach((timer) => clearTimeout(timer));
+      debounceTimers.current.clear();
+    };
+  }, []);
+
+  // Keyboard handlers for tool shortcuts, Space key (pan mode), Delete key, and z-index
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore keyboard shortcuts if user is typing in an input
@@ -176,6 +250,34 @@ export default function Canvas({ width, height }: CanvasProps) {
         setSelectedIds([]);
         e.preventDefault(); // Prevent browser back navigation
       }
+
+      // Layer management shortcuts
+      if (selectedIds.length > 0 && (e.metaKey || e.ctrlKey)) {
+        const selectedObj = objects.find(o => o.id === selectedIds[0]);
+        if (!selectedObj) return;
+
+        if (e.key === "]") {
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Bring to Front (Cmd/Ctrl + Shift + ])
+            const maxZ = getMaxZIndex();
+            updateZIndex(selectedIds[0], maxZ + 1);
+          } else {
+            // Bring Forward (Cmd/Ctrl + ])
+            updateZIndex(selectedIds[0], (selectedObj.zIndex || 0) + 1);
+          }
+        } else if (e.key === "[") {
+          e.preventDefault();
+          if (e.shiftKey) {
+            // Send to Back (Cmd/Ctrl + Shift + [)
+            const minZ = getMinZIndex();
+            updateZIndex(selectedIds[0], minZ - 1);
+          } else {
+            // Send Backward (Cmd/Ctrl + [)
+            updateZIndex(selectedIds[0], (selectedObj.zIndex || 0) - 1);
+          }
+        }
+      }
     };
     
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -192,7 +294,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [spacePressed, selectedIds]);
+  }, [spacePressed, selectedIds, objects, getMaxZIndex, getMinZIndex, updateZIndex, deleteObjectFromFirestore, setActiveTool]);
 
   // Initialize container size
   useEffect(() => {
@@ -338,8 +440,15 @@ export default function Canvas({ width, height }: CanvasProps) {
         return;
       }
 
-      // Create shape from draft using factory
-      const newShape = factory.createDefault(draftRect);
+      // Get default properties for this shape type
+      const defaults = activeTool === "rectangle" 
+        ? defaultShapeProperties.rectangle 
+        : activeTool === "circle"
+        ? defaultShapeProperties.circle
+        : {};
+
+      // Create shape from draft using factory with default properties
+      const newShape = factory.createDefault(draftRect, defaults);
 
       // Validate size
       if (!factory.validateSize(newShape)) {
@@ -496,8 +605,11 @@ export default function Canvas({ width, height }: CanvasProps) {
             return null;
           })()}
           
-          {/* Persisted shapes */}
-          {objects.map((obj) => {
+          {/* Persisted shapes - sorted by zIndex for correct rendering order */}
+          {objects
+            .slice()
+            .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+            .map((obj) => {
             const lockedByOther = isLockedByOtherUser(
               obj.lockedBy,
               obj.lockedAt,
@@ -550,6 +662,19 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       {/* Toolbar (centered bottom) */}
       {isReady && <Toolbar />}
+      
+      {/* Properties Panel (right side) */}
+      {isReady && (
+        <PropertiesPanel
+          selectedIds={selectedIds}
+          objects={objects}
+          onUpdate={handlePropertyUpdate}
+          currentUserId={user?.uid || null}
+          activeTool={activeTool}
+          defaultShapeProperties={defaultShapeProperties}
+          onUpdateDefaults={updateDefaultShapeProperty}
+        />
+      )}
       
       {/* Zoom Controls (bottom-right) */}
       {isReady && (

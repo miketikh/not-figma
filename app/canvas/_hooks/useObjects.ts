@@ -15,14 +15,14 @@ import { generateObjectId } from "../_lib/objects";
 import { CanvasObject, RectangleObject } from "@/types/canvas";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { getShapeFactory } from "../_lib/shapes";
-import type { PersistedRect } from "../_types/shapes";
+import type { PersistedRect, PersistedShape } from "../_types/shapes";
 
-// Re-export PersistedRect for backwards compatibility
+// Re-export types for backwards compatibility
 export type { PersistedRect };
 
 interface UseObjectsProps {
   isReady: boolean;
-  onObjectsUpdate: (objects: PersistedRect[]) => void;
+  onObjectsUpdate: (objects: PersistedShape[]) => void;
 }
 
 export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
@@ -34,7 +34,7 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    * Convert Firestore CanvasObject to local shape using factory
    */
   const canvasObjectToShape = useCallback(
-    (obj: CanvasObject): PersistedRect | null => {
+    (obj: CanvasObject): PersistedShape | null => {
       const factory = getShapeFactory(obj.type);
       if (!factory) {
         console.warn(`No factory found for shape type: ${obj.type}`);
@@ -50,9 +50,9 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    * Convert local shape to Firestore CanvasObject using factory
    */
   const shapeToCanvasObject = useCallback(
-    (shape: PersistedRect): CanvasObject => {
+    (shape: PersistedShape): CanvasObject => {
       // Get the factory based on the shape's type
-      const shapeType = (shape as any).type || "rectangle";
+      const shapeType = shape.type;
       const factory = getShapeFactory(shapeType);
       if (!factory) {
         throw new Error(`Factory not found for shape type: ${shapeType}`);
@@ -72,7 +72,7 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
 
       try {
         // Convert Firestore objects to local shapes using factories
-        const shapes: PersistedRect[] = [];
+        const shapes: PersistedShape[] = [];
 
         objects.forEach((obj) => {
           const shape = canvasObjectToShape(obj);
@@ -95,7 +95,7 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    * Save an object to Firestore
    */
   const saveObject = useCallback(
-    async (shape: PersistedRect) => {
+    async (shape: PersistedShape) => {
       if (!user || savingRef.current) return;
 
       try {
@@ -115,12 +115,12 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    * Update an object in Firestore
    */
   const updateObjectInFirestore = useCallback(
-    async (shape: PersistedRect) => {
+    async (shape: PersistedShape) => {
       if (!user) return;
 
       try {
         // Get the shape type and factory
-        const shapeType = (shape as any).type || "rectangle";
+        const shapeType = shape.type;
         const factory = getShapeFactory(shapeType);
         
         if (!factory) {
@@ -131,13 +131,9 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
         // Convert to Firestore format using the appropriate factory
         const firestoreObject = factory.toFirestore(shape, user.uid);
         
-        // Extract only the fields we want to update (not createdAt, createdBy)
+        // Extract all fields for update (Firestore will merge)
         const updates = {
-          x: firestoreObject.x,
-          y: firestoreObject.y,
-          width: firestoreObject.width,
-          height: firestoreObject.height,
-          rotation: firestoreObject.rotation,
+          ...firestoreObject,
           updatedBy: user.uid,
           updatedAt: Date.now(),
         };

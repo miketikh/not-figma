@@ -115,6 +115,7 @@ export default function CircleShape({
       fill={shape.fill}
       stroke={strokeColor}
       strokeWidth={strokeWidth}
+      opacity={shape.opacity ?? 1}
       draggable={isSelectable}
       listening={isSelectable}
       onClick={handleClick}

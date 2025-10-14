@@ -35,6 +35,9 @@ export interface PersistedRect {
   stroke: string;
   strokeWidth: number;
   rotation: number;
+  opacity: number; // 0-1, affects entire shape
+  zIndex: number; // layer order
+  cornerRadius?: number; // optional rounded corners
   // Lock info
   lockedBy: string | null;
   lockedAt: number | null;
@@ -56,6 +59,8 @@ export interface PersistedCircle {
   stroke: string;
   strokeWidth: number;
   rotation: number; // Ellipses can rotate
+  opacity: number; // 0-1, affects entire shape
+  zIndex: number; // layer order
   // Lock info
   lockedBy: string | null;
   lockedAt: number | null;
@@ -74,8 +79,9 @@ export type PersistedShape = PersistedRect | PersistedCircle;
 export interface ShapeFactory<T> {
   /**
    * Create a shape with default styling
+   * Optional overrides parameter allows customizing default properties
    */
-  createDefault: (params: any) => T;
+  createDefault: (params: any, overrides?: Partial<T>) => T;
 
   /**
    * Convert draft drawing bounds to final shape

@@ -25,8 +25,12 @@ import type {
 export const rectangleFactory: ShapeFactory<PersistedRect> = {
   /**
    * Create a rectangle with default styling
+   * Optional overrides parameter allows customizing default properties
    */
-  createDefault: ({ x, y, width, height }: DrawingBounds): PersistedRect => {
+  createDefault: (
+    { x, y, width, height }: DrawingBounds,
+    overrides?: Partial<PersistedRect>
+  ): PersistedRect => {
     return {
       id: generateObjectId(),
       type: "rectangle",
@@ -38,9 +42,13 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
       stroke: "#3b82f6",
       strokeWidth: 2,
       rotation: 0,
+      opacity: 1,
+      zIndex: 0,
+      cornerRadius: 0,
       lockedBy: null,
       lockedAt: null,
       lockTimeout: LOCK_TIMEOUT_MS,
+      ...overrides, // Apply any custom overrides
     };
   },
 
@@ -81,21 +89,21 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
 
       // Styling
       fill: rect.fill,
-      fillOpacity: 1,
+      fillOpacity: rect.opacity,
       stroke: rect.stroke,
       strokeWidth: rect.strokeWidth,
-      strokeOpacity: 1,
+      strokeOpacity: rect.opacity,
       strokeStyle: "solid",
 
       // Layer
-      zIndex: 0,
+      zIndex: rect.zIndex,
 
       // Interaction
       locked: false,
       visible: true,
 
       // Optional
-      cornerRadius: 0,
+      cornerRadius: rect.cornerRadius || 0,
     };
   },
 
@@ -117,6 +125,9 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
       stroke: rectObj.stroke,
       strokeWidth: rectObj.strokeWidth,
       rotation: rectObj.rotation,
+      opacity: rectObj.fillOpacity ?? 1, // backward compatibility
+      zIndex: rectObj.zIndex ?? 0, // backward compatibility
+      cornerRadius: rectObj.cornerRadius || 0,
       lockedBy: rectObj.lockedBy,
       lockedAt: rectObj.lockedAt,
       lockTimeout: rectObj.lockTimeout,
@@ -183,8 +194,12 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
 export const circleFactory: ShapeFactory<PersistedCircle> = {
   /**
    * Create a circle/ellipse with default styling
+   * Optional overrides parameter allows customizing default properties
    */
-  createDefault: ({ x, y, width, height }: DrawingBounds): PersistedCircle => {
+  createDefault: (
+    { x, y, width, height }: DrawingBounds,
+    overrides?: Partial<PersistedCircle>
+  ): PersistedCircle => {
     // Calculate radiusX and radiusY from bounding box
     const radiusX = (width || 0) / 2;
     const radiusY = (height || 0) / 2;
@@ -204,9 +219,12 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
       stroke: "#ec4899",
       strokeWidth: 2,
       rotation: 0,
+      opacity: 1,
+      zIndex: 0,
       lockedBy: null,
       lockedAt: null,
       lockTimeout: LOCK_TIMEOUT_MS,
+      ...overrides, // Apply any custom overrides
     };
   },
 
@@ -251,14 +269,14 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
 
       // Styling
       fill: circle.fill,
-      fillOpacity: 1,
+      fillOpacity: circle.opacity,
       stroke: circle.stroke,
       strokeWidth: circle.strokeWidth,
-      strokeOpacity: 1,
+      strokeOpacity: circle.opacity,
       strokeStyle: "solid",
 
       // Layer
-      zIndex: 0,
+      zIndex: circle.zIndex,
 
       // Interaction
       locked: false,
@@ -288,6 +306,8 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
       stroke: circleObj.stroke,
       strokeWidth: circleObj.strokeWidth,
       rotation: circleObj.rotation || 0,
+      opacity: circleObj.fillOpacity ?? 1, // backward compatibility
+      zIndex: circleObj.zIndex ?? 0, // backward compatibility
       lockedBy: circleObj.lockedBy,
       lockedAt: circleObj.lockedAt,
       lockTimeout: circleObj.lockTimeout,
