@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
-import RemoteCursor from "./RemoteCursor";
+import RemoteCursorKonva from "./RemoteCursorKonva";
 import PropertiesPanel from "./PropertiesPanel";
 import { useObjects, PersistedRect } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
@@ -105,14 +105,6 @@ export default function Canvas({ width, height }: CanvasProps) {
     stageRef,
     isReady,
   });
-
-  // Transform canvas coordinates to screen coordinates (placeholder for Konva)
-  const transformCursorPosition = (canvasX: number, canvasY: number) => {
-    // Apply viewport transform: screenCoord = canvasCoord * zoom + pan
-    const screenX = canvasX * viewport.zoom + viewport.x;
-    const screenY = canvasY * viewport.zoom + viewport.y;
-    return { x: screenX, y: screenY };
-  };
 
   // Update Transformer when selection changes
   useEffect(() => {
@@ -651,6 +643,18 @@ export default function Canvas({ width, height }: CanvasProps) {
           
           {/* Transformer for selection handles */}
           {activeTool === "select" && !spacePressed && <Transformer ref={transformerRef} />}
+          
+          {/* Remote Cursors - rendered inside canvas */}
+          {Object.entries(remoteCursors).map(([userId, cursor]) => (
+            <RemoteCursorKonva
+              key={userId}
+              x={cursor.x}
+              y={cursor.y}
+              displayName={cursor.displayName}
+              color={cursor.color}
+              zoom={viewport.zoom}
+            />
+          ))}
         </StageContainer>
       )}
       
@@ -713,21 +717,6 @@ export default function Canvas({ width, height }: CanvasProps) {
           </div>
         </TooltipProvider>
       )}
-      
-      {/* Remote Cursors */}
-      {isReady &&
-        Object.entries(remoteCursors).map(([userId, cursor]) => {
-          const screenPos = transformCursorPosition(cursor.x, cursor.y);
-          return (
-            <RemoteCursor
-              key={userId}
-              x={screenPos.x}
-              y={screenPos.y}
-              displayName={cursor.displayName}
-              color={cursor.color}
-            />
-          );
-        })}
       
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
