@@ -8,6 +8,7 @@ import { getPropertyComponent } from "./properties/shape-properties";
 import { isLockedByOtherUser } from "../_lib/locks";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { CanvasTool } from "@/types/canvas";
+import { isShapeTool } from "../_constants/tools";
 
 interface PropertiesPanelProps {
   selectedIds: string[];
@@ -50,33 +51,36 @@ export default function PropertiesPanel({
     selectedIds.includes(obj.id)
   );
 
-  // Check if we're in drawing mode (rectangle or circle tool active)
-  const isDrawingMode = activeTool === "rectangle" || activeTool === "circle";
+  // Check if we're in drawing mode (shape tool active)
   const hasSelection = selectedIds.length > 0;
 
-  // Show default properties when drawing tool is active and nothing selected
-  if (isDrawingMode && !hasSelection) {
-    const shapeType = activeTool as "rectangle" | "circle";
-    const defaults = defaultShapeProperties[shapeType];
+  // Show default properties when shape tool is active and nothing selected
+  if (isShapeTool(activeTool) && !hasSelection) {
+    const shapeType = activeTool; // TypeScript knows this is "rectangle" | "circle" now
     const ShapePropertiesComponent = getPropertyComponent(shapeType);
 
     // Create a mock shape object with default properties for UI display
-    const mockShape: any = {
-      type: shapeType,
-      fill: defaults.fill,
-      stroke: defaults.stroke,
-      strokeWidth: defaults.strokeWidth,
-      opacity: defaults.opacity,
-      ...(shapeType === "rectangle" && { 
-        cornerRadius: defaults.cornerRadius,
-        width: 100, // Default width for max calculation
-        height: 100, // Default height for max calculation
-      }),
-      ...(shapeType === "circle" && {
-        radiusX: 50, // Default radius for display
-        radiusY: 50, // Default radius for display
-      }),
-    };
+    const mockShape: any = 
+      shapeType === "rectangle"
+        ? {
+            type: "rectangle",
+            fill: defaultShapeProperties.rectangle.fill,
+            stroke: defaultShapeProperties.rectangle.stroke,
+            strokeWidth: defaultShapeProperties.rectangle.strokeWidth,
+            opacity: defaultShapeProperties.rectangle.opacity,
+            cornerRadius: defaultShapeProperties.rectangle.cornerRadius,
+            width: 100, // Default width for max calculation
+            height: 100, // Default height for max calculation
+          }
+        : {
+            type: "circle",
+            fill: defaultShapeProperties.circle.fill,
+            stroke: defaultShapeProperties.circle.stroke,
+            strokeWidth: defaultShapeProperties.circle.strokeWidth,
+            opacity: defaultShapeProperties.circle.opacity,
+            radiusX: 50, // Default radius for display
+            radiusY: 50, // Default radius for display
+          };
 
     return (
       <div className="absolute top-4 right-4 w-[280px] bg-white rounded-lg border shadow-lg overflow-hidden">

@@ -25,8 +25,9 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { Transformer, Rect, Circle, Ellipse } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
-import { isDrawingTool } from "../_constants/tools";
+import { isDrawingTool, isShapeTool } from "../_constants/tools";
 import type { PersistedShape } from "../_types/shapes";
+import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
 
 interface CanvasProps {
   width?: number;
@@ -150,17 +151,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     });
   }, [selectedIds]);
 
-  // Helper functions for z-index management
-  const getMaxZIndex = useCallback(() => {
-    if (objects.length === 0) return 0;
-    return Math.max(...objects.map(obj => obj.zIndex || 0));
-  }, [objects]);
-
-  const getMinZIndex = useCallback(() => {
-    if (objects.length === 0) return 0;
-    return Math.min(...objects.map(obj => obj.zIndex || 0));
-  }, [objects]);
-
+  // Helper function for updating z-index
   const updateZIndex = useCallback((objectId: string, newZIndex: number) => {
     const obj = objects.find(o => o.id === objectId);
     if (!obj) return;
@@ -260,7 +251,7 @@ export default function Canvas({ width, height }: CanvasProps) {
           e.preventDefault();
           if (e.shiftKey) {
             // Bring to Front (Cmd/Ctrl + Shift + ])
-            const maxZ = getMaxZIndex();
+            const maxZ = getMaxZIndex(objects);
             updateZIndex(selectedIds[0], maxZ + 1);
           } else {
             // Bring Forward (Cmd/Ctrl + ])
@@ -270,7 +261,7 @@ export default function Canvas({ width, height }: CanvasProps) {
           e.preventDefault();
           if (e.shiftKey) {
             // Send to Back (Cmd/Ctrl + Shift + [)
-            const minZ = getMinZIndex();
+            const minZ = getMinZIndex(objects);
             updateZIndex(selectedIds[0], minZ - 1);
           } else {
             // Send Backward (Cmd/Ctrl + [)
@@ -294,7 +285,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [spacePressed, selectedIds, objects, getMaxZIndex, getMinZIndex, updateZIndex, deleteObjectFromFirestore, setActiveTool]);
+  }, [spacePressed, selectedIds, objects, updateZIndex, deleteObjectFromFirestore, setActiveTool]);
 
   // Initialize container size
   useEffect(() => {
@@ -441,10 +432,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       }
 
       // Get default properties for this shape type
-      const defaults = activeTool === "rectangle" 
-        ? defaultShapeProperties.rectangle 
-        : activeTool === "circle"
-        ? defaultShapeProperties.circle
+      const defaults = isShapeTool(activeTool) 
+        ? defaultShapeProperties[activeTool]
         : {};
 
       // Create shape from draft using factory with default properties

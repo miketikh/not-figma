@@ -16,6 +16,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  getMaxZIndex,
+  getMinZIndex,
+  LayerOperation,
+  calculateNewZIndex,
+} from "../../_lib/layer-management";
 
 interface UniversalPropertiesProps {
   object: PersistedShape;
@@ -30,32 +36,13 @@ export default function UniversalProperties({
   onUpdate,
   disabled = false,
 }: UniversalPropertiesProps) {
-  const getMaxZIndex = () => {
-    if (allObjects.length === 0) return 0;
-    return Math.max(...allObjects.map((obj) => obj.zIndex || 0));
-  };
-
-  const getMinZIndex = () => {
-    if (allObjects.length === 0) return 0;
-    return Math.min(...allObjects.map((obj) => obj.zIndex || 0));
-  };
-
-  const handleBringToFront = () => {
-    const maxZ = getMaxZIndex();
-    onUpdate({ zIndex: maxZ + 1 });
-  };
-
-  const handleBringForward = () => {
-    onUpdate({ zIndex: (object.zIndex || 0) + 1 });
-  };
-
-  const handleSendBackward = () => {
-    onUpdate({ zIndex: (object.zIndex || 0) - 1 });
-  };
-
-  const handleSendToBack = () => {
-    const minZ = getMinZIndex();
-    onUpdate({ zIndex: minZ - 1 });
+  const handleLayerOperation = (operation: LayerOperation) => {
+    const newZIndex = calculateNewZIndex(
+      object.zIndex || 0,
+      operation,
+      allObjects
+    );
+    onUpdate({ zIndex: newZIndex });
   };
 
   // Get width/height for display (handle circle/ellipse differently)
@@ -208,7 +195,7 @@ export default function UniversalProperties({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleBringToFront}
+                  onClick={() => handleLayerOperation(LayerOperation.TO_FRONT)}
                   disabled={disabled}
                   className="h-8"
                 >
@@ -228,7 +215,9 @@ export default function UniversalProperties({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleBringForward}
+                  onClick={() =>
+                    handleLayerOperation(LayerOperation.BRING_FORWARD)
+                  }
                   disabled={disabled}
                   className="h-8"
                 >
@@ -247,7 +236,9 @@ export default function UniversalProperties({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleSendBackward}
+                  onClick={() =>
+                    handleLayerOperation(LayerOperation.SEND_BACKWARD)
+                  }
                   disabled={disabled}
                   className="h-8"
                 >
@@ -266,7 +257,7 @@ export default function UniversalProperties({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleSendToBack}
+                  onClick={() => handleLayerOperation(LayerOperation.TO_BACK)}
                   disabled={disabled}
                   className="h-8"
                 >
