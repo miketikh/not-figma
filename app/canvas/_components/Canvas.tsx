@@ -10,6 +10,15 @@ import { createFabricRectangle } from "../_lib/objects";
 import { useObjects } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
 import { acquireLock, releaseLock, renewLock } from "@/lib/firebase/firestore";
+import { Plus, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 interface CanvasProps {
   width?: number;
@@ -526,7 +535,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       className="relative w-full h-full overflow-hidden"
       style={{
         backgroundColor: '#ffffff',
-        backgroundImage: `radial-gradient(circle, #d1d5db 1px, transparent 1px)`,
+        backgroundImage: `radial-gradient(circle, var(--color-gray-300) 1px, transparent 1px)`,
         backgroundSize: `${20 * gridTransform.zoom}px ${20 * gridTransform.zoom}px`,
         backgroundPosition: `${gridTransform.x}px ${gridTransform.y}px`,
       }}
@@ -538,29 +547,46 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       {/* Zoom Controls (bottom-right) */}
       {isReady && (
-        <div className="absolute bottom-4 right-4 flex flex-col gap-2 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
-          <button
-            onClick={handleZoomIn}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-gray-700"
-            title="Zoom In"
-          >
-            <span className="text-lg font-semibold">+</span>
-          </button>
-          <button
-            onClick={handleResetZoom}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-xs text-gray-700 font-medium"
-            title="Reset Zoom (100%)"
-          >
-            {Math.round(viewport.zoom * 100)}%
-          </button>
-          <button
-            onClick={handleZoomOut}
-            className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors text-gray-700"
-            title="Zoom Out"
-          >
-            <span className="text-lg font-semibold">−</span>
-          </button>
-        </div>
+        <TooltipProvider>
+          <div className="absolute bottom-6 right-6 flex flex-col bg-white rounded-md overflow-hidden border shadow-md">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+                  <Plus size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Zoom In <span className="text-muted-foreground">(⌘+)</span></p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Separator orientation="horizontal" />
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleResetZoom} className="text-xs">
+                  {Math.round(viewport.zoom * 100)}%
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Reset Zoom <span className="text-muted-foreground">(⌘0)</span></p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Separator orientation="horizontal" />
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+                  <Minus size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Zoom Out <span className="text-muted-foreground">(⌘−)</span></p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       )}
       
       {/* Remote Cursors */}
@@ -580,7 +606,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-gray-500">
+          <p style={{ color: 'var(--color-gray-500)' }}>
             Loading canvas...
           </p>
         </div>
