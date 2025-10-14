@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
 import RemoteCursor from "./RemoteCursor";
-import { useObjects } from "../_hooks/useObjects";
+import { useObjects, PersistedRect } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
-import { LockManager } from "../_lib/locks";
+import { LockManager, isLockedByOtherUser } from "../_lib/locks";
+import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Rect } from "react-konva";
+import { Rect, Transformer } from "react-konva";
 
 interface CanvasProps {
   width?: number;
@@ -50,24 +51,45 @@ export default function Canvas({ width, height }: CanvasProps) {
   const [draftRect, setDraftRect] = useState<DraftRect | null>(null);
   const drawStartRef = useRef({ x: 0, y: 0 });
   
-  // Lock management
-  const lockManagerRef = useRef<LockManager>(new LockManager());
+  // Persisted shapes
+  const [rectangles, setRectangles] = useState<PersistedRect[]>([]);
+  
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const transformerRef = useRef<Konva.Transformer>(null);
+  const shapeRefs = useRef<Map<string, Konva.Rect>>(new Map());
+  
+  // Lock management with expiration callback
+  const lockManagerRef = useRef<LockManager>(
+    new LockManager(null, (expiredObjectIds) => {
+      // Remove expired objects from selection when locks expire
+      setSelectedIds(prev => prev.filter(id => !expiredObjectIds.includes(id)));
+    })
+  );
   
   // Zustand store
   const { viewport, updateViewport, activeTool } = useCanvasStore();
   const { user } = useAuth();
   
-  // Object persistence (temporarily passing null for canvas)
+  // Stable callback for Firestore updates
+  const handleObjectsUpdate = useCallback((firestoreRects: PersistedRect[]) => {
+    setRectangles(firestoreRects);
+  }, []);
+
+  // Object persistence with Firestore
   const {
     saveObject,
     updateObjectInFirestore,
     deleteObjectFromFirestore,
-    assignIdToObject,
-  } = useObjects({ canvas: null, isReady });
+    generateId,
+  } = useObjects({
+    isReady,
+    onObjectsUpdate: handleObjectsUpdate,
+  });
   
-  // Cursor tracking (temporarily passing null for canvas)
+  // Cursor tracking
   const { remoteCursors } = useCursors({
-    canvas: null,
+    stageRef,
     isReady,
   });
 
@@ -79,12 +101,57 @@ export default function Canvas({ width, height }: CanvasProps) {
     return { x: screenX, y: screenY };
   };
 
-  // Keyboard handlers for Space key (pan mode)
+  // Update Transformer when selection changes
+  useEffect(() => {
+    const transformer = transformerRef.current;
+    if (!transformer) return;
+
+    const selectedNodes = selectedIds
+      .map((id) => shapeRefs.current.get(id))
+      .filter((node): node is Konva.Rect => node !== undefined);
+
+    transformer.nodes(selectedNodes);
+    transformer.getLayer()?.batchDraw();
+  }, [selectedIds]);
+
+  // Handle lock acquisition/release on selection changes
+  useEffect(() => {
+    const lockManager = lockManagerRef.current;
+    if (!lockManager) return;
+
+    // Get previously selected IDs (from the Set of locked objects)
+    const currentlyLocked = new Set(lockManager.getLockedObjects());
+    const newlySelected = new Set(selectedIds);
+
+    // Release locks on deselected objects
+    currentlyLocked.forEach((id) => {
+      if (!newlySelected.has(id)) {
+        lockManager.releaseLock(id);
+      }
+    });
+
+    // Acquire locks on newly selected objects
+    selectedIds.forEach((id) => {
+      if (!currentlyLocked.has(id)) {
+        lockManager.tryAcquireLock(id);
+      }
+    });
+  }, [selectedIds]);
+
+  // Keyboard handlers for Space key (pan mode) and Delete key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !spacePressed) {
         setSpacePressed(true);
         e.preventDefault(); // Prevent page scroll
+      }
+      
+      // Delete selected shapes
+      if ((e.code === "Delete" || e.code === "Backspace") && selectedIds.length > 0) {
+        // Delete from Firestore
+        selectedIds.forEach((id) => deleteObjectFromFirestore(id));
+        setSelectedIds([]);
+        e.preventDefault(); // Prevent browser back navigation
       }
     };
     
@@ -102,7 +169,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [spacePressed]);
+  }, [spacePressed, selectedIds]);
 
   // Initialize container size
   useEffect(() => {
@@ -173,6 +240,12 @@ export default function Canvas({ width, height }: CanvasProps) {
   const handleMouseDown = (e: KonvaEventObject<MouseEvent>) => {
     const stage = stageRef.current;
     if (!stage) return;
+
+    // Click on empty area to deselect
+    const clickedOnEmpty = e.target === stage;
+    if (clickedOnEmpty && activeTool === "select") {
+      setSelectedIds([]);
+    }
 
     // Start panning on Space+drag or middle mouse button
     if (e.evt.button === 1 || (e.evt.button === 0 && spacePressed)) {
@@ -249,11 +322,31 @@ export default function Canvas({ width, height }: CanvasProps) {
         return;
       }
 
-      // Save the rectangle (persistence will be wired in next PR)
-      console.log("Rectangle created:", draftRect);
-      // TODO: Call saveObject with proper serialization in PR #45
+      // Create and save the rectangle
+      const newRect: PersistedRect = {
+        id: generateId(),
+        x: draftRect.x,
+        y: draftRect.y,
+        width: draftRect.width,
+        height: draftRect.height,
+        fill: "rgba(59, 130, 246, 0.3)",
+        stroke: "#3b82f6",
+        strokeWidth: 2,
+        rotation: 0,
+        lockedBy: null,
+        lockedAt: null,
+        lockTimeout: LOCK_TIMEOUT_MS,
+      };
       
+      // Save to Firestore (will automatically update local state via subscription)
+      saveObject(newRect);
       setDraftRect(null);
+      
+      // If in select tool, select the new shape
+      if (activeTool === "select") {
+        setSelectedIds([newRect.id]);
+      }
+      
       return;
     }
 
@@ -377,7 +470,104 @@ export default function Canvas({ width, height }: CanvasProps) {
             />
           )}
           
-          {/* Persisted shapes will be rendered here in next PR */}
+          {/* Persisted rectangles */}
+          {rectangles.map((rect) => {
+            const lockedByOther = isLockedByOtherUser(
+              rect.lockedBy,
+              rect.lockedAt,
+              rect.lockTimeout || LOCK_TIMEOUT_MS,
+              user?.uid || null
+            );
+            const isSelectable = activeTool === "select" && !lockedByOther;
+            const isSelected = selectedIds.includes(rect.id);
+            
+            // Determine stroke color based on lock status
+            const strokeColor = lockedByOther ? "#ef4444" : rect.stroke;
+            const strokeWidth = rect.strokeWidth / viewport.zoom;
+            
+            return (
+              <Rect
+                key={rect.id}
+                ref={(node) => {
+                  if (node) {
+                    shapeRefs.current.set(rect.id, node);
+                  } else {
+                    shapeRefs.current.delete(rect.id);
+                  }
+                }}
+                x={rect.x}
+                y={rect.y}
+                width={rect.width}
+                height={rect.height}
+                fill={rect.fill}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                rotation={rect.rotation || 0}
+                draggable={isSelectable}
+                listening={isSelectable}
+                onClick={(e) => {
+                  if (!isSelectable) return;
+                  e.cancelBubble = true;
+                  
+                  // Simple click to select (no multi-select for now)
+                  setSelectedIds([rect.id]);
+                }}
+                onDragEnd={(e) => {
+                  // Update rectangle position after drag
+                  const node = e.target as Konva.Rect;
+                  const updatedRect = {
+                    ...rect,
+                    x: node.x(),
+                    y: node.y(),
+                  };
+                  
+                  // Optimistic update to local state
+                  setRectangles((prev) =>
+                    prev.map((r) => (r.id === rect.id ? updatedRect : r))
+                  );
+                  
+                  // Renew lock on drag
+                  lockManagerRef.current.renewLockForObject(rect.id);
+                  
+                  // Persist to Firestore (will sync to other clients)
+                  updateObjectInFirestore(updatedRect);
+                }}
+                onTransformEnd={(e) => {
+                  // Update rectangle after transform (resize/rotate)
+                  const node = e.target as Konva.Rect;
+                  const scaleX = node.scaleX();
+                  const scaleY = node.scaleY();
+                  
+                  // Reset scale and apply to width/height
+                  node.scaleX(1);
+                  node.scaleY(1);
+                  
+                  const updatedRect = {
+                    ...rect,
+                    x: node.x(),
+                    y: node.y(),
+                    width: Math.max(5, node.width() * scaleX),
+                    height: Math.max(5, node.height() * scaleY),
+                    rotation: node.rotation(),
+                  };
+                  
+                  // Optimistic update to local state
+                  setRectangles((prev) =>
+                    prev.map((r) => (r.id === rect.id ? updatedRect : r))
+                  );
+                  
+                  // Renew lock on transform
+                  lockManagerRef.current.renewLockForObject(rect.id);
+                  
+                  // Persist to Firestore (will sync to other clients)
+                  updateObjectInFirestore(updatedRect);
+                }}
+              />
+            );
+          })}
+          
+          {/* Transformer for selection handles */}
+          {activeTool === "select" && <Transformer ref={transformerRef} />}
         </StageContainer>
       )}
       

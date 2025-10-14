@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./config";
 import { CanvasObject, ObjectUpdate } from "@/types/canvas";
+import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 
 // Collection name
 const CANVAS_OBJECTS_COLLECTION = "canvasObjects";
@@ -197,12 +198,12 @@ export async function acquireLock(
   await updateDoc(objectRef, {
     lockedBy: userId,
     lockedAt: now,
-    lockTimeout: 30000, // 30 second timeout
+    lockTimeout: LOCK_TIMEOUT_MS,
     updatedBy: userId,
     updatedAt: now,
   });
   
-  return { success: true, lockedBy: userId, expiresAt: now + 30000 };
+  return { success: true, lockedBy: userId, expiresAt: now + LOCK_TIMEOUT_MS };
 }
 
 /**

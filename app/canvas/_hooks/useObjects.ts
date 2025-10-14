@@ -1,207 +1,196 @@
 /**
  * Hook for managing canvas objects with Firestore persistence and real-time sync
+ * Konva version - works with plain object state instead of Fabric canvas
  */
 
 import { useEffect, useCallback, useRef } from "react";
-import * as fabric from "fabric";
 import { useAuth } from "@/hooks/useAuth";
 import {
   createObject,
   updateObject,
   deleteObject,
   subscribeToObjects,
-  canEdit,
-  isLockExpired,
 } from "@/lib/firebase/firestore";
-import {
-  fabricRectToCanvasObject,
-  canvasObjectToFabricRect,
-  generateObjectId,
-} from "../_lib/objects";
+import { generateObjectId } from "../_lib/objects";
 import { CanvasObject, RectangleObject } from "@/types/canvas";
+import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 
-interface UseObjectsProps {
-  canvas: fabric.Canvas | null;
-  isReady: boolean;
+// PersistedRect interface is now defined in Canvas.tsx where it's used
+// This hook works with the generic types and converts to/from Firestore
+export interface PersistedRect {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  rotation?: number;
+  // Lock info
+  lockedBy: string | null;
+  lockedAt: number | null;
+  lockTimeout?: number;
 }
 
-export function useObjects({ canvas, isReady }: UseObjectsProps) {
+interface UseObjectsProps {
+  isReady: boolean;
+  onObjectsUpdate: (objects: PersistedRect[]) => void;
+}
+
+export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
   const { user } = useAuth();
   const loadedRef = useRef(false);
   const savingRef = useRef(false);
-  const syncingRef = useRef(false); // Prevent sync loops
+
+  /**
+   * Convert Firestore CanvasObject to PersistedRect
+   */
+  const canvasObjectToPersistedRect = useCallback(
+    (obj: CanvasObject): PersistedRect | null => {
+      if (obj.type === "rectangle") {
+        const rectObj = obj as RectangleObject;
+        return {
+          id: rectObj.id,
+          x: rectObj.x,
+          y: rectObj.y,
+          width: rectObj.width,
+          height: rectObj.height,
+          fill: rectObj.fill,
+          stroke: rectObj.stroke,
+          strokeWidth: rectObj.strokeWidth,
+          rotation: rectObj.rotation,
+          // Include lock info
+          lockedBy: rectObj.lockedBy,
+          lockedAt: rectObj.lockedAt,
+          lockTimeout: rectObj.lockTimeout,
+        };
+      }
+      return null;
+    },
+    []
+  );
+
+  /**
+   * Convert PersistedRect to Firestore RectangleObject
+   */
+  const persistedRectToCanvasObject = useCallback(
+    (rect: PersistedRect, isNew: boolean = false): RectangleObject => {
+      const now = Date.now();
+
+      return {
+        id: rect.id,
+        type: "rectangle",
+
+        // Ownership & Sync
+        createdBy: user?.uid || "unknown",
+        createdAt: isNew ? now : 0, // Will be overridden for updates
+        updatedBy: user?.uid || "unknown",
+        updatedAt: now,
+
+        // Locking
+        lockedBy: null,
+        lockedAt: null,
+        lockTimeout: LOCK_TIMEOUT_MS,
+
+        // Transform
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+        rotation: rect.rotation || 0,
+
+        // Styling
+        fill: rect.fill,
+        fillOpacity: 1,
+        stroke: rect.stroke,
+        strokeWidth: rect.strokeWidth,
+        strokeOpacity: 1,
+        strokeStyle: "solid",
+
+        // Layer
+        zIndex: 0,
+
+        // Interaction
+        locked: false,
+        visible: true,
+
+        // Optional
+        cornerRadius: 0,
+      };
+    },
+    [user]
+  );
 
   /**
    * Handle incoming objects from Firestore (real-time sync)
    */
   const handleObjectsSync = useCallback(
     (objects: CanvasObject[]) => {
-      if (!canvas || !isReady || syncingRef.current) return;
-
-      syncingRef.current = true;
+      if (!isReady) return;
 
       try {
-        // Create a map of incoming objects by ID
-        const incomingObjectsMap = new Map<string, CanvasObject>();
-        objects.forEach((obj) => incomingObjectsMap.set(obj.id, obj));
+        // Convert Firestore objects to PersistedRect
+        const rects: PersistedRect[] = [];
 
-        // Get current canvas objects
-        const canvasObjects = canvas.getObjects();
-        const canvasObjectIds = new Set(
-          canvasObjects.map((obj) => (obj as any).data?.id).filter(Boolean)
-        );
-
-        // 1. Update or add objects from Firestore
-        objects.forEach((firestoreObj) => {
-          const existingFabricObj = canvasObjects.find(
-            (obj) => (obj as any).data?.id === firestoreObj.id
-          );
-
-          if (existingFabricObj) {
-            // Object exists - check if it needs updating
-            if (firestoreObj.type === "rectangle") {
-              const rect = existingFabricObj as fabric.Rect;
-              
-              // Check if object is locked by another user
-              const isLockedByOther =
-                firestoreObj.lockedBy &&
-                firestoreObj.lockedBy !== user?.uid &&
-                firestoreObj.lockedAt &&
-                !isLockExpired(firestoreObj.lockedAt, firestoreObj.lockTimeout);
-
-              // Check if WE have this object locked (we're editing it)
-              const isLockedByUs =
-                firestoreObj.lockedBy === user?.uid &&
-                firestoreObj.lockedAt &&
-                !isLockExpired(firestoreObj.lockedAt, firestoreObj.lockTimeout);
-
-              // Apply visual feedback and selectability
-              if (isLockedByOther) {
-                // Locked by another user - red outline, not selectable
-                rect.set({
-                  stroke: "#ef4444",
-                  strokeWidth: 2,
-                  selectable: false,
-                  evented: false,
-                });
-              } else {
-                // Not locked or locked by us - normal appearance
-                rect.set({
-                  stroke: firestoreObj.stroke,
-                  strokeWidth: firestoreObj.strokeWidth,
-                  selectable: true,
-                  evented: true,
-                });
-              }
-              
-              // Only update position if we DON'T have it locked (avoid fighting our own edits)
-              if (!isLockedByUs) {
-                const needsUpdate =
-                  rect.left !== firestoreObj.x ||
-                  rect.top !== firestoreObj.y ||
-                  rect.width !== firestoreObj.width ||
-                  rect.height !== firestoreObj.height ||
-                  rect.angle !== firestoreObj.rotation;
-
-                if (needsUpdate) {
-                  rect.set({
-                    left: firestoreObj.x,
-                    top: firestoreObj.y,
-                    width: firestoreObj.width,
-                    height: firestoreObj.height,
-                    angle: firestoreObj.rotation,
-                    fill: firestoreObj.fill,
-                    scaleX: 1,
-                    scaleY: 1,
-                  });
-                  rect.setCoords();
-                }
-              }
+        objects.forEach((obj) => {
+          if (obj.type === "rectangle") {
+            const rect = canvasObjectToPersistedRect(obj);
+            if (rect) {
+              rects.push(rect);
             }
-          } else {
-            // Object doesn't exist - add it
-            if (firestoreObj.type === "rectangle") {
-              const fabricRect = canvasObjectToFabricRect(
-                firestoreObj as RectangleObject
-              );
-              canvas.add(fabricRect);
-            }
-            // TODO: Add support for other shape types
           }
         });
 
-        // 2. Remove objects that no longer exist in Firestore
-        canvasObjects.forEach((fabricObj) => {
-          const objId = (fabricObj as any).data?.id;
-          if (objId && !incomingObjectsMap.has(objId)) {
-            canvas.remove(fabricObj);
-          }
-        });
-
-        canvas.requestRenderAll();
+        // Update the Canvas component's state
+        onObjectsUpdate(rects);
         loadedRef.current = true;
       } catch (error) {
         console.error("Error syncing objects:", error);
-      } finally {
-        syncingRef.current = false;
       }
     },
-    [canvas, isReady]
+    [isReady, onObjectsUpdate, canvasObjectToPersistedRect]
   );
 
   /**
    * Save an object to Firestore
    */
   const saveObject = useCallback(
-    async (fabricObject: fabric.Object) => {
+    async (rect: PersistedRect) => {
       if (!user || savingRef.current) return;
 
       try {
         savingRef.current = true;
-
-        if (fabricObject instanceof fabric.Rect) {
-          const canvasObject = fabricRectToCanvasObject(fabricObject, user.uid);
-          await createObject(canvasObject);
-        }
-        // TODO: Add support for other shape types
+        const canvasObject = persistedRectToCanvasObject(rect, true);
+        await createObject(canvasObject);
       } catch (error) {
         console.error("Error saving object:", error);
       } finally {
         savingRef.current = false;
       }
     },
-    [user]
+    [user, persistedRectToCanvasObject]
   );
 
   /**
    * Update an object in Firestore
    */
   const updateObjectInFirestore = useCallback(
-    async (fabricObject: fabric.Object) => {
+    async (rect: PersistedRect) => {
       if (!user) return;
 
       try {
-        const objectId = (fabricObject as any).data?.id;
-        if (!objectId) return;
+        const updates = {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          rotation: rect.rotation || 0,
+          updatedBy: user.uid,
+          updatedAt: Date.now(),
+        };
 
-        if (fabricObject instanceof fabric.Rect) {
-          // Calculate actual dimensions (width/height * scale)
-          const actualWidth = (fabricObject.width || 0) * (fabricObject.scaleX || 1);
-          const actualHeight = (fabricObject.height || 0) * (fabricObject.scaleY || 1);
-          
-          const updates = {
-            x: fabricObject.left || 0,
-            y: fabricObject.top || 0,
-            width: actualWidth,
-            height: actualHeight,
-            rotation: fabricObject.angle || 0,
-            updatedBy: user.uid,
-            updatedAt: Date.now(),
-          };
-
-          await updateObject(objectId, updates);
-        }
-        // TODO: Add support for other shape types
+        await updateObject(rect.id, updates);
       } catch (error) {
         console.error("Error updating object:", error);
       }
@@ -221,18 +210,15 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
   }, []);
 
   /**
-   * Assign ID to a new object
+   * Generate ID for a new object
    */
-  const assignIdToObject = useCallback((fabricObject: fabric.Object) => {
-    const obj = fabricObject as any;
-    if (!obj.data?.id) {
-      obj.data = { id: generateObjectId() };
-    }
+  const generateId = useCallback(() => {
+    return generateObjectId();
   }, []);
 
   // Set up real-time subscription to Firestore
   useEffect(() => {
-    if (!canvas || !isReady) return;
+    if (!isReady) return;
 
     const unsubscribe = subscribeToObjects(
       handleObjectsSync,
@@ -245,14 +231,12 @@ export function useObjects({ canvas, isReady }: UseObjectsProps) {
     return () => {
       unsubscribe();
     };
-  }, [canvas, isReady, handleObjectsSync]);
+  }, [isReady, handleObjectsSync]);
 
   return {
     saveObject,
     updateObjectInFirestore,
     deleteObjectFromFirestore,
-    assignIdToObject,
+    generateId,
   };
 }
-
-

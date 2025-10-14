@@ -3,8 +3,29 @@
  * Manages lock acquisition, renewal, release, and activity tracking
  */
 
-import * as fabric from "fabric";
 import { acquireLock, releaseLock, renewLock } from "@/lib/firebase/firestore";
+import { LOCK_TIMEOUT_MS, LOCK_CHECK_INTERVAL_MS } from "@/lib/constants/locks";
+
+/**
+ * Check if an object is locked by another user
+ * @param lockedBy - User ID who owns the lock
+ * @param lockedAt - Timestamp when lock was acquired
+ * @param lockTimeout - Lock timeout duration in ms
+ * @param currentUserId - Current user's ID
+ * @returns true if locked by another user with active lock
+ */
+export function isLockedByOtherUser(
+  lockedBy: string | null,
+  lockedAt: number | null,
+  lockTimeout: number,
+  currentUserId: string | null
+): boolean {
+  if (!lockedBy || !lockedAt || !currentUserId) return false;
+  if (lockedBy === currentUserId) return false;
+  
+  const isExpired = Date.now() - lockedAt > lockTimeout;
+  return !isExpired;
+}
 
 /**
  * Lock manager for canvas objects
@@ -15,11 +36,11 @@ export class LockManager {
   private lastActivityTime: Map<string, number> = new Map();
   private expirationCheckInterval: NodeJS.Timeout | null = null;
   private userId: string | null = null;
-  private canvas: fabric.Canvas | null = null;
+  private onLockExpired?: (objectIds: string[]) => void;
 
-  constructor(userId: string | null = null, canvas: fabric.Canvas | null = null) {
+  constructor(userId: string | null = null, onLockExpired?: (objectIds: string[]) => void) {
     this.userId = userId;
-    this.canvas = canvas;
+    this.onLockExpired = onLockExpired;
   }
 
   /**
@@ -27,13 +48,6 @@ export class LockManager {
    */
   setUserId(userId: string | null) {
     this.userId = userId;
-  }
-
-  /**
-   * Set the canvas instance (needed for auto-deselection)
-   */
-  setCanvas(canvas: fabric.Canvas | null) {
-    this.canvas = canvas;
   }
 
   /**
@@ -100,104 +114,12 @@ export class LockManager {
         // Update last activity time
         this.lastActivityTime.set(objectId, Date.now());
       } else {
-        // Lost the lock - remove from tracking
+        // Lock was lost (expired or taken by another user)
         this.lockedObjects.delete(objectId);
         this.lastActivityTime.delete(objectId);
-
-        // Deselect this object
-        this.deselectObject(objectId);
       }
     } catch (error) {
       console.error("Error renewing lock:", error);
-    }
-  }
-
-  /**
-   * Check for expired locks and auto-deselect
-   * Called periodically by the expiration checker
-   */
-  checkLockExpiration(): void {
-    if (!this.userId || !this.canvas) return;
-
-    const now = Date.now();
-    const expiredObjects: string[] = [];
-
-    // Check each locked object
-    this.lastActivityTime.forEach((lastActivity, objectId) => {
-      // If last activity was more than 30 seconds ago
-      if (now - lastActivity > 30000) {
-        expiredObjects.push(objectId);
-      }
-    });
-
-    // Deselect and release locks for expired objects
-    if (expiredObjects.length > 0) {
-      this.handleExpiredObjects(expiredObjects);
-    }
-  }
-
-  /**
-   * Handle expired objects by releasing locks and deselecting
-   */
-  private async handleExpiredObjects(expiredObjectIds: string[]): Promise<void> {
-    if (!this.canvas || !this.userId) return;
-
-    const activeObjects = this.canvas.getActiveObjects();
-    const objectsToKeep = activeObjects.filter((obj) => {
-      const objId = (obj as any).data?.id;
-      return !expiredObjectIds.includes(objId);
-    });
-
-    // Release locks
-    for (const objectId of expiredObjectIds) {
-      await releaseLock(objectId, this.userId);
-      this.lockedObjects.delete(objectId);
-      this.lastActivityTime.delete(objectId);
-    }
-
-    // Update selection
-    if (objectsToKeep.length === 0) {
-      this.canvas.discardActiveObject();
-    } else if (objectsToKeep.length < activeObjects.length) {
-      // Re-select only the non-expired objects
-      this.canvas.discardActiveObject();
-      if (objectsToKeep.length === 1) {
-        this.canvas.setActiveObject(objectsToKeep[0]);
-      } else {
-        const selection = new fabric.ActiveSelection(objectsToKeep, {
-          canvas: this.canvas,
-        });
-        this.canvas.setActiveObject(selection);
-      }
-    }
-
-    this.canvas.requestRenderAll();
-  }
-
-  /**
-   * Deselect a specific object from the canvas
-   */
-  private deselectObject(objectId: string): void {
-    if (!this.canvas) return;
-
-    const obj = this.canvas.getObjects().find((o) => (o as any).data?.id === objectId);
-    
-    if (obj && this.canvas.getActiveObjects().includes(obj)) {
-      const activeObjects = this.canvas.getActiveObjects();
-      const remainingObjects = activeObjects.filter((o) => o !== obj);
-
-      this.canvas.discardActiveObject();
-      
-      if (remainingObjects.length === 1) {
-        this.canvas.setActiveObject(remainingObjects[0]);
-      } else if (remainingObjects.length > 1) {
-        const selection = new fabric.ActiveSelection(remainingObjects, {
-          canvas: this.canvas,
-        });
-        this.canvas.setActiveObject(selection);
-      }
-      
-      this.canvas.requestRenderAll();
     }
   }
 
@@ -207,16 +129,45 @@ export class LockManager {
    */
   startExpirationChecker(): void {
     if (this.expirationCheckInterval) {
-      this.stopExpirationChecker();
+      clearInterval(this.expirationCheckInterval);
     }
 
     this.expirationCheckInterval = setInterval(() => {
       this.checkLockExpiration();
-    }, 5000);
+    }, LOCK_CHECK_INTERVAL_MS);
   }
 
   /**
-   * Stop checking for expired locks
+   * Check for expired locks and release them
+   * Called periodically by the expiration checker
+   */
+  private checkLockExpiration(): void {
+    if (!this.userId) return;
+
+    const now = Date.now();
+    const expiredObjects: string[] = [];
+
+    // Check each locked object
+    this.lastActivityTime.forEach((lastActivity, objectId) => {
+      // If last activity was more than the lock timeout
+      if (now - lastActivity > LOCK_TIMEOUT_MS) {
+        expiredObjects.push(objectId);
+      }
+    });
+
+    // Notify callback before releasing locks (for deselection)
+    if (expiredObjects.length > 0 && this.onLockExpired) {
+      this.onLockExpired(expiredObjects);
+    }
+
+    // Release locks for expired objects
+    expiredObjects.forEach((objectId) => {
+      this.releaseLock(objectId);
+    });
+  }
+
+  /**
+   * Stop the expiration checker
    */
   stopExpirationChecker(): void {
     if (this.expirationCheckInterval) {
@@ -233,13 +184,6 @@ export class LockManager {
   }
 
   /**
-   * Check if we have a specific object locked
-   */
-  hasLock(objectId: string): boolean {
-    return this.lockedObjects.has(objectId);
-  }
-
-  /**
    * Cleanup - release all locks and stop checker
    */
   async cleanup(): Promise<void> {
@@ -247,37 +191,3 @@ export class LockManager {
     await this.releaseAllLocks();
   }
 }
-
-/**
- * Setup lock renewal event listeners on the canvas
- * Renews locks when user actively manipulates objects
- */
-export function setupLockRenewalListeners(
-  canvas: fabric.Canvas,
-  lockManager: LockManager
-): void {
-  // Renew lock when user moves object
-  canvas.on("object:moving", (e) => {
-    const objectId = (e.target as any).data?.id;
-    if (objectId) {
-      lockManager.renewLockForObject(objectId);
-    }
-  });
-
-  // Renew lock when user scales object
-  canvas.on("object:scaling", (e) => {
-    const objectId = (e.target as any).data?.id;
-    if (objectId) {
-      lockManager.renewLockForObject(objectId);
-    }
-  });
-
-  // Renew lock when user rotates object
-  canvas.on("object:rotating", (e) => {
-    const objectId = (e.target as any).data?.id;
-    if (objectId) {
-      lockManager.renewLockForObject(objectId);
-    }
-  });
-}
-

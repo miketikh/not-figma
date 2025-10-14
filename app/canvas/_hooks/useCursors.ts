@@ -1,9 +1,11 @@
 /**
  * Hook for tracking remote user cursors
+ * Konva version - works with Stage instead of Fabric Canvas
  */
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import Konva from "konva";
 import {
   updateCursorPosition,
   removeCursor,
@@ -15,10 +17,9 @@ import {
 } from "@/lib/firebase/realtime";
 import { CursorMap } from "@/types/canvas";
 import { UserPresence } from "@/types/user";
-import * as fabric from "fabric";
 
 interface UseCursorsProps {
-  canvas: fabric.Canvas | null;
+  stageRef: React.RefObject<Konva.Stage | null>;
   isReady: boolean;
 }
 
@@ -29,7 +30,7 @@ interface CursorData {
   color: string;
 }
 
-export function useCursors({ canvas, isReady }: UseCursorsProps) {
+export function useCursors({ stageRef, isReady }: UseCursorsProps) {
   const { user } = useAuth();
   const [remoteCursors, setRemoteCursors] = useState<Record<string, CursorData>>({});
   const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
@@ -75,67 +76,74 @@ export function useCursors({ canvas, isReady }: UseCursorsProps) {
 
   // Track local cursor position and broadcast to Realtime Database
   const handleMouseMove = useCallback(
-    (e: fabric.TPointerEventInfo) => {
-      if (!canvas || !user) return;
+    (e: MouseEvent) => {
+      const stage = stageRef.current;
+      if (!stage || !user) return;
 
-      const pointer = canvas.getPointer(e.e);
-
-      // Throttle cursor updates to ~30ms (33 updates/second)
-      // This provides smooth movement while being cost-effective
+      // Throttle cursor updates (every 50ms)
       if (throttleTimerRef.current) return;
 
       throttleTimerRef.current = setTimeout(() => {
         throttleTimerRef.current = null;
-      }, 30);
+      }, 50);
 
-      // Send cursor position to Realtime Database
-      updateCursorPosition(user.uid, pointer.x, pointer.y);
+      // Get pointer position and convert to canvas coordinates
+      const containerRect = stage.container().getBoundingClientRect();
+      const pointerX = e.clientX - containerRect.left;
+      const pointerY = e.clientY - containerRect.top;
+
+      // Convert screen coordinates to canvas coordinates
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const canvasPoint = transform.point({ x: pointerX, y: pointerY });
+
+      // Update cursor position in Realtime Database
+      updateCursorPosition(user.uid, canvasPoint.x, canvasPoint.y);
     },
-    [canvas, user]
+    [user, stageRef]
   );
 
-  // Subscribe to remote cursor positions and combine with presence data
+  // Attach mouse move listener to stage
   useEffect(() => {
-    if (!canvas || !isReady || !user) return;
+    const stage = stageRef.current;
+    if (!stage || !isReady || !user) return;
+
+    const container = stage.container();
+    container.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      container.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [stageRef, isReady, user, handleMouseMove]);
+
+  // Subscribe to cursor updates from other users
+  useEffect(() => {
+    if (!user) return;
 
     const unsubscribe = subscribeToCursors((cursors: CursorMap) => {
-      // Filter out our own cursor and combine with presence data
-      const cursorData: Record<string, CursorData> = {};
+      // Filter out own cursor and merge with presence data
+      const remoteCursorData: Record<string, CursorData> = {};
 
       Object.entries(cursors).forEach(([userId, cursor]) => {
-        if (userId !== user.uid) {
-          // Get presence data for this user
+        if (userId !== user.uid && cursor) {
           const presence = presenceData[userId];
-          
-          cursorData[userId] = {
+          remoteCursorData[userId] = {
             x: cursor.x,
             y: cursor.y,
             displayName: presence?.displayName || "Anonymous",
-            color: presence?.color || "#4ECDC4",
+            color: presence?.color || "#888888",
           };
         }
       });
 
-      setRemoteCursors(cursorData);
+      setRemoteCursors(remoteCursorData);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [canvas, isReady, user, presenceData]);
+  }, [user, presenceData]);
 
-  // Set up mouse move listener on canvas
-  useEffect(() => {
-    if (!canvas || !isReady) return;
-
-    canvas.on("mouse:move", handleMouseMove);
-
-    return () => {
-      canvas.off("mouse:move", handleMouseMove);
-    };
-  }, [canvas, isReady, handleMouseMove]);
-
-  // Clean up cursor on unmount
+  // Cleanup on unmount
   useEffect(() => {
     if (!user) return;
 
@@ -146,8 +154,5 @@ export function useCursors({ canvas, isReady }: UseCursorsProps) {
 
   return {
     remoteCursors,
-    userColor: userColorRef.current,
-    displayName: displayNameRef.current,
   };
 }
-
