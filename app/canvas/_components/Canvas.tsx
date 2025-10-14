@@ -22,6 +22,8 @@ import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Rect, Transformer } from "react-konva";
+import { getShapeFactory } from "../_lib/shapes";
+import ShapeComponent from "./shapes";
 
 interface CanvasProps {
   width?: number;
@@ -52,7 +54,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const drawStartRef = useRef({ x: 0, y: 0 });
   
   // Persisted shapes
-  const [rectangles, setRectangles] = useState<PersistedRect[]>([]);
+  const [objects, setObjects] = useState<PersistedRect[]>([]);
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -73,7 +75,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   
   // Stable callback for Firestore updates
   const handleObjectsUpdate = useCallback((firestoreRects: PersistedRect[]) => {
-    setRectangles(firestoreRects);
+    setObjects(firestoreRects);
   }, []);
 
   // Object persistence with Firestore
@@ -278,8 +280,8 @@ export default function Canvas({ width, height }: CanvasProps) {
     const stage = stageRef.current;
     if (!stage) return;
 
-    // Update draft rectangle while drawing
-    if (isDrawing && draftRect) {
+    // Update draft shape while drawing
+    if (isDrawing && draftRect && activeTool) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
@@ -287,64 +289,49 @@ export default function Canvas({ width, height }: CanvasProps) {
       const transform = stage.getAbsoluteTransform().copy().invert();
       const canvasPoint = transform.point(pointer);
 
-      const startX = drawStartRef.current.x;
-      const startY = drawStartRef.current.y;
+      // Get factory for current tool
+      const factory = getShapeFactory(activeTool);
+      if (!factory) return;
 
-      // Calculate width and height (support negative deltas)
-      let width = canvasPoint.x - startX;
-      let height = canvasPoint.y - startY;
-      let x = startX;
-      let y = startY;
+      // Use factory to normalize drawing coordinates
+      const normalized = factory.normalizeDrawing(
+        drawStartRef.current,
+        canvasPoint
+      );
 
-      // Adjust position if width/height are negative
-      if (width < 0) {
-        x = canvasPoint.x;
-        width = Math.abs(width);
-      }
-      if (height < 0) {
-        y = canvasPoint.y;
-        height = Math.abs(height);
-      }
-
-      setDraftRect({ x, y, width, height });
+      setDraftRect(normalized);
     }
   };
 
   // Mouse up handler
   const handleMouseUp = () => {
-    // Finish drawing rectangle
-    if (isDrawing && draftRect) {
+    // Finish drawing shape
+    if (isDrawing && draftRect && activeTool) {
       setIsDrawing(false);
 
-      // Discard if too small
-      if (draftRect.width < 5 || draftRect.height < 5) {
+      // Get factory for current tool
+      const factory = getShapeFactory(activeTool);
+      if (!factory) {
         setDraftRect(null);
         return;
       }
 
-      // Create and save the rectangle
-      const newRect: PersistedRect = {
-        id: generateId(),
-        x: draftRect.x,
-        y: draftRect.y,
-        width: draftRect.width,
-        height: draftRect.height,
-        fill: "rgba(59, 130, 246, 0.3)",
-        stroke: "#3b82f6",
-        strokeWidth: 2,
-        rotation: 0,
-        lockedBy: null,
-        lockedAt: null,
-        lockTimeout: LOCK_TIMEOUT_MS,
-      };
+      // Create shape from draft using factory
+      const newShape = factory.createDefault(draftRect);
+
+      // Validate size
+      if (!factory.validateSize(newShape)) {
+        setDraftRect(null);
+        return;
+      }
       
       // Save to Firestore (will automatically update local state via subscription)
-      saveObject(newRect);
+      saveObject(newShape);
       setDraftRect(null);
       
       // If in select tool, select the new shape
       if (activeTool === "select") {
-        setSelectedIds([newRect.id]);
+        setSelectedIds([newShape.id]);
       }
       
       return;
@@ -470,97 +457,48 @@ export default function Canvas({ width, height }: CanvasProps) {
             />
           )}
           
-          {/* Persisted rectangles */}
-          {rectangles.map((rect) => {
+          {/* Persisted shapes */}
+          {objects.map((obj) => {
             const lockedByOther = isLockedByOtherUser(
-              rect.lockedBy,
-              rect.lockedAt,
-              rect.lockTimeout || LOCK_TIMEOUT_MS,
+              obj.lockedBy,
+              obj.lockedAt,
+              obj.lockTimeout || LOCK_TIMEOUT_MS,
               user?.uid || null
             );
             const isSelectable = activeTool === "select" && !lockedByOther;
-            const isSelected = selectedIds.includes(rect.id);
-            
-            // Determine stroke color based on lock status
-            const strokeColor = lockedByOther ? "#ef4444" : rect.stroke;
-            const strokeWidth = rect.strokeWidth / viewport.zoom;
+            const isSelected = selectedIds.includes(obj.id);
             
             return (
-              <Rect
-                key={rect.id}
-                ref={(node) => {
+              <ShapeComponent
+                key={obj.id}
+                object={obj as any}
+                isSelected={isSelected}
+                isLocked={lockedByOther}
+                isSelectable={isSelectable}
+                zoom={viewport.zoom}
+                onSelect={() => {
+                  setSelectedIds([obj.id]);
+                }}
+                onTransform={(updates) => {
+                  const updatedObj = { ...obj, ...updates };
+                  
+                  // Optimistic update to local state
+                  setObjects((prev) =>
+                    prev.map((o) => (o.id === obj.id ? updatedObj : o))
+                  );
+                  
+                  // Persist to Firestore (will sync to other clients)
+                  updateObjectInFirestore(updatedObj);
+                }}
+                shapeRef={(node) => {
                   if (node) {
-                    shapeRefs.current.set(rect.id, node);
+                    shapeRefs.current.set(obj.id, node);
                   } else {
-                    shapeRefs.current.delete(rect.id);
+                    shapeRefs.current.delete(obj.id);
                   }
                 }}
-                x={rect.x}
-                y={rect.y}
-                width={rect.width}
-                height={rect.height}
-                fill={rect.fill}
-                stroke={strokeColor}
-                strokeWidth={strokeWidth}
-                rotation={rect.rotation || 0}
-                draggable={isSelectable}
-                listening={isSelectable}
-                onClick={(e) => {
-                  if (!isSelectable) return;
-                  e.cancelBubble = true;
-                  
-                  // Simple click to select (no multi-select for now)
-                  setSelectedIds([rect.id]);
-                }}
-                onDragEnd={(e) => {
-                  // Update rectangle position after drag
-                  const node = e.target as Konva.Rect;
-                  const updatedRect = {
-                    ...rect,
-                    x: node.x(),
-                    y: node.y(),
-                  };
-                  
-                  // Optimistic update to local state
-                  setRectangles((prev) =>
-                    prev.map((r) => (r.id === rect.id ? updatedRect : r))
-                  );
-                  
-                  // Renew lock on drag
-                  lockManagerRef.current.renewLockForObject(rect.id);
-                  
-                  // Persist to Firestore (will sync to other clients)
-                  updateObjectInFirestore(updatedRect);
-                }}
-                onTransformEnd={(e) => {
-                  // Update rectangle after transform (resize/rotate)
-                  const node = e.target as Konva.Rect;
-                  const scaleX = node.scaleX();
-                  const scaleY = node.scaleY();
-                  
-                  // Reset scale and apply to width/height
-                  node.scaleX(1);
-                  node.scaleY(1);
-                  
-                  const updatedRect = {
-                    ...rect,
-                    x: node.x(),
-                    y: node.y(),
-                    width: Math.max(5, node.width() * scaleX),
-                    height: Math.max(5, node.height() * scaleY),
-                    rotation: node.rotation(),
-                  };
-                  
-                  // Optimistic update to local state
-                  setRectangles((prev) =>
-                    prev.map((r) => (r.id === rect.id ? updatedRect : r))
-                  );
-                  
-                  // Renew lock on transform
-                  lockManagerRef.current.renewLockForObject(rect.id);
-                  
-                  // Persist to Firestore (will sync to other clients)
-                  updateObjectInFirestore(updatedRect);
+                onRenewLock={() => {
+                  lockManagerRef.current.renewLockForObject(obj.id);
                 }}
               />
             );

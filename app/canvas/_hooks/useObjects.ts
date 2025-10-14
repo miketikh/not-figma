@@ -14,24 +14,10 @@ import {
 import { generateObjectId } from "../_lib/objects";
 import { CanvasObject, RectangleObject } from "@/types/canvas";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
+import { getShapeFactory, PersistedRect } from "../_lib/shapes";
 
-// PersistedRect interface is now defined in Canvas.tsx where it's used
-// This hook works with the generic types and converts to/from Firestore
-export interface PersistedRect {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  fill: string;
-  stroke: string;
-  strokeWidth: number;
-  rotation?: number;
-  // Lock info
-  lockedBy: string | null;
-  lockedAt: number | null;
-  lockTimeout?: number;
-}
+// Re-export PersistedRect for backwards compatibility
+export type { PersistedRect };
 
 interface UseObjectsProps {
   isReady: boolean;
@@ -44,80 +30,33 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
   const savingRef = useRef(false);
 
   /**
-   * Convert Firestore CanvasObject to PersistedRect
+   * Convert Firestore CanvasObject to local shape using factory
    */
-  const canvasObjectToPersistedRect = useCallback(
+  const canvasObjectToShape = useCallback(
     (obj: CanvasObject): PersistedRect | null => {
-      if (obj.type === "rectangle") {
-        const rectObj = obj as RectangleObject;
-        return {
-          id: rectObj.id,
-          x: rectObj.x,
-          y: rectObj.y,
-          width: rectObj.width,
-          height: rectObj.height,
-          fill: rectObj.fill,
-          stroke: rectObj.stroke,
-          strokeWidth: rectObj.strokeWidth,
-          rotation: rectObj.rotation,
-          // Include lock info
-          lockedBy: rectObj.lockedBy,
-          lockedAt: rectObj.lockedAt,
-          lockTimeout: rectObj.lockTimeout,
-        };
+      const factory = getShapeFactory(obj.type);
+      if (!factory) {
+        console.warn(`No factory found for shape type: ${obj.type}`);
+        return null;
       }
-      return null;
+      
+      return factory.fromFirestore(obj);
     },
     []
   );
 
   /**
-   * Convert PersistedRect to Firestore RectangleObject
+   * Convert local shape to Firestore CanvasObject using factory
    */
-  const persistedRectToCanvasObject = useCallback(
-    (rect: PersistedRect, isNew: boolean = false): RectangleObject => {
-      const now = Date.now();
+  const shapeToCanvasObject = useCallback(
+    (shape: PersistedRect): CanvasObject => {
+      // For now, we assume rectangles. In the future, we'd detect type from shape properties
+      const factory = getShapeFactory("rectangle");
+      if (!factory) {
+        throw new Error("Rectangle factory not found");
+      }
 
-      return {
-        id: rect.id,
-        type: "rectangle",
-
-        // Ownership & Sync
-        createdBy: user?.uid || "unknown",
-        createdAt: isNew ? now : 0, // Will be overridden for updates
-        updatedBy: user?.uid || "unknown",
-        updatedAt: now,
-
-        // Locking
-        lockedBy: null,
-        lockedAt: null,
-        lockTimeout: LOCK_TIMEOUT_MS,
-
-        // Transform
-        x: rect.x,
-        y: rect.y,
-        width: rect.width,
-        height: rect.height,
-        rotation: rect.rotation || 0,
-
-        // Styling
-        fill: rect.fill,
-        fillOpacity: 1,
-        stroke: rect.stroke,
-        strokeWidth: rect.strokeWidth,
-        strokeOpacity: 1,
-        strokeStyle: "solid",
-
-        // Layer
-        zIndex: 0,
-
-        // Interaction
-        locked: false,
-        visible: true,
-
-        // Optional
-        cornerRadius: 0,
-      };
+      return factory.toFirestore(shape, user?.uid || "unknown");
     },
     [user]
   );
@@ -130,38 +69,36 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
       if (!isReady) return;
 
       try {
-        // Convert Firestore objects to PersistedRect
-        const rects: PersistedRect[] = [];
+        // Convert Firestore objects to local shapes using factories
+        const shapes: PersistedRect[] = [];
 
         objects.forEach((obj) => {
-          if (obj.type === "rectangle") {
-            const rect = canvasObjectToPersistedRect(obj);
-            if (rect) {
-              rects.push(rect);
-            }
+          const shape = canvasObjectToShape(obj);
+          if (shape) {
+            shapes.push(shape);
           }
         });
 
         // Update the Canvas component's state
-        onObjectsUpdate(rects);
+        onObjectsUpdate(shapes);
         loadedRef.current = true;
       } catch (error) {
         console.error("Error syncing objects:", error);
       }
     },
-    [isReady, onObjectsUpdate, canvasObjectToPersistedRect]
+    [isReady, onObjectsUpdate, canvasObjectToShape]
   );
 
   /**
    * Save an object to Firestore
    */
   const saveObject = useCallback(
-    async (rect: PersistedRect) => {
+    async (shape: PersistedRect) => {
       if (!user || savingRef.current) return;
 
       try {
         savingRef.current = true;
-        const canvasObject = persistedRectToCanvasObject(rect, true);
+        const canvasObject = shapeToCanvasObject(shape);
         await createObject(canvasObject);
       } catch (error) {
         console.error("Error saving object:", error);
@@ -169,7 +106,7 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
         savingRef.current = false;
       }
     },
-    [user, persistedRectToCanvasObject]
+    [user, shapeToCanvasObject]
   );
 
   /**
