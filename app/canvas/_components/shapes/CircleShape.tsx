@@ -1,16 +1,16 @@
 "use client";
 
-import { Rect } from "react-konva";
+import { Ellipse } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import type { PersistedRect } from "../../_types/shapes";
+import type { PersistedCircle } from "../../_types/shapes";
 
 /**
- * Props for RectangleShape component
+ * Props for CircleShape component
  */
-export interface RectangleShapeProps {
-  /** The rectangle shape data */
-  shape: PersistedRect;
+export interface CircleShapeProps {
+  /** The circle shape data */
+  shape: PersistedCircle;
   
   /** Whether this shape is currently selected */
   isSelected: boolean;
@@ -27,21 +27,21 @@ export interface RectangleShapeProps {
   /** Callback when shape is selected */
   onSelect: () => void;
   
-  /** Callback when shape is transformed (drag/resize/rotate) */
-  onTransform: (updates: Partial<PersistedRect>) => void;
+  /** Callback when shape is transformed (drag/resize) */
+  onTransform: (updates: Partial<PersistedCircle>) => void;
   
   /** Ref callback for transformer attachment */
-  shapeRef: (node: Konva.Rect | null) => void;
+  shapeRef: (node: Konva.Ellipse | null) => void;
   
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
 }
 
 /**
- * RectangleShape Component
- * Renders a rectangle using Konva with full interaction support
+ * CircleShape Component
+ * Renders a circle/ellipse using Konva with full interaction support
  */
-export default function RectangleShape({
+export default function CircleShape({
   shape,
   isSelected,
   isLocked,
@@ -51,7 +51,7 @@ export default function RectangleShape({
   onTransform,
   shapeRef,
   onRenewLock,
-}: RectangleShapeProps) {
+}: CircleShapeProps) {
   // Determine stroke color based on lock status
   const strokeColor = isLocked ? "#ef4444" : shape.stroke;
   const strokeWidth = shape.strokeWidth / zoom;
@@ -69,9 +69,9 @@ export default function RectangleShape({
    * Handle drag end to update position
    */
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    const node = e.target as Konva.Rect;
+    const node = e.target as Konva.Ellipse;
     
-    // Update position
+    // Update center position
     onTransform({
       x: node.x(),
       y: node.y(),
@@ -82,24 +82,23 @@ export default function RectangleShape({
   };
 
   /**
-   * Handle transform end to update size/rotation
+   * Handle transform end to update radiusX and radiusY
    */
   const handleTransformEnd = (e: KonvaEventObject<Event>) => {
-    const node = e.target as Konva.Rect;
+    const node = e.target as Konva.Ellipse;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     
-    // Reset scale and apply to width/height
+    // Reset scale and apply to radii
     node.scaleX(1);
     node.scaleY(1);
     
-    // Update shape with new dimensions
+    // Update ellipse with new radii (allow independent scaling)
     onTransform({
       x: node.x(),
       y: node.y(),
-      width: Math.max(5, node.width() * scaleX),
-      height: Math.max(5, node.height() * scaleY),
-      rotation: node.rotation(),
+      radiusX: Math.max(5, node.radiusX() * scaleX),
+      radiusY: Math.max(5, node.radiusY() * scaleY),
     });
     
     // Renew lock
@@ -107,16 +106,15 @@ export default function RectangleShape({
   };
 
   return (
-    <Rect
+    <Ellipse
       ref={shapeRef}
       x={shape.x}
       y={shape.y}
-      width={shape.width}
-      height={shape.height}
+      radiusX={shape.radiusX}
+      radiusY={shape.radiusY}
       fill={shape.fill}
       stroke={strokeColor}
       strokeWidth={strokeWidth}
-      rotation={shape.rotation}
       draggable={isSelectable}
       listening={isSelectable}
       onClick={handleClick}

@@ -3,9 +3,10 @@
  * Delegates rendering to the appropriate shape component based on object type
  */
 
-import { PersistedRect } from "../../_lib/shapes";
+import type { PersistedRect, PersistedCircle } from "../../_types/shapes";
 import RectangleShape from "./RectangleShape";
-import Konva from "konva";
+import CircleShape from "./CircleShape";
+import type Konva from "konva";
 
 /**
  * Base shape interface that all local shapes must have
@@ -52,7 +53,7 @@ export interface ShapeComponentProps {
  * ShapeComponent Router
  * Renders the appropriate shape component based on the object's type
  */
-export default function ShapeComponent(props: ShapeComponentProps): JSX.Element | null {
+export default function ShapeComponent(props: ShapeComponentProps) {
   const {
     object,
     isSelected,
@@ -83,15 +84,23 @@ export default function ShapeComponent(props: ShapeComponentProps): JSX.Element 
       );
 
     case "circle":
-    case "line":
-    case "text":
-      // Not yet implemented - will be added in future PRs
-      console.warn(`Shape type "${object.type}" not yet implemented`);
-      return null;
+      return (
+        <CircleShape
+          shape={object as PersistedCircle}
+          isSelected={isSelected}
+          isLocked={isLocked}
+          isSelectable={isSelectable}
+          zoom={zoom}
+          onSelect={onSelect}
+          onTransform={onTransform}
+          shapeRef={shapeRef as (node: Konva.Ellipse | null) => void}
+          onRenewLock={onRenewLock}
+        />
+      );
 
     default:
-      // Unknown shape type
-      console.error(`Unknown shape type: ${(object as any).type}`);
+      // Unknown shape type - should never happen if factories are properly registered
+      console.error(`No component found for shape type: ${object.type}`);
       return null;
   }
 }

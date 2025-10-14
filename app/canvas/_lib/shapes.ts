@@ -6,84 +6,13 @@
 import { CanvasObject, RectangleObject } from "@/types/canvas";
 import { generateObjectId } from "./objects";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
-
-// ============================================================================
-// Types & Interfaces
-// ============================================================================
-
-/**
- * Point in canvas space
- */
-export interface Point {
-  x: number;
-  y: number;
-}
-
-/**
- * Drawing bounds (normalized, always positive width/height)
- */
-export interface DrawingBounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
- * Persisted rectangle shape (local representation)
- */
-export interface PersistedRect {
-  id: string;
-  type: "rectangle";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  fill: string;
-  stroke: string;
-  strokeWidth: number;
-  rotation: number;
-  // Lock info
-  lockedBy: string | null;
-  lockedAt: number | null;
-  lockTimeout: number;
-}
-
-/**
- * Generic shape factory interface
- * All shape types should implement this interface
- */
-export interface ShapeFactory<T> {
-  /**
-   * Create a shape with default styling
-   */
-  createDefault: (params: any) => T;
-
-  /**
-   * Convert draft drawing bounds to final shape
-   */
-  createFromDraft: (draft: DrawingBounds) => T;
-
-  /**
-   * Convert local shape to Firestore CanvasObject
-   */
-  toFirestore: (shape: T, userId: string) => CanvasObject;
-
-  /**
-   * Convert Firestore CanvasObject to local shape
-   */
-  fromFirestore: (obj: CanvasObject) => T | null;
-
-  /**
-   * Check if shape meets minimum size requirements
-   */
-  validateSize: (shape: T) => boolean;
-
-  /**
-   * Normalize drawing coordinates (handle negative width/height)
-   */
-  normalizeDrawing: (start: Point, current: Point) => DrawingBounds;
-}
+import type {
+  Point,
+  DrawingBounds,
+  PersistedRect,
+  PersistedCircle,
+  ShapeFactory,
+} from "../_types/shapes";
 
 // ============================================================================
 // Rectangle Factory
@@ -224,6 +153,199 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
 
     return { x, y, width, height };
   },
+
+  /**
+   * Get draft rectangle data for preview rendering
+   */
+  getDraftData: (draft: DrawingBounds) => {
+    return {
+      type: "rect" as const,
+      props: {
+        x: draft.x,
+        y: draft.y,
+        width: draft.width,
+        height: draft.height,
+        fill: "rgba(59, 130, 246, 0.3)",
+        stroke: "#3b82f6",
+      },
+    };
+  },
+};
+
+// ============================================================================
+// Circle Factory
+// ============================================================================
+
+/**
+ * Circle/Ellipse shape factory
+ * Handles creation, conversion, and validation of circles and ellipses
+ */
+export const circleFactory: ShapeFactory<PersistedCircle> = {
+  /**
+   * Create a circle/ellipse with default styling
+   */
+  createDefault: ({ x, y, width, height }: DrawingBounds): PersistedCircle => {
+    // Calculate radiusX and radiusY from bounding box
+    const radiusX = (width || 0) / 2;
+    const radiusY = (height || 0) / 2;
+    
+    // Center position is the center of the bounding box
+    const centerX = x + (width || 0) / 2;
+    const centerY = y + (height || 0) / 2;
+    
+    return {
+      id: generateObjectId(),
+      type: "circle",
+      x: centerX,
+      y: centerY,
+      radiusX,
+      radiusY,
+      fill: "rgba(236, 72, 153, 0.3)",
+      stroke: "#ec4899",
+      strokeWidth: 2,
+      rotation: 0,
+      lockedBy: null,
+      lockedAt: null,
+      lockTimeout: LOCK_TIMEOUT_MS,
+    };
+  },
+
+  /**
+   * Create circle from draft drawing bounds
+   */
+  createFromDraft: (draft: DrawingBounds): PersistedCircle => {
+    return circleFactory.createDefault(draft);
+  },
+
+  /**
+   * Convert local PersistedCircle to Firestore CircleObject
+   */
+  toFirestore: (circle: PersistedCircle, userId: string): CanvasObject => {
+    const now = Date.now();
+    
+    // Convert radiusX and radiusY to width and height (diameter)
+    const width = (circle.radiusX || 0) * 2;
+    const height = (circle.radiusY || 0) * 2;
+
+    return {
+      id: circle.id,
+      type: "circle",
+
+      // Ownership & Sync
+      createdBy: userId,
+      createdAt: now,
+      updatedBy: userId,
+      updatedAt: now,
+
+      // Locking
+      lockedBy: circle.lockedBy,
+      lockedAt: circle.lockedAt,
+      lockTimeout: circle.lockTimeout,
+
+      // Transform (CircleObject uses width/height as diameters)
+      x: circle.x || 0,
+      y: circle.y || 0,
+      width,
+      height,
+      rotation: circle.rotation,
+
+      // Styling
+      fill: circle.fill,
+      fillOpacity: 1,
+      stroke: circle.stroke,
+      strokeWidth: circle.strokeWidth,
+      strokeOpacity: 1,
+      strokeStyle: "solid",
+
+      // Layer
+      zIndex: 0,
+
+      // Interaction
+      locked: false,
+      visible: true,
+    };
+  },
+
+  /**
+   * Convert Firestore CircleObject to local PersistedCircle
+   */
+  fromFirestore: (obj: CanvasObject): PersistedCircle | null => {
+    if (obj.type !== "circle") return null;
+
+    const circleObj = obj as any;
+    // CircleObject stores diameters as width/height, convert to radiusX/radiusY
+    const radiusX = (circleObj.width || 0) / 2;
+    const radiusY = (circleObj.height || 0) / 2;
+    
+    return {
+      id: circleObj.id,
+      type: "circle",
+      x: circleObj.x,
+      y: circleObj.y,
+      radiusX,
+      radiusY,
+      fill: circleObj.fill,
+      stroke: circleObj.stroke,
+      strokeWidth: circleObj.strokeWidth,
+      rotation: circleObj.rotation || 0,
+      lockedBy: circleObj.lockedBy,
+      lockedAt: circleObj.lockedAt,
+      lockTimeout: circleObj.lockTimeout,
+    };
+  },
+
+  /**
+   * Validate circle/ellipse meets minimum size requirements
+   */
+  validateSize: (circle: PersistedCircle): boolean => {
+    return circle.radiusX >= 5 && circle.radiusY >= 5;
+  },
+
+  /**
+   * Normalize drawing coordinates for circle/ellipse
+   * Calculates bounding box from drag distance
+   */
+  normalizeDrawing: (start: Point, current: Point): DrawingBounds => {
+    // Same as rectangle normalization - we'll convert to radiusX/radiusY in createDefault
+    let width = current.x - start.x;
+    let height = current.y - start.y;
+    let x = start.x;
+    let y = start.y;
+
+    if (width < 0) {
+      x = current.x;
+      width = Math.abs(width);
+    }
+
+    if (height < 0) {
+      y = current.y;
+      height = Math.abs(height);
+    }
+
+    return { x, y, width, height };
+  },
+
+  /**
+   * Get draft circle/ellipse data for preview rendering
+   */
+  getDraftData: (draft: DrawingBounds) => {
+    const radiusX = draft.width / 2;
+    const radiusY = draft.height / 2;
+    const centerX = draft.x + draft.width / 2;
+    const centerY = draft.y + draft.height / 2;
+
+    return {
+      type: "ellipse" as const,
+      props: {
+        x: centerX,
+        y: centerY,
+        radiusX,
+        radiusY,
+        fill: "rgba(236, 72, 153, 0.3)",
+        stroke: "#ec4899",
+      },
+    };
+  },
 };
 
 // ============================================================================
@@ -236,9 +358,7 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
  */
 export const shapeFactories: Record<string, ShapeFactory<any>> = {
   rectangle: rectangleFactory,
-  // circle: circleFactory,      // Will be added in PR #6
-  // line: lineFactory,          // Will be added in PR #7
-  // text: textFactory,          // Will be added in PR #8
+  circle: circleFactory,
 };
 
 /**

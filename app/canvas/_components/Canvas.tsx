@@ -21,9 +21,10 @@ import { Separator } from "@/components/ui/separator";
 import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Rect, Transformer } from "react-konva";
+import { Transformer, Rect, Circle, Ellipse } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
+import { isDrawingTool } from "../_constants/tools";
 
 interface CanvasProps {
   width?: number;
@@ -255,8 +256,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       return;
     }
 
-    // Start drawing rectangle (left click, rectangle tool, not panning)
-    if (e.evt.button === 0 && activeTool === "rectangle" && !isPanning) {
+    // Start drawing shape (left click, drawing tool, not panning)
+    if (e.evt.button === 0 && isDrawingTool(activeTool) && !isPanning) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
@@ -443,19 +444,26 @@ export default function Canvas({ width, height }: CanvasProps) {
           onMouseUp={handleMouseUp}
           onDragEnd={handleDragEnd}
         >
-          {/* Draft rectangle while drawing */}
-          {draftRect && (
-            <Rect
-              x={draftRect.x}
-              y={draftRect.y}
-              width={draftRect.width}
-              height={draftRect.height}
-              fill="rgba(59, 130, 246, 0.3)"
-              stroke="#3b82f6"
-              strokeWidth={2 / viewport.zoom}
-              listening={false}
-            />
-          )}
+          {/* Draft shape while drawing */}
+          {draftRect && activeTool && (() => {
+            const factory = getShapeFactory(activeTool);
+            if (!factory) return null;
+            
+            const draftData = factory.getDraftData(draftRect);
+            const commonProps = {
+              strokeWidth: 2 / viewport.zoom,
+              listening: false,
+            };
+            
+            if (draftData.type === "rect") {
+              return <Rect {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "circle") {
+              return <Circle {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "ellipse") {
+              return <Ellipse {...draftData.props} {...commonProps} />;
+            }
+            return null;
+          })()}
           
           {/* Persisted shapes */}
           {objects.map((obj) => {

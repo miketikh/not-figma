@@ -14,7 +14,8 @@ import {
 import { generateObjectId } from "../_lib/objects";
 import { CanvasObject, RectangleObject } from "@/types/canvas";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
-import { getShapeFactory, PersistedRect } from "../_lib/shapes";
+import { getShapeFactory } from "../_lib/shapes";
+import type { PersistedRect } from "../_types/shapes";
 
 // Re-export PersistedRect for backwards compatibility
 export type { PersistedRect };
@@ -50,10 +51,11 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    */
   const shapeToCanvasObject = useCallback(
     (shape: PersistedRect): CanvasObject => {
-      // For now, we assume rectangles. In the future, we'd detect type from shape properties
-      const factory = getShapeFactory("rectangle");
+      // Get the factory based on the shape's type
+      const shapeType = (shape as any).type || "rectangle";
+      const factory = getShapeFactory(shapeType);
       if (!factory) {
-        throw new Error("Rectangle factory not found");
+        throw new Error(`Factory not found for shape type: ${shapeType}`);
       }
 
       return factory.toFirestore(shape, user?.uid || "unknown");
@@ -113,21 +115,34 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    * Update an object in Firestore
    */
   const updateObjectInFirestore = useCallback(
-    async (rect: PersistedRect) => {
+    async (shape: PersistedRect) => {
       if (!user) return;
 
       try {
+        // Get the shape type and factory
+        const shapeType = (shape as any).type || "rectangle";
+        const factory = getShapeFactory(shapeType);
+        
+        if (!factory) {
+          console.error(`No factory found for shape type: ${shapeType}`);
+          return;
+        }
+
+        // Convert to Firestore format using the appropriate factory
+        const firestoreObject = factory.toFirestore(shape, user.uid);
+        
+        // Extract only the fields we want to update (not createdAt, createdBy)
         const updates = {
-          x: rect.x,
-          y: rect.y,
-          width: rect.width,
-          height: rect.height,
-          rotation: rect.rotation || 0,
+          x: firestoreObject.x,
+          y: firestoreObject.y,
+          width: firestoreObject.width,
+          height: firestoreObject.height,
+          rotation: firestoreObject.rotation,
           updatedBy: user.uid,
           updatedAt: Date.now(),
         };
 
-        await updateObject(rect.id, updates);
+        await updateObject(shape.id, updates);
       } catch (error) {
         console.error("Error updating object:", error);
       }
