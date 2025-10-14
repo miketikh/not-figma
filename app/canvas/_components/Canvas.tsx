@@ -610,7 +610,7 @@ export default function Canvas({ width, height }: CanvasProps) {
               obj.lockTimeout || LOCK_TIMEOUT_MS,
               user?.uid || null
             );
-            const isSelectable = activeTool === "select" && !lockedByOther;
+            const isSelectable = activeTool === "select" && !lockedByOther && !spacePressed;
             const isSelected = selectedIds.includes(obj.id);
             
             return (
@@ -650,7 +650,7 @@ export default function Canvas({ width, height }: CanvasProps) {
           })}
           
           {/* Transformer for selection handles */}
-          {activeTool === "select" && <Transformer ref={transformerRef} />}
+          {activeTool === "select" && !spacePressed && <Transformer ref={transformerRef} />}
         </StageContainer>
       )}
       
