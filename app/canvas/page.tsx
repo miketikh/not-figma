@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import Canvas from "./_components/Canvas";
+import OnlineUsers from "./_components/OnlineUsers";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,25 +21,28 @@ function CanvasPageContent() {
       {/* Header */}
       <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
         <div className="h-full px-6 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect x="3" y="3" width="8" height="8" rx="1" fill="#3b82f6" />
-                <rect x="13" y="3" width="8" height="8" rx="1" fill="#60a5fa" />
-                <rect x="3" y="13" width="8" height="8" rx="1" fill="#60a5fa" />
-                <rect x="13" y="13" width="8" height="8" rx="1" fill="#93c5fd" />
-              </svg>
-              <h1 className="text-xl font-semibold text-foreground">
-                CollabCanvas
-              </h1>
-            </div>
+          {/* Left Side - Logo */}
+          <div className="flex items-center gap-2">
+            <svg 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect x="3" y="3" width="8" height="8" rx="1" fill="#3b82f6" />
+              <rect x="13" y="3" width="8" height="8" rx="1" fill="#60a5fa" />
+              <rect x="3" y="13" width="8" height="8" rx="1" fill="#60a5fa" />
+              <rect x="13" y="13" width="8" height="8" rx="1" fill="#93c5fd" />
+            </svg>
+            <h1 className="text-xl font-semibold text-foreground">
+              CollabCanvas
+            </h1>
+          </div>
+
+          {/* Center - Online Users */}
+          <div className="flex-1 flex justify-center">
+            <OnlineUsers />
           </div>
 
           {/* Right Side - User Info */}
