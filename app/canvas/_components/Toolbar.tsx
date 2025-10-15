@@ -50,23 +50,28 @@ export default function Toolbar() {
             <div key={tool.id} className="flex items-center">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant={activeTool === tool.id ? "default" : "ghost"}
-                    size="icon"
+                  <button
                     onClick={() => handleToolClick(tool.id)}
+                    className={`flex flex-col items-center justify-center px-3 py-2 hover:bg-accent transition-colors ${
+                      activeTool === tool.id ? "bg-accent" : ""
+                    }`}
                   >
-                    <Icon />
-                  </Button>
+                    <div className="flex items-center justify-center w-6 h-6 mb-1">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {tool.shortcut}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center w-6 h-6">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    {tool.label}{" "}
-                    <span className="text-muted-foreground">({tool.shortcut})</span>
-                  </p>
+                  <p>{tool.label}</p>
                 </TooltipContent>
               </Tooltip>
-              
-              {index < TOOLS.length - 1 && <Separator orientation="vertical" className="h-6" />}
+
+              {index < TOOLS.length - 1 && <Separator orientation="vertical" className="h-full" />}
             </div>
           );
         })}
