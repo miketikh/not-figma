@@ -122,6 +122,9 @@ export default function TextShape({
     onRenewLock();
   };
 
+  // Determine text decoration style
+  const textDecoration = shape.textDecoration !== "none" ? shape.textDecoration : undefined;
+
   return (
     <Text
       ref={shapeRef}
@@ -130,10 +133,15 @@ export default function TextShape({
       width={shape.width}
       text={shape.content}
       fontSize={shape.fontSize}
-      fontFamily="Arial" // Hardcoded for MVP
-      align="left" // Hardcoded for MVP
-      lineHeight={1.2} // Hardcoded for MVP
+      fontFamily={shape.fontFamily}
+      fontStyle={shape.fontStyle === "italic" ? "italic" : "normal"}
+      fontVariant={shape.fontWeight}
+      align={shape.textAlign}
+      textDecoration={textDecoration}
+      lineHeight={shape.lineHeight}
       fill={fillColor}
+      stroke={shape.stroke}
+      strokeWidth={shape.strokeWidth}
       rotation={shape.rotation}
       opacity={shape.opacity ?? 1}
       draggable={isSelectable}

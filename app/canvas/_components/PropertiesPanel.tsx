@@ -86,9 +86,17 @@ export default function PropertiesPanel({
             y: 0,
             width: 100,
             height: 30,
-            content: defaultShapeProperties.text?.content ?? "Text",
+            content: "Text", // Always default to "Text", don't save content as a default
             fontSize: defaultShapeProperties.text?.fontSize ?? 16,
+            fontFamily: defaultShapeProperties.text?.fontFamily ?? "Arial",
+            fontWeight: defaultShapeProperties.text?.fontWeight ?? "normal",
+            fontStyle: defaultShapeProperties.text?.fontStyle ?? "normal",
+            textAlign: defaultShapeProperties.text?.textAlign ?? "left",
+            textDecoration: defaultShapeProperties.text?.textDecoration ?? "none",
+            lineHeight: defaultShapeProperties.text?.lineHeight ?? 1.2,
             fill: defaultShapeProperties.text?.fill ?? "#000000",
+            stroke: defaultShapeProperties.text?.stroke ?? "#000000",
+            strokeWidth: defaultShapeProperties.text?.strokeWidth ?? 0,
             opacity: defaultShapeProperties.text?.opacity ?? 1,
           };
 

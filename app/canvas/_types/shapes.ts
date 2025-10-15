@@ -91,8 +91,7 @@ export interface PersistedLine {
 
 /**
  * Persisted text shape (local representation)
- * MVP: Only content and fontSize are editable
- * Other typography properties are hardcoded defaults
+ * Full text support with all typography properties
  */
 export interface PersistedText {
   id: string;
@@ -102,8 +101,16 @@ export interface PersistedText {
   width: number; // bounding box width
   height: number; // bounding box height (auto-adjusts to content)
   content: string; // the actual text content
-  fontSize: number; // font size in pixels (MVP - editable)
+  fontSize: number; // font size in pixels
+  fontFamily: string; // font family (Arial, Helvetica, etc.)
+  fontWeight: "normal" | "bold" | "lighter" | "bolder"; // font weight
+  fontStyle: "normal" | "italic"; // font style
+  textAlign: "left" | "center" | "right"; // text alignment
+  textDecoration: "none" | "underline" | "line-through"; // text decoration
+  lineHeight: number; // line height multiplier
   fill: string; // text color
+  stroke: string; // text outline color
+  strokeWidth: number; // text outline width
   rotation: number;
   opacity: number; // 0-1, affects entire text
   zIndex: number; // layer order

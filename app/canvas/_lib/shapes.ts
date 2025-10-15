@@ -541,7 +541,7 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
 /**
  * Text shape factory
  * Handles creation, conversion, and validation of text objects
- * MVP: Only content and fontSize are editable, other typography is hardcoded
+ * Full typography support with all text properties
  */
 export const textFactory: ShapeFactory<PersistedText> = {
   /**
@@ -561,7 +561,15 @@ export const textFactory: ShapeFactory<PersistedText> = {
       height: height || 30, // Default height (will auto-adjust)
       content: "Text",
       fontSize: 16,
+      fontFamily: "Arial",
+      fontWeight: "normal",
+      fontStyle: "normal",
+      textAlign: "left",
+      textDecoration: "none",
+      lineHeight: 1.2,
       fill: "#000000", // Black text
+      stroke: "#000000",
+      strokeWidth: 0, // No outline by default
       rotation: 0,
       opacity: 1,
       zIndex: 0,
@@ -610,21 +618,21 @@ export const textFactory: ShapeFactory<PersistedText> = {
       // Text Content
       content: text.content,
       fontSize: text.fontSize,
-      
-      // Typography (hardcoded defaults for MVP)
-      fontFamily: "Arial",
-      fontWeight: "normal",
-      fontStyle: "normal",
-      textAlign: "left",
-      textDecoration: "none",
-      lineHeight: 1.2,
+
+      // Typography
+      fontFamily: text.fontFamily,
+      fontWeight: text.fontWeight,
+      fontStyle: text.fontStyle,
+      textAlign: text.textAlign,
+      textDecoration: text.textDecoration,
+      lineHeight: text.lineHeight,
 
       // Styling
       fill: text.fill,
       fillOpacity: text.opacity,
-      stroke: "#000000",
-      strokeWidth: 0, // No outline for MVP
-      strokeOpacity: 1,
+      stroke: text.stroke,
+      strokeWidth: text.strokeWidth,
+      strokeOpacity: text.opacity,
       strokeStyle: "solid",
 
       // Layer
@@ -652,7 +660,15 @@ export const textFactory: ShapeFactory<PersistedText> = {
       height: textObj.height,
       content: textObj.content,
       fontSize: textObj.fontSize,
+      fontFamily: textObj.fontFamily || "Arial", // backward compatibility
+      fontWeight: textObj.fontWeight || "normal", // backward compatibility
+      fontStyle: textObj.fontStyle || "normal", // backward compatibility
+      textAlign: textObj.textAlign || "left", // backward compatibility
+      textDecoration: textObj.textDecoration || "none", // backward compatibility
+      lineHeight: textObj.lineHeight ?? 1.2, // backward compatibility
       fill: textObj.fill,
+      stroke: textObj.stroke || "#000000", // backward compatibility
+      strokeWidth: textObj.strokeWidth ?? 0, // backward compatibility
       rotation: textObj.rotation || 0,
       opacity: textObj.fillOpacity ?? 1, // backward compatibility
       zIndex: textObj.zIndex ?? 0, // backward compatibility

@@ -160,11 +160,10 @@ export default function StyleProperties({
       </div>
       )}
 
-      {/* Stroke Section - Hidden for text in MVP (no outline support yet) */}
-      {!isText && (
+      {/* Stroke Section - Now visible for text (outline support added) */}
       <div>
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-          Stroke
+          {isText ? "Text Outline" : "Stroke"}
         </Label>
         
         <div className="space-y-2">
@@ -222,7 +221,6 @@ export default function StyleProperties({
           </div>
         </div>
       </div>
-      )}
 
       {/* Opacity Section */}
       <div>

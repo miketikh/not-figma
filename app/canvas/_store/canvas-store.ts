@@ -28,9 +28,16 @@ export interface DefaultShapeProperties {
     opacity: number;
   };
   text: {
-    content: string;
     fontSize: number;
+    fontFamily: string;
+    fontWeight: "normal" | "bold" | "lighter" | "bolder";
+    fontStyle: "normal" | "italic";
+    textAlign: "left" | "center" | "right";
+    textDecoration: "none" | "underline" | "line-through";
+    lineHeight: number;
     fill: string;
+    stroke: string;
+    strokeWidth: number;
     opacity: number;
   };
 }
@@ -89,9 +96,16 @@ const DEFAULT_SHAPE_PROPERTIES: DefaultShapeProperties = {
     opacity: 1,
   },
   text: {
-    content: "Text",
     fontSize: 16,
+    fontFamily: "Arial",
+    fontWeight: "normal",
+    fontStyle: "normal",
+    textAlign: "left",
+    textDecoration: "none",
+    lineHeight: 1.2,
     fill: "#000000", // Black
+    stroke: "#000000",
+    strokeWidth: 0, // No outline by default
     opacity: 1,
   },
 };
