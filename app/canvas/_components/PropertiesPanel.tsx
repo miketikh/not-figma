@@ -86,7 +86,7 @@ export default function PropertiesPanel({
             y: 0,
             width: 100,
             height: 30,
-            content: "Text", // Always default to "Text", don't save content as a default
+            content: defaultShapeProperties.text?.content ?? "Text",
             fontSize: defaultShapeProperties.text?.fontSize ?? 16,
             fontFamily: defaultShapeProperties.text?.fontFamily ?? "Arial",
             fontWeight: defaultShapeProperties.text?.fontWeight ?? "normal",

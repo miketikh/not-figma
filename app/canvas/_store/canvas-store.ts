@@ -28,6 +28,7 @@ export interface DefaultShapeProperties {
     opacity: number;
   };
   text: {
+    content: string; // Temporary content that resets when tool is activated
     fontSize: number;
     fontFamily: string;
     fontWeight: "normal" | "bold" | "lighter" | "bolder";
@@ -96,6 +97,7 @@ const DEFAULT_SHAPE_PROPERTIES: DefaultShapeProperties = {
     opacity: 1,
   },
   text: {
+    content: "Text",
     fontSize: 16,
     fontFamily: "Arial",
     fontWeight: "normal",

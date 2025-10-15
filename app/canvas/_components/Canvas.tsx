@@ -229,6 +229,8 @@ export default function Canvas({ width, height }: CanvasProps) {
           e.preventDefault();
         } else if (e.key === "t" || e.key === "T") {
           setActiveTool("text");
+          // Reset text content to default when activating text tool
+          updateDefaultShapeProperty("text", { content: "Text" });
           e.preventDefault();
         }
       }
@@ -406,7 +408,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       const factory = getShapeFactory("text");
       if (!factory) return;
 
-      // Get default properties for text
+      // Get default properties for text (including user-edited content)
       const defaults = isShapeTool("text")
         ? defaultShapeProperties.text
         : {};
@@ -422,6 +424,9 @@ export default function Canvas({ width, height }: CanvasProps) {
 
       // Auto-select the new text so user can edit it in properties panel
       setSelectedIds([newText.id]);
+
+      // Switch to select tool for better UX (user can immediately edit in properties)
+      setActiveTool("select");
     }
   };
 

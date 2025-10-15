@@ -29,7 +29,15 @@ const TOOLS: ToolButton[] = [
 ];
 
 export default function Toolbar() {
-  const { activeTool, setActiveTool } = useCanvasStore();
+  const { activeTool, setActiveTool, updateDefaultShapeProperty } = useCanvasStore();
+
+  const handleToolClick = (toolId: CanvasTool) => {
+    setActiveTool(toolId);
+    // Reset text content to default when clicking text tool
+    if (toolId === "text") {
+      updateDefaultShapeProperty("text", { content: "Text" });
+    }
+  };
 
   return (
     <div 
@@ -45,7 +53,7 @@ export default function Toolbar() {
                   <Button
                     variant={activeTool === tool.id ? "default" : "ghost"}
                     size="icon"
-                    onClick={() => setActiveTool(tool.id)}
+                    onClick={() => handleToolClick(tool.id)}
                   >
                     <Icon />
                   </Button>
