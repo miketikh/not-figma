@@ -486,23 +486,27 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #13: Deployment Setup
+### PR #13: Deployment Setup ✅
 **Branch:** `setup/deployment`  
 **Goal:** Deploy to Vercel and verify production works
 
 **Tasks:**
-- [ ] Create Vercel account (if needed)
-- [ ] Connect GitHub repository to Vercel
-- [ ] Configure environment variables in Vercel dashboard
-- [ ] Configure Firebase for production domain
-- [ ] Test deployment
-- [ ] Verify authentication works in production
-- [ ] Verify real-time sync works in production
-- [ ] Update README with deployed link
+- [x] Create Vercel account (if needed)
+- [x] Connect GitHub repository to Vercel
+- [x] Configure environment variables in Vercel dashboard
+- [x] Configure Firebase for production domain
+- [x] Test deployment
+- [x] Verify authentication works in production
+- [x] Verify real-time sync works in production
+- [ ] Update README with deployed link (in progress)
 
 **Files Modified:**
 - `README.md` (add deployed link)
 - Vercel dashboard (configuration only)
+
+**Notes:**
+- App successfully deployed and accessible
+- All core features working in production
 
 ---
 
@@ -563,24 +567,28 @@ The underscore prefix tells Next.js these are NOT routes.
 
 ---
 
-### PR #16: Additional Shape Types - Lines
+### PR #16: Additional Shape Types - Lines ✅
 **Branch:** `feature/lines`  
 **Goal:** Add line shape type
 
 **Tasks:**
-- [ ] Extend object types for lines
-- [ ] Add line to Toolbar
-- [ ] Implement line creation logic
-- [ ] Implement line rendering
-- [ ] Add line selection and manipulation
-- [ ] Test line creation and editing
-- [ ] Sync lines across users
+- [x] Extend object types for lines
+- [x] Add line to Toolbar
+- [x] Implement line creation logic
+- [x] Implement line rendering
+- [x] Add line selection and manipulation
+- [x] Test line creation and editing
+- [x] Sync lines across users
+
+**Files Created:**
+- `app/canvas/_components/shapes/LineShape.tsx` (NEW)
+- `app/canvas/_components/properties/shape-properties/LineProperties.tsx` (NEW)
 
 **Files Modified:**
-- `types/objects.ts` (add Line type)
-- `lib/canvas/objects.ts` (add line functions)
-- `components/canvas/Toolbar.tsx` (add line button)
-- `components/canvas/Canvas.tsx` (handle line creation)
+- `app/canvas/_types/shapes.ts` (add PersistedLine type)
+- `app/canvas/_lib/shapes.ts` (add line factory functions)
+- `app/canvas/_components/Toolbar.tsx` (add line button)
+- `app/canvas/_components/Canvas.tsx` (handle line creation and rendering)
 
 ---
 
@@ -1146,10 +1154,12 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 
 ## Current Progress (As of October 2025)
 
-### ✅ Completed PRs (1-11, 15, 20, 23, 24, 25 partial)
+### ✅ Completed PRs (1-11, 13, 15, 16, 20, 23, 24, 25 partial)
 - **PR #1-10:** ✅ All MVP features complete (setup, auth, canvas, shapes, sync, cursors)
 - **PR #11:** ✅ Presence System (OnlineUsers component showing active users)
+- **PR #13:** ✅ Deployment Setup (deployed to production)
 - **PR #15:** ✅ Circle Shape (full support with creation, editing, properties)
+- **PR #16:** ✅ Line Shape (full support with creation, editing, properties)
 - **PR #20:** ✅ Layer Management (z-index controls with UI buttons and keyboard shortcuts)
 - **PR #21:** ⚠️ Keyboard Shortcuts (partial - delete, tool shortcuts, space pan, layer shortcuts working)
 - **PR #23:** ✅ Rotation (via Konva Transformer and properties panel)
@@ -1158,9 +1168,7 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 
 ### 🚧 Not Yet Implemented
 - **PR #12:** Connection Status & Reconnection (offline handling)
-- **PR #13:** Deployment Setup (needs Vercel deployment)
 - **PR #14:** MVP Testing & Validation
-- **PR #16:** Lines shape type
 - **PR #17:** Text shape type
 - **PR #18:** Multi-Select (shift-click, drag-to-select)
 - **PR #19:** Group Operations
@@ -1173,7 +1181,7 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 
 ### Key Features Working
 ✅ Canvas with pan & zoom  
-✅ Rectangle and Circle shapes  
+✅ Rectangle, Circle, and Line shapes  
 ✅ Real-time collaboration with object sync  
 ✅ Multiplayer cursors with user names  
 ✅ Online user presence display  
@@ -1182,6 +1190,8 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 ✅ Layer management (z-index)  
 ✅ Rotation support  
 ✅ Color pickers and styling controls  
-✅ Tool shortcuts (V, H, R, C)  
+✅ Tool shortcuts (V, H, R, C, L)  
 ✅ Delete key support  
-✅ Space+drag pan mode
+✅ Space+drag pan mode  
+✅ Production deployment  
+✅ Modern homepage with gradient design
