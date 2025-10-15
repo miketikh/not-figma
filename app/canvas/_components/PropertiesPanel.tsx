@@ -163,10 +163,31 @@ export default function PropertiesPanel({
           </p>
         </div>
         <div className="p-4 max-h-[calc(100vh-120px)] overflow-y-auto">
-          <p className="text-sm text-gray-500 mb-4">
-            Multi-select editing coming soon. Currently showing properties for
-            single selection only.
-          </p>
+          <div className="text-sm space-y-3">
+            <p className="font-medium text-gray-700">Multi-Select Operations</p>
+            <ul className="space-y-2 text-xs text-gray-600">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Drag anywhere in the bounding box to move all objects</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Shift</kbd> + click to add/remove objects</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Shift</kbd> + drag to add more objects</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Esc</kbd> to deselect all</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Delete</kbd> to remove all selected objects</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     );
