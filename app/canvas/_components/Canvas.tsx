@@ -22,11 +22,11 @@ import { Separator } from "@/components/ui/separator";
 import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Transformer, Rect, Circle, Ellipse, Line } from "react-konva";
+import { Transformer, Rect, Circle, Ellipse, Line, Text } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
 import { isDrawingTool, isShapeTool } from "../_constants/tools";
-import type { PersistedShape } from "../_types/shapes";
+import type { PersistedShape, PersistedText } from "../_types/shapes";
 import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
 
 interface CanvasProps {
@@ -56,6 +56,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [draftRect, setDraftRect] = useState<DraftRect | null>(null);
   const drawStartRef = useRef({ x: 0, y: 0 });
+  
   
   // Persisted shapes
   const [objects, setObjects] = useState<PersistedShape[]>([]);
@@ -226,6 +227,9 @@ export default function Canvas({ width, height }: CanvasProps) {
         } else if (e.key === "l" || e.key === "L") {
           setActiveTool("line");
           e.preventDefault();
+        } else if (e.key === "t" || e.key === "T") {
+          setActiveTool("text");
+          e.preventDefault();
         }
       }
 
@@ -388,6 +392,37 @@ export default function Canvas({ width, height }: CanvasProps) {
         height: 0,
       });
     }
+
+    // Place text object (left click, text tool)
+    if (e.evt.button === 0 && activeTool === "text" && clickedOnEmpty) {
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      // Convert pointer to canvas coordinates
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const canvasPoint = transform.point(pointer);
+
+      // Get the text factory
+      const factory = getShapeFactory("text");
+      if (!factory) return;
+
+      // Get default properties for text
+      const defaults = isShapeTool("text")
+        ? defaultShapeProperties.text
+        : {};
+
+      // Create new text object at click position
+      const newText = factory.createDefault(
+        { x: canvasPoint.x, y: canvasPoint.y, width: 100, height: 30 },
+        defaults
+      );
+
+      // Save to Firestore
+      saveObject(newText);
+
+      // Auto-select the new text so user can edit it in properties panel
+      setSelectedIds([newText.id]);
+    }
   };
 
   // Mouse move handler for drawing
@@ -536,6 +571,7 @@ export default function Canvas({ width, height }: CanvasProps) {
     setGridTransform({ x: center.x, y: center.y, zoom: 1 });
   };
 
+
   // Get cursor style based on active tool and state
   const getCursorStyle = () => {
     if (isPanning) return 'grabbing';
@@ -584,8 +620,13 @@ export default function Canvas({ width, height }: CanvasProps) {
               : undefined;
             
             const draftData = factory.getDraftData(draftRect, styleDefaults);
+            
+            // Calculate strokeWidth (text doesn't have strokeWidth)
+            const hasStrokeWidth = styleDefaults && "strokeWidth" in styleDefaults;
+            const strokeWidth = hasStrokeWidth ? styleDefaults.strokeWidth : 2;
+            
             const commonProps = {
-              strokeWidth: (styleDefaults?.strokeWidth ?? 2) / viewport.zoom,
+              strokeWidth: strokeWidth / viewport.zoom,
               listening: false,
             };
             
@@ -647,6 +688,7 @@ export default function Canvas({ width, height }: CanvasProps) {
                 onRenewLock={() => {
                   lockManagerRef.current.renewLockForObject(obj.id);
                 }}
+                onEditRequest={undefined}
               />
             );
           })}

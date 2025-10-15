@@ -14,7 +14,7 @@ export const DRAWING_TOOLS: readonly CanvasTool[] = ["rectangle", "circle", "lin
  * Shape types that correspond to drawing tools
  * Used for mapping tools to their default properties
  */
-export type ShapeToolType = "rectangle" | "circle" | "line";
+export type ShapeToolType = "rectangle" | "circle" | "line" | "text";
 
 /**
  * Check if a tool is a drawing tool
@@ -28,6 +28,6 @@ export function isDrawingTool(tool: CanvasTool): boolean {
  * Returns true if the tool creates a shape and can be used as a key for defaultShapeProperties
  */
 export function isShapeTool(tool: CanvasTool): tool is ShapeToolType {
-  return tool === "rectangle" || tool === "circle" || tool === "line";
+  return tool === "rectangle" || tool === "circle" || tool === "line" || tool === "text";
 }
 

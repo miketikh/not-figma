@@ -38,9 +38,12 @@ export default function StyleProperties({
 
   // Parse stroke color to hex
   const getStrokeColor = () => {
+    // Check if object has stroke property (text might not have it in defaults)
+    if (!("stroke" in object)) return "#000000";
+    
     const stroke = object.stroke;
-    if (stroke.startsWith("#")) return stroke;
-    return stroke;
+    if (typeof stroke === "string" && stroke.startsWith("#")) return stroke;
+    return stroke || "#000000";
   };
 
   const handleFillColorChange = (color: string) => {
@@ -73,14 +76,17 @@ export default function StyleProperties({
   
   // Lines don't have fill, only stroke
   const isLine = object.type === "line";
+  
+  // Text has fill but no "No Fill" option (text always needs color)
+  const isText = object.type === "text";
 
   return (
     <div className="space-y-4">
-      {/* Fill Section - Hidden for lines */}
+      {/* Fill Section - Hidden for lines, simplified for text */}
       {!isLine && (
       <div>
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-          Fill
+          {isText ? "Text Color" : "Fill"}
         </Label>
         
         <div className="space-y-2">
@@ -134,7 +140,8 @@ export default function StyleProperties({
             </div>
           )}
 
-          {/* No Fill checkbox */}
+          {/* No Fill checkbox - Hidden for text (text always needs color) */}
+          {!isText && (
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -148,11 +155,13 @@ export default function StyleProperties({
               No Fill
             </Label>
           </div>
+          )}
         </div>
       </div>
       )}
 
-      {/* Stroke Section */}
+      {/* Stroke Section - Hidden for text in MVP (no outline support yet) */}
+      {!isText && (
       <div>
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
           Stroke
@@ -213,6 +222,7 @@ export default function StyleProperties({
           </div>
         </div>
       </div>
+      )}
 
       {/* Opacity Section */}
       <div>

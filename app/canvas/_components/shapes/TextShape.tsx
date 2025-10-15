@@ -1,0 +1,148 @@
+"use client";
+
+import { Text } from "react-konva";
+import Konva from "konva";
+import { KonvaEventObject } from "konva/lib/Node";
+import type { PersistedText } from "../../_types/shapes";
+
+/**
+ * Props for TextShape component
+ */
+export interface TextShapeProps {
+  /** The text shape data */
+  shape: PersistedText;
+  
+  /** Whether this shape is currently selected */
+  isSelected: boolean;
+  
+  /** Whether this shape is locked by another user */
+  isLocked: boolean;
+  
+  /** Whether this shape can be selected (depends on active tool) */
+  isSelectable: boolean;
+  
+  /** Viewport zoom level (for stroke scaling) */
+  zoom: number;
+  
+  /** Callback when shape is selected */
+  onSelect: () => void;
+  
+  /** Callback when shape is transformed (drag/resize/rotate) */
+  onTransform: (updates: Partial<PersistedText>) => void;
+  
+  /** Ref callback for transformer attachment */
+  shapeRef: (node: Konva.Text | null) => void;
+  
+  /** Callback to renew lock during interaction */
+  onRenewLock: () => void;
+  
+  /** Callback when double-clicked to edit */
+  onEditRequest?: (textId: string) => void;
+}
+
+/**
+ * TextShape Component
+ * Renders text using Konva with full interaction support
+ * MVP: No inline editing, edit via properties panel only
+ */
+export default function TextShape({
+  shape,
+  isSelected,
+  isLocked,
+  isSelectable,
+  zoom,
+  onSelect,
+  onTransform,
+  shapeRef,
+  onRenewLock,
+  onEditRequest,
+}: TextShapeProps) {
+  // Determine fill color based on lock status
+  const fillColor = isLocked ? "#ef4444" : shape.fill;
+
+  /**
+   * Handle click to select
+   */
+  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (!isSelectable) return;
+    e.cancelBubble = true;
+    onSelect();
+  };
+
+  /**
+   * Handle double-click to edit
+   */
+  const handleDblClick = (e: KonvaEventObject<MouseEvent>) => {
+    if (!isSelectable || isLocked) return;
+    e.cancelBubble = true;
+    if (onEditRequest) {
+      onEditRequest(shape.id);
+    }
+  };
+
+  /**
+   * Handle drag end to update position
+   */
+  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+    const node = e.target as Konva.Text;
+    
+    // Update position
+    onTransform({
+      x: node.x(),
+      y: node.y(),
+    });
+    
+    // Renew lock
+    onRenewLock();
+  };
+
+  /**
+   * Handle transform end to update size/rotation
+   */
+  const handleTransformEnd = (e: KonvaEventObject<Event>) => {
+    const node = e.target as Konva.Text;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+    
+    // Reset scale and apply to width (height auto-adjusts for text)
+    node.scaleX(1);
+    node.scaleY(1);
+    
+    // Update shape with new dimensions
+    onTransform({
+      x: node.x(),
+      y: node.y(),
+      width: Math.max(50, node.width() * scaleX), // Min width 50px
+      rotation: node.rotation(),
+      // Note: fontSize could be scaled here in the future
+      // fontSize: Math.max(8, shape.fontSize * scaleY),
+    });
+    
+    // Renew lock
+    onRenewLock();
+  };
+
+  return (
+    <Text
+      ref={shapeRef}
+      x={shape.x}
+      y={shape.y}
+      width={shape.width}
+      text={shape.content}
+      fontSize={shape.fontSize}
+      fontFamily="Arial" // Hardcoded for MVP
+      align="left" // Hardcoded for MVP
+      lineHeight={1.2} // Hardcoded for MVP
+      fill={fillColor}
+      rotation={shape.rotation}
+      opacity={shape.opacity ?? 1}
+      draggable={isSelectable}
+      listening={isSelectable}
+      onClick={handleClick}
+      onDblClick={handleDblClick}
+      onDragEnd={handleDragEnd}
+      onTransformEnd={handleTransformEnd}
+    />
+  );
+}
+

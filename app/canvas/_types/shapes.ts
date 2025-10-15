@@ -90,9 +90,33 @@ export interface PersistedLine {
 }
 
 /**
+ * Persisted text shape (local representation)
+ * MVP: Only content and fontSize are editable
+ * Other typography properties are hardcoded defaults
+ */
+export interface PersistedText {
+  id: string;
+  type: "text";
+  x: number; // top-left x
+  y: number; // top-left y
+  width: number; // bounding box width
+  height: number; // bounding box height (auto-adjusts to content)
+  content: string; // the actual text content
+  fontSize: number; // font size in pixels (MVP - editable)
+  fill: string; // text color
+  rotation: number;
+  opacity: number; // 0-1, affects entire text
+  zIndex: number; // layer order
+  // Lock info
+  lockedBy: string | null;
+  lockedAt: number | null;
+  lockTimeout: number;
+}
+
+/**
  * Union type for all local shape types
  */
-export type PersistedShape = PersistedRect | PersistedCircle | PersistedLine;
+export type PersistedShape = PersistedRect | PersistedCircle | PersistedLine | PersistedText;
 
 /**
  * Style overrides for draft preview rendering

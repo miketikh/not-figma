@@ -3,7 +3,7 @@
  * Centralizes shape creation, conversion, and drawing logic
  */
 
-import { CanvasObject, RectangleObject, LineObject } from "@/types/canvas";
+import { CanvasObject, RectangleObject, LineObject, TextObject } from "@/types/canvas";
 import { generateObjectId } from "./objects";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import type {
@@ -12,6 +12,7 @@ import type {
   PersistedRect,
   PersistedCircle,
   PersistedLine,
+  PersistedText,
   ShapeFactory,
 } from "../_types/shapes";
 
@@ -534,6 +535,166 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
 };
 
 // ============================================================================
+// Text Factory
+// ============================================================================
+
+/**
+ * Text shape factory
+ * Handles creation, conversion, and validation of text objects
+ * MVP: Only content and fontSize are editable, other typography is hardcoded
+ */
+export const textFactory: ShapeFactory<PersistedText> = {
+  /**
+   * Create a text with default styling
+   * Optional overrides parameter allows customizing default properties
+   */
+  createDefault: (
+    { x, y, width, height }: DrawingBounds,
+    overrides?: Partial<PersistedText>
+  ): PersistedText => {
+    return {
+      id: generateObjectId(),
+      type: "text",
+      x,
+      y,
+      width: width || 100, // Default width
+      height: height || 30, // Default height (will auto-adjust)
+      content: "Text",
+      fontSize: 16,
+      fill: "#000000", // Black text
+      rotation: 0,
+      opacity: 1,
+      zIndex: 0,
+      lockedBy: null,
+      lockedAt: null,
+      lockTimeout: LOCK_TIMEOUT_MS,
+      ...overrides, // Apply any custom overrides
+    };
+  },
+
+  /**
+   * Create text from draft (not really used for click-to-place, but required by interface)
+   */
+  createFromDraft: (draft: DrawingBounds): PersistedText => {
+    return textFactory.createDefault(draft);
+  },
+
+  /**
+   * Convert local PersistedText to Firestore TextObject
+   */
+  toFirestore: (text: PersistedText, userId: string): TextObject => {
+    const now = Date.now();
+
+    return {
+      id: text.id,
+      type: "text",
+
+      // Ownership & Sync
+      createdBy: userId,
+      createdAt: now,
+      updatedBy: userId,
+      updatedAt: now,
+
+      // Locking
+      lockedBy: text.lockedBy,
+      lockedAt: text.lockedAt,
+      lockTimeout: text.lockTimeout,
+
+      // Transform
+      x: text.x,
+      y: text.y,
+      width: text.width,
+      height: text.height,
+      rotation: text.rotation,
+
+      // Text Content
+      content: text.content,
+      fontSize: text.fontSize,
+      
+      // Typography (hardcoded defaults for MVP)
+      fontFamily: "Arial",
+      fontWeight: "normal",
+      fontStyle: "normal",
+      textAlign: "left",
+      textDecoration: "none",
+      lineHeight: 1.2,
+
+      // Styling
+      fill: text.fill,
+      fillOpacity: text.opacity,
+      stroke: "#000000",
+      strokeWidth: 0, // No outline for MVP
+      strokeOpacity: 1,
+      strokeStyle: "solid",
+
+      // Layer
+      zIndex: text.zIndex,
+
+      // Interaction
+      locked: false,
+      visible: true,
+    };
+  },
+
+  /**
+   * Convert Firestore TextObject to local PersistedText
+   */
+  fromFirestore: (obj: CanvasObject): PersistedText | null => {
+    if (obj.type !== "text") return null;
+
+    const textObj = obj as TextObject;
+    return {
+      id: textObj.id,
+      type: "text",
+      x: textObj.x,
+      y: textObj.y,
+      width: textObj.width,
+      height: textObj.height,
+      content: textObj.content,
+      fontSize: textObj.fontSize,
+      fill: textObj.fill,
+      rotation: textObj.rotation || 0,
+      opacity: textObj.fillOpacity ?? 1, // backward compatibility
+      zIndex: textObj.zIndex ?? 0, // backward compatibility
+      lockedBy: textObj.lockedBy,
+      lockedAt: textObj.lockedAt,
+      lockTimeout: textObj.lockTimeout,
+    };
+  },
+
+  /**
+   * Validate text has content
+   */
+  validateSize: (text: PersistedText): boolean => {
+    // Allow empty text for MVP (user can edit in properties panel)
+    return true;
+    // Alternative: return text.content.length > 0;
+  },
+
+  /**
+   * Normalize drawing coordinates (not really used for text, but required by interface)
+   */
+  normalizeDrawing: (start: Point, current: Point): DrawingBounds => {
+    // Text is click-to-place, not drag-to-draw
+    // Just return the click position
+    return { 
+      x: start.x, 
+      y: start.y, 
+      width: 100, 
+      height: 30 
+    };
+  },
+
+  /**
+   * Get draft text data for preview rendering
+   * For MVP, text doesn't show draft preview (click-to-place)
+   */
+  getDraftData: (draft: DrawingBounds, styleOverrides = {}) => {
+    return null; // No draft preview for text tool
+  },
+};
+
+// ============================================================================
 // Shape Factory Registry
 // ============================================================================
 
@@ -545,6 +706,7 @@ export const shapeFactories: Record<string, ShapeFactory<any>> = {
   rectangle: rectangleFactory,
   circle: circleFactory,
   line: lineFactory,
+  text: textFactory,
 };
 
 /**

@@ -27,6 +27,12 @@ export interface DefaultShapeProperties {
     strokeWidth: number;
     opacity: number;
   };
+  text: {
+    content: string;
+    fontSize: number;
+    fill: string;
+    opacity: number;
+  };
 }
 
 interface CanvasStore {
@@ -80,6 +86,12 @@ const DEFAULT_SHAPE_PROPERTIES: DefaultShapeProperties = {
   line: {
     stroke: "#a855f7", // Purple
     strokeWidth: 2,
+    opacity: 1,
+  },
+  text: {
+    content: "Text",
+    fontSize: 16,
+    fill: "#000000", // Black
     opacity: 1,
   },
 };

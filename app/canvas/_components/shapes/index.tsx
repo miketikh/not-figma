@@ -3,10 +3,11 @@
  * Delegates rendering to the appropriate shape component based on object type
  */
 
-import type { PersistedRect, PersistedCircle, PersistedLine } from "../../_types/shapes";
+import type { PersistedRect, PersistedCircle, PersistedLine, PersistedText } from "../../_types/shapes";
 import RectangleShape from "./RectangleShape";
 import CircleShape from "./CircleShape";
 import LineShape from "./LineShape";
+import TextShape from "./TextShape";
 import type Konva from "konva";
 
 /**
@@ -48,6 +49,9 @@ export interface ShapeComponentProps {
   
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
+  
+  /** Optional callback for text editing (double-click) */
+  onEditRequest?: (textId: string) => void;
 }
 
 /**
@@ -65,6 +69,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
     onTransform,
     shapeRef,
     onRenewLock,
+    onEditRequest,
   } = props;
 
   // Route to the appropriate shape component based on type
@@ -111,6 +116,22 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           onTransform={onTransform}
           shapeRef={shapeRef as (node: Konva.Line | null) => void}
           onRenewLock={onRenewLock}
+        />
+      );
+
+    case "text":
+      return (
+        <TextShape
+          shape={object as PersistedText}
+          isSelected={isSelected}
+          isLocked={isLocked}
+          isSelectable={isSelectable}
+          zoom={zoom}
+          onSelect={onSelect}
+          onTransform={onTransform}
+          shapeRef={shapeRef as (node: Konva.Text | null) => void}
+          onRenewLock={onRenewLock}
+          onEditRequest={onEditRequest}
         />
       );
 

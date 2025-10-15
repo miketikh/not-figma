@@ -2,7 +2,7 @@
 
 import type { CanvasTool } from "@/types/canvas";
 import { useCanvasStore } from "../_store/canvas-store";
-import { MousePointer2, Hand, Square, Circle, Minus } from "lucide-react";
+import { MousePointer2, Hand, Square, Circle, Minus, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -25,6 +25,7 @@ const TOOLS: ToolButton[] = [
   { id: "rectangle", label: "Rectangle", icon: Square, shortcut: "R" },
   { id: "circle", label: "Circle", icon: Circle, shortcut: "C" },
   { id: "line", label: "Line", icon: Minus, shortcut: "L" },
+  { id: "text", label: "Text", icon: Type, shortcut: "T" },
 ];
 
 export default function Toolbar() {

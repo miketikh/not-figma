@@ -19,7 +19,7 @@ interface PropertiesPanelProps {
   activeTool: CanvasTool;
   defaultShapeProperties: DefaultShapeProperties;
   onUpdateDefaults: (
-    shapeType: "rectangle" | "circle" | "line",
+    shapeType: "rectangle" | "circle" | "line" | "text",
     updates: any
   ) => void;
 }
@@ -69,7 +69,8 @@ export default function PropertiesPanel({
             radiusX: 50, // Default radius for display
             radiusY: 50, // Default radius for display
           }
-        : {
+        : shapeType === "line"
+        ? {
             type: "line",
             stroke: defaultShapeProperties.line?.stroke ?? "#a855f7",
             strokeWidth: defaultShapeProperties.line?.strokeWidth ?? 2,
@@ -78,6 +79,17 @@ export default function PropertiesPanel({
             y: 0,
             x2: 100,
             y2: 100,
+          }
+        : {
+            type: "text",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 30,
+            content: defaultShapeProperties.text?.content ?? "Text",
+            fontSize: defaultShapeProperties.text?.fontSize ?? 16,
+            fill: defaultShapeProperties.text?.fill ?? "#000000",
+            opacity: defaultShapeProperties.text?.opacity ?? 1,
           };
 
     return (
