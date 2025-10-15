@@ -97,27 +97,40 @@ export default function TextShape({
   };
 
   /**
-   * Handle transform end to update size/rotation
+   * Handle transform (real-time during resize) to update width immediately
+   * This makes text reflow in real-time as the bounding box is resized
+   */
+  const handleTransform = (e: KonvaEventObject<Event>) => {
+    const node = e.target as Konva.Text;
+    const scaleX = node.scaleX();
+
+    // Calculate new width from scale
+    const newWidth = Math.max(50, node.width() * scaleX);
+
+    // Reset scale and apply to width
+    node.scaleX(1);
+    node.scaleY(1);
+
+    // Update the node's width directly for immediate reflow
+    node.width(newWidth);
+  };
+
+  /**
+   * Handle transform end to save final size/rotation to Firestore
    */
   const handleTransformEnd = (e: KonvaEventObject<Event>) => {
     const node = e.target as Konva.Text;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-    
-    // Reset scale and apply to width (height auto-adjusts for text)
-    node.scaleX(1);
-    node.scaleY(1);
-    
-    // Update shape with new dimensions
+
+    // Save final dimensions to Firestore
     onTransform({
       x: node.x(),
       y: node.y(),
-      width: Math.max(50, node.width() * scaleX), // Min width 50px
+      width: node.width(), // Already updated by handleTransform
       rotation: node.rotation(),
       // Note: fontSize could be scaled here in the future
       // fontSize: Math.max(8, shape.fontSize * scaleY),
     });
-    
+
     // Renew lock
     onRenewLock();
   };
@@ -144,11 +157,13 @@ export default function TextShape({
       strokeWidth={shape.strokeWidth}
       rotation={shape.rotation}
       opacity={shape.opacity ?? 1}
+      wrap="char" // Enable character-level wrapping (breaks mid-word at boundary)
       draggable={isSelectable}
       listening={isSelectable}
       onClick={handleClick}
       onDblClick={handleDblClick}
       onDragEnd={handleDragEnd}
+      onTransform={handleTransform} // Real-time width update during resize
       onTransformEnd={handleTransformEnd}
     />
   );
