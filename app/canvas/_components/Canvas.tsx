@@ -5,9 +5,11 @@ import { useCanvasStore } from "../_store/canvas-store";
 import { useAuth } from "@/hooks/useAuth";
 import Toolbar from "./Toolbar";
 import RemoteCursorKonva from "./RemoteCursorKonva";
+import ActiveTransformOverlay from "./ActiveTransformOverlay";
 import PropertiesPanel from "./PropertiesPanel";
 import { useObjects, PersistedRect } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
+import { useActiveTransforms } from "../_hooks/useActiveTransforms";
 import { LockManager, isLockedByOtherUser } from "../_lib/locks";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { Plus, Minus } from "lucide-react";
@@ -28,6 +30,7 @@ import ShapeComponent from "./shapes";
 import { isDrawingTool, isShapeTool } from "../_constants/tools";
 import type { PersistedShape, PersistedText } from "../_types/shapes";
 import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
+import { broadcastTransform, clearTransform } from "@/lib/firebase/realtime-transforms";
 
 interface CanvasProps {
   width?: number;
@@ -107,6 +110,9 @@ export default function Canvas({ width, height }: CanvasProps) {
     isReady,
   });
 
+  // Active transform tracking
+  const { activeTransformsWithUser } = useActiveTransforms();
+
   // Update Transformer when selection changes
   useEffect(() => {
     const transformer = transformerRef.current;
@@ -168,18 +174,18 @@ export default function Canvas({ width, height }: CanvasProps) {
     if (!obj) return;
 
     const updatedObj = { ...obj, ...updates } as PersistedShape;
-    
+
     // Optimistic update to local state (immediate)
     setObjects((prev) =>
       prev.map((o) => (o.id === objectId ? updatedObj : o))
     );
-    
+
     // Clear existing timer for this object
     const existingTimer = debounceTimers.current.get(objectId);
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-    
+
     // Debounce Firestore writes (300ms)
     const timer = setTimeout(() => {
       updateObjectInFirestore(updatedObj);
@@ -187,7 +193,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       lockManagerRef.current.renewLockForObject(objectId);
       debounceTimers.current.delete(objectId);
     }, 300);
-    
+
     debounceTimers.current.set(objectId, timer);
   }, [objects, updateObjectInFirestore]);
 
@@ -196,6 +202,65 @@ export default function Canvas({ width, height }: CanvasProps) {
     return () => {
       debounceTimers.current.forEach((timer) => clearTimeout(timer));
       debounceTimers.current.clear();
+    };
+  }, []);
+
+  // Throttled transform broadcasting (50ms per object)
+  const broadcastThrottleTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  const handleTransformMove = useCallback((objectId: string, updates: Partial<PersistedShape>) => {
+    // Only broadcast if user has this object locked
+    const obj = objects.find(o => o.id === objectId);
+    if (!obj || !user) return;
+    if (obj.lockedBy !== user.uid) return;
+
+    // Throttle broadcasts (50ms per object)
+    if (broadcastThrottleTimers.current.has(objectId)) return;
+
+    const timer = setTimeout(() => {
+      broadcastThrottleTimers.current.delete(objectId);
+    }, 50);
+
+    broadcastThrottleTimers.current.set(objectId, timer);
+
+    // Prepare transform data for broadcasting
+    const transformData: any = {
+      type: obj.type,
+      x: updates.x ?? obj.x,
+      y: updates.y ?? obj.y,
+    };
+
+    // Add shape-specific properties using type narrowing
+    if (obj.type === "rectangle" && "width" in obj) {
+      transformData.width = (updates as any).width ?? obj.width;
+      transformData.height = (updates as any).height ?? obj.height;
+      transformData.rotation = (updates as any).rotation ?? obj.rotation;
+    } else if (obj.type === "circle" && "radiusX" in obj) {
+      transformData.radiusX = (updates as any).radiusX ?? obj.radiusX;
+      transformData.radiusY = (updates as any).radiusY ?? obj.radiusY;
+    } else if (obj.type === "line" && "x2" in obj) {
+      transformData.x2 = (updates as any).x2 ?? obj.x2;
+      transformData.y2 = (updates as any).y2 ?? obj.y2;
+    } else if (obj.type === "text" && "width" in obj) {
+      transformData.width = (updates as any).width ?? obj.width;
+      transformData.height = (updates as any).height ?? obj.height;
+      transformData.rotation = (updates as any).rotation ?? obj.rotation;
+    }
+
+    // Broadcast to Realtime Database
+    broadcastTransform(objectId, user.uid, transformData);
+  }, [objects, user]);
+
+  const handleTransformEnd = useCallback((objectId: string) => {
+    // Clear the active transform broadcast
+    clearTransform(objectId);
+  }, []);
+
+  // Cleanup broadcast throttle timers on unmount
+  useEffect(() => {
+    return () => {
+      broadcastThrottleTimers.current.forEach((timer) => clearTimeout(timer));
+      broadcastThrottleTimers.current.clear();
     };
   }, []);
 
@@ -674,14 +739,21 @@ export default function Canvas({ width, height }: CanvasProps) {
                 }}
                 onTransform={(updates) => {
                   const updatedObj = { ...obj, ...updates };
-                  
+
                   // Optimistic update to local state
                   setObjects((prev) =>
                     prev.map((o) => (o.id === obj.id ? updatedObj : o))
                   );
-                  
+
                   // Persist to Firestore (will sync to other clients)
                   updateObjectInFirestore(updatedObj);
+
+                  // Clear active transform broadcast
+                  handleTransformEnd(obj.id);
+                }}
+                onTransformMove={(updates) => {
+                  // Broadcast transform in real-time
+                  handleTransformMove(obj.id, updates);
                 }}
                 shapeRef={(node) => {
                   if (node) {
@@ -697,7 +769,16 @@ export default function Canvas({ width, height }: CanvasProps) {
               />
             );
           })}
-          
+
+          {/* Active Transform Overlays - rendered after shapes but before Transformer */}
+          {Object.entries(activeTransformsWithUser).map(([objectId, activeTransform]) => (
+            <ActiveTransformOverlay
+              key={`active-transform-${objectId}`}
+              activeTransform={activeTransform}
+              zoom={viewport.zoom}
+            />
+          ))}
+
           {/* Transformer for selection handles */}
           {activeTool === "select" && !spacePressed && <Transformer ref={transformerRef} />}
           

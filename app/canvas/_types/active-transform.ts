@@ -71,10 +71,10 @@ export type ActiveTransform =
  * Active transform with user display information
  * Merged with presence data for rendering
  */
-export interface ActiveTransformWithUser extends ActiveTransform {
+export type ActiveTransformWithUser = ActiveTransform & {
   displayName: string;
   color: string;
-}
+};
 
 /**
  * Map of object IDs to their active transforms

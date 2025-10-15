@@ -36,30 +36,30 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 **Goal:** Add transform broadcasting from local user's shape interactions
 
 **Tasks:**
-- [ ] Modify RectangleShape component
-  - [ ] Add `onTransformMove` prop
-  - [ ] Add `onDragMove` handler to broadcast position during drag
-  - [ ] Add `onTransform` handler to broadcast size/rotation during transform
-  - [ ] Keep existing `onDragEnd` and `onTransformEnd` handlers
-- [ ] Modify CircleShape component
-  - [ ] Add `onTransformMove` prop
-  - [ ] Add `onDragMove` handler for position
-  - [ ] Add `onTransform` handler for radii changes
-- [ ] Modify LineShape component
-  - [ ] Add `onTransformMove` prop
-  - [ ] Add `onDragMove` handler for endpoint translation
-  - [ ] Add `onTransform` handler for endpoint scaling
-- [ ] Modify TextShape component (if exists)
-  - [ ] Add `onTransformMove` prop
-  - [ ] Add `onDragMove` handler
-  - [ ] Add `onTransform` handler
-- [ ] Update Canvas component
-  - [ ] Add throttled broadcast handler (50ms per object)
-  - [ ] Implement `handleTransformMove` callback
-  - [ ] Call `broadcastTransform` during active transforms
-  - [ ] Call `clearTransform` on transform end
-  - [ ] Only broadcast for objects user has locked
-- [ ] Test broadcasting with console logs
+- [x] Modify RectangleShape component
+  - [x] Add `onTransformMove` prop
+  - [x] Add `onDragMove` handler to broadcast position during drag
+  - [x] Add `onTransform` handler to broadcast size/rotation during transform
+  - [x] Keep existing `onDragEnd` and `onTransformEnd` handlers
+- [x] Modify CircleShape component
+  - [x] Add `onTransformMove` prop
+  - [x] Add `onDragMove` handler for position
+  - [x] Add `onTransform` handler for radii changes
+- [x] Modify LineShape component
+  - [x] Add `onTransformMove` prop
+  - [x] Add `onDragMove` handler for endpoint translation
+  - [x] Add `onTransform` handler for endpoint scaling
+- [x] Modify TextShape component (if exists)
+  - [x] Add `onTransformMove` prop
+  - [x] Add `onDragMove` handler
+  - [x] Add `onTransform` handler
+- [x] Update Canvas component
+  - [x] Add throttled broadcast handler (50ms per object)
+  - [x] Implement `handleTransformMove` callback
+  - [x] Call `broadcastTransform` during active transforms
+  - [x] Call `clearTransform` on transform end
+  - [x] Only broadcast for objects user has locked
+- [x] Test broadcasting with console logs
 
 **Files Modified:**
 - `app/canvas/_components/shapes/RectangleShape.tsx`
@@ -75,24 +75,26 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 **Goal:** Subscribe to and process remote user transforms
 
 **Tasks:**
-- [ ] Create useActiveTransforms hook
-  - [ ] Subscribe to `activeTransforms` in Realtime DB
-  - [ ] Filter out own user's transforms (by userId)
-  - [ ] Merge with presence data for user names and colors
-  - [ ] Return `Map<objectId, transformWithUserInfo>`
-  - [ ] Add stale transform cleanup (>5 seconds old)
-  - [ ] Handle subscription lifecycle
-  - [ ] Create `app/canvas/_hooks/useActiveTransforms.ts`
-- [ ] Integrate hook in Canvas component
-  - [ ] Import and call `useActiveTransforms`
-  - [ ] Pass active transforms to rendering layer
-- [ ] Test receiving transforms from multiple users
+- [x] Create useActiveTransforms hook
+  - [x] Subscribe to `activeTransforms` in Realtime DB
+  - [x] Filter out own user's transforms (by userId)
+  - [x] Merge with presence data for user names and colors
+  - [x] Return `Map<objectId, transformWithUserInfo>`
+  - [x] Add stale transform cleanup (>5 seconds old)
+  - [x] Handle subscription lifecycle
+  - [x] Create `app/canvas/_hooks/useActiveTransforms.ts`
+- [x] Integrate hook in Canvas component
+  - [x] Import and call `useActiveTransforms`
+  - [x] Pass active transforms to rendering layer
+- [x] Test receiving transforms from multiple users
 
 **Files Created:**
 - `app/canvas/_hooks/useActiveTransforms.ts` (NEW)
 
 **Files Modified:**
 - `app/canvas/_components/Canvas.tsx`
+- `app/canvas/_components/shapes/index.tsx`
+- `app/canvas/_types/active-transform.ts` (type fix)
 
 ---
 
@@ -101,23 +103,23 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 **Goal:** Render semi-transparent overlays for active transforms
 
 **Tasks:**
-- [ ] Create ActiveTransformOverlay component
-  - [ ] Accept `activeTransform` and `zoom` props
-  - [ ] Render Rectangle overlay with semi-transparent fill
-  - [ ] Render Circle/Ellipse overlay with semi-transparent fill
-  - [ ] Render Line overlay with semi-transparent stroke
-  - [ ] Render Text overlay with semi-transparent fill
-  - [ ] Add glow effect using user's color
-  - [ ] Add user name label above shape (Konva Text)
-  - [ ] Disable interaction (`listening={false}`)
-  - [ ] Create `app/canvas/_components/ActiveTransformOverlay.tsx`
-- [ ] Integrate overlays in Canvas rendering
-  - [ ] Map over active transforms
-  - [ ] Render `<ActiveTransformOverlay>` for each
-  - [ ] Position after base objects but before Transformer
-  - [ ] Ensure proper z-index layering
-- [ ] Test visual appearance with multiple users
-- [ ] Verify overlays don't interfere with interactions
+- [x] Create ActiveTransformOverlay component
+  - [x] Accept `activeTransform` and `zoom` props
+  - [x] Render Rectangle overlay with semi-transparent fill
+  - [x] Render Circle/Ellipse overlay with semi-transparent fill
+  - [x] Render Line overlay with semi-transparent stroke
+  - [x] Render Text overlay with semi-transparent fill
+  - [x] Add glow effect using user's color
+  - [x] Add user name label above shape (Konva Text)
+  - [x] Disable interaction (`listening={false}`)
+  - [x] Create `app/canvas/_components/ActiveTransformOverlay.tsx`
+- [x] Integrate overlays in Canvas rendering
+  - [x] Map over active transforms
+  - [x] Render `<ActiveTransformOverlay>` for each
+  - [x] Position after base objects but before Transformer
+  - [x] Ensure proper z-index layering
+- [x] Test visual appearance with multiple users
+- [x] Verify overlays don't interfere with interactions
 
 **Files Created:**
 - `app/canvas/_components/ActiveTransformOverlay.tsx` (NEW)
@@ -168,13 +170,13 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 - [x] PR #1: Core Infrastructure
 
 ### Phase 2: Broadcasting
-- [ ] PR #2: Broadcasting from Shape Components
+- [x] PR #2: Broadcasting from Shape Components
 
 ### Phase 3: Receiving
-- [ ] PR #3: Receiving Remote Transforms
+- [x] PR #3: Receiving Remote Transforms
 
 ### Phase 4: Rendering
-- [ ] PR #4: Rendering Active Transform Overlays
+- [x] PR #4: Rendering Active Transform Overlays
 
 ### Phase 5: Finalization
 - [ ] PR #5: Polish & Edge Cases

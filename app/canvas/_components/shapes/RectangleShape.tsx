@@ -11,28 +11,31 @@ import type { PersistedRect } from "../../_types/shapes";
 export interface RectangleShapeProps {
   /** The rectangle shape data */
   shape: PersistedRect;
-  
+
   /** Whether this shape is currently selected */
   isSelected: boolean;
-  
+
   /** Whether this shape is locked by another user */
   isLocked: boolean;
-  
+
   /** Whether this shape can be selected (depends on active tool) */
   isSelectable: boolean;
-  
+
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
-  
+
   /** Callback when shape is selected */
   onSelect: () => void;
-  
+
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: Partial<PersistedRect>) => void;
-  
+
+  /** Callback for real-time transform broadcasting during drag/resize/rotate */
+  onTransformMove?: (updates: Partial<PersistedRect>) => void;
+
   /** Ref callback for transformer attachment */
   shapeRef: (node: Konva.Rect | null) => void;
-  
+
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
 }
@@ -49,6 +52,7 @@ export default function RectangleShape({
   zoom,
   onSelect,
   onTransform,
+  onTransformMove,
   shapeRef,
   onRenewLock,
 }: RectangleShapeProps) {
@@ -66,19 +70,54 @@ export default function RectangleShape({
   };
 
   /**
+   * Handle drag move to broadcast position in real-time
+   */
+  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+    if (!onTransformMove) return;
+
+    const node = e.target as Konva.Rect;
+
+    // Broadcast position update in real-time
+    onTransformMove({
+      x: node.x(),
+      y: node.y(),
+    });
+  };
+
+  /**
    * Handle drag end to update position
    */
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
     const node = e.target as Konva.Rect;
-    
+
     // Update position
     onTransform({
       x: node.x(),
       y: node.y(),
     });
-    
+
     // Renew lock
     onRenewLock();
+  };
+
+  /**
+   * Handle transform to broadcast size/rotation in real-time
+   */
+  const handleTransform = (e: KonvaEventObject<Event>) => {
+    if (!onTransformMove) return;
+
+    const node = e.target as Konva.Rect;
+    const scaleX = node.scaleX();
+    const scaleY = node.scaleY();
+
+    // Broadcast transform update in real-time (don't reset scale yet)
+    onTransformMove({
+      x: node.x(),
+      y: node.y(),
+      width: Math.max(5, node.width() * scaleX),
+      height: Math.max(5, node.height() * scaleY),
+      rotation: node.rotation(),
+    });
   };
 
   /**
@@ -88,11 +127,11 @@ export default function RectangleShape({
     const node = e.target as Konva.Rect;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
-    
+
     // Reset scale and apply to width/height
     node.scaleX(1);
     node.scaleY(1);
-    
+
     // Update shape with new dimensions
     onTransform({
       x: node.x(),
@@ -101,7 +140,7 @@ export default function RectangleShape({
       height: Math.max(5, node.height() * scaleY),
       rotation: node.rotation(),
     });
-    
+
     // Renew lock
     onRenewLock();
   };
@@ -122,7 +161,9 @@ export default function RectangleShape({
       draggable={isSelectable}
       listening={isSelectable}
       onClick={handleClick}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
+      onTransform={handleTransform}
       onTransformEnd={handleTransformEnd}
     />
   );

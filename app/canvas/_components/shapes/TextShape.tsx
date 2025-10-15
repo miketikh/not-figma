@@ -11,31 +11,34 @@ import type { PersistedText } from "../../_types/shapes";
 export interface TextShapeProps {
   /** The text shape data */
   shape: PersistedText;
-  
+
   /** Whether this shape is currently selected */
   isSelected: boolean;
-  
+
   /** Whether this shape is locked by another user */
   isLocked: boolean;
-  
+
   /** Whether this shape can be selected (depends on active tool) */
   isSelectable: boolean;
-  
+
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
-  
+
   /** Callback when shape is selected */
   onSelect: () => void;
-  
+
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: Partial<PersistedText>) => void;
-  
+
+  /** Callback for real-time transform broadcasting during drag/resize/rotate */
+  onTransformMove?: (updates: Partial<PersistedText>) => void;
+
   /** Ref callback for transformer attachment */
   shapeRef: (node: Konva.Text | null) => void;
-  
+
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
-  
+
   /** Callback when double-clicked to edit */
   onEditRequest?: (textId: string) => void;
 }
@@ -53,6 +56,7 @@ export default function TextShape({
   zoom,
   onSelect,
   onTransform,
+  onTransformMove,
   shapeRef,
   onRenewLock,
   onEditRequest,
@@ -81,17 +85,32 @@ export default function TextShape({
   };
 
   /**
+   * Handle drag move to broadcast position in real-time
+   */
+  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+    if (!onTransformMove) return;
+
+    const node = e.target as Konva.Text;
+
+    // Broadcast position update in real-time
+    onTransformMove({
+      x: node.x(),
+      y: node.y(),
+    });
+  };
+
+  /**
    * Handle drag end to update position
    */
   const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
     const node = e.target as Konva.Text;
-    
+
     // Update position
     onTransform({
       x: node.x(),
       y: node.y(),
     });
-    
+
     // Renew lock
     onRenewLock();
   };
@@ -99,6 +118,7 @@ export default function TextShape({
   /**
    * Handle transform (real-time during resize) to update width immediately
    * This makes text reflow in real-time as the bounding box is resized
+   * Also broadcasts the transform for real-time collaboration
    */
   const handleTransform = (e: KonvaEventObject<Event>) => {
     const node = e.target as Konva.Text;
@@ -113,6 +133,16 @@ export default function TextShape({
 
     // Update the node's width directly for immediate reflow
     node.width(newWidth);
+
+    // Broadcast transform update in real-time
+    if (onTransformMove) {
+      onTransformMove({
+        x: node.x(),
+        y: node.y(),
+        width: newWidth,
+        rotation: node.rotation(),
+      });
+    }
   };
 
   /**
@@ -162,8 +192,9 @@ export default function TextShape({
       listening={isSelectable}
       onClick={handleClick}
       onDblClick={handleDblClick}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
-      onTransform={handleTransform} // Real-time width update during resize
+      onTransform={handleTransform} // Real-time width update during resize + broadcast
       onTransformEnd={handleTransformEnd}
     />
   );

@@ -43,7 +43,10 @@ export interface ShapeComponentProps {
   
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: any) => void;
-  
+
+  /** Callback for real-time transform broadcasting during drag/resize/rotate */
+  onTransformMove?: (updates: any) => void;
+
   /** Ref callback for transformer attachment */
   shapeRef: (node: any) => void;
   
@@ -67,6 +70,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
     zoom,
     onSelect,
     onTransform,
+    onTransformMove,
     shapeRef,
     onRenewLock,
     onEditRequest,
@@ -84,6 +88,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           zoom={zoom}
           onSelect={onSelect}
           onTransform={onTransform}
+          onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Rect | null) => void}
           onRenewLock={onRenewLock}
         />
@@ -99,6 +104,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           zoom={zoom}
           onSelect={onSelect}
           onTransform={onTransform}
+          onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Ellipse | null) => void}
           onRenewLock={onRenewLock}
         />
@@ -114,6 +120,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           zoom={zoom}
           onSelect={onSelect}
           onTransform={onTransform}
+          onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Line | null) => void}
           onRenewLock={onRenewLock}
         />
@@ -129,6 +136,7 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           zoom={zoom}
           onSelect={onSelect}
           onTransform={onTransform}
+          onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Text | null) => void}
           onRenewLock={onRenewLock}
           onEditRequest={onEditRequest}
