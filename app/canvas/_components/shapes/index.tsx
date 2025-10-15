@@ -9,6 +9,7 @@ import CircleShape from "./CircleShape";
 import LineShape from "./LineShape";
 import TextShape from "./TextShape";
 import type Konva from "konva";
+import { KonvaEventObject } from "konva/lib/Node";
 
 /**
  * Base shape interface that all local shapes must have
@@ -45,7 +46,7 @@ export interface ShapeComponentProps {
   lockingUserName?: string;
 
   /** Callback when shape is selected */
-  onSelect: () => void;
+  onSelect: (e: KonvaEventObject<MouseEvent>) => void;
 
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: any) => void;

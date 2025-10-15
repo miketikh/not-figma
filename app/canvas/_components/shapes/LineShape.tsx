@@ -32,7 +32,7 @@ export interface LineShapeProps {
   lockingUserName?: string;
 
   /** Callback when shape is selected */
-  onSelect: () => void;
+  onSelect: (e: KonvaEventObject<MouseEvent>) => void;
 
   /** Callback when shape is transformed (drag/resize) */
   onTransform: (updates: Partial<PersistedLine>) => void;
@@ -78,7 +78,7 @@ export default function LineShape({
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     if (!isSelectable) return;
     e.cancelBubble = true;
-    onSelect();
+    onSelect(e);
   };
 
   /**

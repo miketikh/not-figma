@@ -32,7 +32,7 @@ export interface RectangleShapeProps {
   lockingUserName?: string;
 
   /** Callback when shape is selected */
-  onSelect: () => void;
+  onSelect: (e: KonvaEventObject<MouseEvent>) => void;
 
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: Partial<PersistedRect>) => void;
@@ -78,7 +78,7 @@ export default function RectangleShape({
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     if (!isSelectable) return;
     e.cancelBubble = true;
-    onSelect();
+    onSelect(e);
   };
 
   /**

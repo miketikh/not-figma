@@ -17,6 +17,7 @@ import {
 } from "@/lib/firebase/realtime";
 import { CursorMap } from "@/types/canvas";
 import { UserPresence } from "@/types/user";
+import { screenToCanvasCoordinates } from "../_lib/coordinates";
 
 interface UseCursorsProps {
   stageRef: React.RefObject<Konva.Stage | null>;
@@ -92,9 +93,8 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
       const pointerX = e.clientX - containerRect.left;
       const pointerY = e.clientY - containerRect.top;
 
-      // Convert screen coordinates to canvas coordinates
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const canvasPoint = transform.point({ x: pointerX, y: pointerY });
+      const canvasPoint = screenToCanvasCoordinates(stage, { x: pointerX, y: pointerY });
+      if (!canvasPoint) return;
 
       // Update cursor position in Realtime Database
       updateCursorPosition(user.uid, canvasPoint.x, canvasPoint.y);

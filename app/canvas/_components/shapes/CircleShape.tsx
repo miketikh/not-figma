@@ -32,7 +32,7 @@ export interface CircleShapeProps {
   lockingUserName?: string;
 
   /** Callback when shape is selected */
-  onSelect: () => void;
+  onSelect: (e: KonvaEventObject<MouseEvent>) => void;
 
   /** Callback when shape is transformed (drag/resize) */
   onTransform: (updates: Partial<PersistedCircle>) => void;
@@ -78,7 +78,7 @@ export default function CircleShape({
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     if (!isSelectable) return;
     e.cancelBubble = true;
-    onSelect();
+    onSelect(e);
   };
 
   /**

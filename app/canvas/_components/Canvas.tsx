@@ -32,6 +32,8 @@ import { isDrawingTool, isShapeTool } from "../_constants/tools";
 import type { PersistedShape, PersistedText } from "../_types/shapes";
 import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
 import { broadcastTransform, clearTransform } from "@/lib/firebase/realtime-transforms";
+import { screenToCanvasCoordinates } from "../_lib/coordinates";
+import { getIntersectingObjects } from "../_lib/intersection";
 
 interface CanvasProps {
   width?: number;
@@ -60,15 +62,24 @@ export default function Canvas({ width, height }: CanvasProps) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [draftRect, setDraftRect] = useState<DraftRect | null>(null);
   const drawStartRef = useRef({ x: 0, y: 0 });
-  
-  
+
+  // Selection rectangle state (for drag-to-select)
+  const [selectionRect, setSelectionRect] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const selectionStartRef = useRef({ x: 0, y: 0 });
+
   // Persisted shapes
   const [objects, setObjects] = useState<PersistedShape[]>([]);
   
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const transformerRef = useRef<Konva.Transformer>(null);
-  const shapeRefs = useRef<Map<string, Konva.Rect>>(new Map());
+  const shapeRefs = useRef<Map<string, Konva.Shape>>(new Map());
   
   // Lock management with expiration callback
   const lockManagerRef = useRef<LockManager>(
@@ -124,7 +135,7 @@ export default function Canvas({ width, height }: CanvasProps) {
 
     const selectedNodes = selectedIds
       .map((id) => shapeRefs.current.get(id))
-      .filter((node): node is Konva.Rect => node !== undefined);
+      .filter((node): node is Konva.Shape => node !== undefined);
 
     transformer.nodes(selectedNodes);
     transformer.getLayer()?.batchDraw();
@@ -308,7 +319,17 @@ export default function Canvas({ width, height }: CanvasProps) {
         setSpacePressed(true);
         e.preventDefault(); // Prevent page scroll
       }
-      
+
+      // Escape: Deselect all and cancel selection rectangle
+      if (e.code === "Escape") {
+        setSelectedIds([]);
+        if (isSelecting) {
+          setIsSelecting(false);
+          setSelectionRect(null);
+        }
+        e.preventDefault();
+      }
+
       // Delete selected shapes
       if ((e.code === "Delete" || e.code === "Backspace") && selectedIds.length > 0) {
         // Delete from Firestore
@@ -432,10 +453,30 @@ export default function Canvas({ width, height }: CanvasProps) {
     const stage = stageRef.current;
     if (!stage) return;
 
-    // Click on empty area to deselect
+    // Click on empty area to start selection rectangle or deselect
     const clickedOnEmpty = e.target === stage;
     if (clickedOnEmpty && activeTool === "select") {
-      setSelectedIds([]);
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
+
+      // If shift key is pressed, keep existing selection and start additive selection
+      // If no shift, clear selection
+      if (!e.evt.shiftKey) {
+        setSelectedIds([]);
+      }
+
+      // Start selection rectangle
+      setIsSelecting(true);
+      selectionStartRef.current = { x: canvasPoint.x, y: canvasPoint.y };
+      setSelectionRect({
+        x: canvasPoint.x,
+        y: canvasPoint.y,
+        width: 0,
+        height: 0,
+      });
     }
 
     // If stage is draggable (pan tool or space), Konva handles the panning
@@ -450,9 +491,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
-      // Convert pointer to canvas coordinates (account for stage transform)
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const canvasPoint = transform.point(pointer);
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
 
       setIsDrawing(true);
       drawStartRef.current = { x: canvasPoint.x, y: canvasPoint.y };
@@ -469,9 +509,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
-      // Convert pointer to canvas coordinates
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const canvasPoint = transform.point(pointer);
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
 
       // Get the text factory
       const factory = getShapeFactory("text");
@@ -499,19 +538,41 @@ export default function Canvas({ width, height }: CanvasProps) {
     }
   };
 
-  // Mouse move handler for drawing
+  // Mouse move handler for drawing and selection
   const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
     const stage = stageRef.current;
     if (!stage) return;
+
+    // Update selection rectangle while selecting
+    if (isSelecting) {
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
+
+      // Calculate rectangle from start to current position
+      const startX = selectionStartRef.current.x;
+      const startY = selectionStartRef.current.y;
+      const endX = canvasPoint.x;
+      const endY = canvasPoint.y;
+
+      // Normalize rectangle to handle negative drag directions (all 4 quadrants)
+      const x = Math.min(startX, endX);
+      const y = Math.min(startY, endY);
+      const width = Math.abs(endX - startX);
+      const height = Math.abs(endY - startY);
+
+      setSelectionRect({ x, y, width, height });
+    }
 
     // Update draft shape while drawing
     if (isDrawing && draftRect && activeTool) {
       const pointer = stage.getPointerPosition();
       if (!pointer) return;
 
-      // Convert pointer to canvas coordinates
-      const transform = stage.getAbsoluteTransform().copy().invert();
-      const canvasPoint = transform.point(pointer);
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
 
       // Get factory for current tool
       const factory = getShapeFactory(activeTool);
@@ -528,7 +589,36 @@ export default function Canvas({ width, height }: CanvasProps) {
   };
 
   // Mouse up handler
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: KonvaEventObject<MouseEvent>) => {
+    // Finish selection rectangle
+    if (isSelecting && selectionRect) {
+      const shiftPressed = e.evt.shiftKey;
+
+      // Find all objects intersecting the selection rectangle
+      const intersectingIds = getIntersectingObjects(
+        selectionRect,
+        objects,
+        user?.uid || null
+      );
+
+      // Update selection based on shift key
+      if (shiftPressed) {
+        // Add to existing selection (avoid duplicates)
+        setSelectedIds((prev) => {
+          const newIds = intersectingIds.filter((id) => !prev.includes(id));
+          return [...prev, ...newIds];
+        });
+      } else {
+        // Replace selection
+        setSelectedIds(intersectingIds);
+      }
+
+      // Clear selection rectangle
+      setIsSelecting(false);
+      setSelectionRect(null);
+      return;
+    }
+
     // Finish drawing shape
     if (isDrawing && draftRect && activeTool) {
       setIsDrawing(false);
@@ -541,7 +631,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       }
 
       // Get default properties for this shape type
-      const defaults = isShapeTool(activeTool) 
+      const defaults = isShapeTool(activeTool)
         ? defaultShapeProperties[activeTool]
         : {};
 
@@ -553,16 +643,16 @@ export default function Canvas({ width, height }: CanvasProps) {
         setDraftRect(null);
         return;
       }
-      
+
       // Save to Firestore (will automatically update local state via subscription)
       saveObject(newShape);
       setDraftRect(null);
-      
+
       // If in select tool, select the new shape
       if (activeTool === "select") {
         setSelectedIds([newShape.id]);
       }
-      
+
       return;
     }
 
@@ -745,8 +835,24 @@ export default function Canvas({ width, height }: CanvasProps) {
                 zoom={viewport.zoom}
                 lockingUserColor={lockingUser?.color}
                 lockingUserName={lockingUser?.displayName || lockingUser?.email}
-                onSelect={() => {
-                  setSelectedIds([obj.id]);
+                onSelect={(e) => {
+                  const shiftPressed = e.evt.shiftKey;
+
+                  if (shiftPressed) {
+                    // Shift-click: toggle object in/out of selection
+                    setSelectedIds((prev) => {
+                      if (prev.includes(obj.id)) {
+                        // Remove from selection
+                        return prev.filter((id) => id !== obj.id);
+                      } else {
+                        // Add to selection
+                        return [...prev, obj.id];
+                      }
+                    });
+                  } else {
+                    // Normal click: replace selection
+                    setSelectedIds([obj.id]);
+                  }
                 }}
                 onTransform={(updates) => {
                   const updatedObj = { ...obj, ...updates };
@@ -780,6 +886,21 @@ export default function Canvas({ width, height }: CanvasProps) {
               />
             );
           })}
+
+          {/* Selection Rectangle Preview */}
+          {selectionRect && (
+            <Rect
+              x={selectionRect.x}
+              y={selectionRect.y}
+              width={selectionRect.width}
+              height={selectionRect.height}
+              stroke="#3b82f6"
+              strokeWidth={1 / viewport.zoom}
+              dash={[4 / viewport.zoom, 4 / viewport.zoom]}
+              fill="rgba(59, 130, 246, 0.1)"
+              listening={false}
+            />
+          )}
 
           {/* Active Transform Overlays - rendered after shapes but before Transformer */}
           {Object.entries(activeTransformsWithUser).map(([objectId, activeTransform]) => (

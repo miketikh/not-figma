@@ -32,7 +32,7 @@ export interface TextShapeProps {
   lockingUserName?: string;
 
   /** Callback when shape is selected */
-  onSelect: () => void;
+  onSelect: (e: KonvaEventObject<MouseEvent>) => void;
 
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: Partial<PersistedText>) => void;
@@ -82,7 +82,7 @@ export default function TextShape({
   const handleClick = (e: KonvaEventObject<MouseEvent>) => {
     if (!isSelectable) return;
     e.cancelBubble = true;
-    onSelect();
+    onSelect(e);
   };
 
   /**
