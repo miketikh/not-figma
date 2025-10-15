@@ -1,9 +1,10 @@
 "use client";
 
-import { Line } from "react-konva";
+import { Group, Line } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedLine } from "../../_types/shapes";
+import LockedByBadge from "../LockedByBadge";
 
 /**
  * Props for LineShape component
@@ -23,6 +24,12 @@ export interface LineShapeProps {
 
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
+
+  /** Color of the user who locked this object (if locked) */
+  lockingUserColor?: string;
+
+  /** Display name of the user who locked this object (if locked) */
+  lockingUserName?: string;
 
   /** Callback when shape is selected */
   onSelect: () => void;
@@ -50,6 +57,8 @@ export default function LineShape({
   isLocked,
   isSelectable,
   zoom,
+  lockingUserColor,
+  lockingUserName,
   onSelect,
   onTransform,
   onTransformMove,
@@ -57,7 +66,10 @@ export default function LineShape({
   onRenewLock,
 }: LineShapeProps) {
   // Determine stroke color based on lock status
-  const strokeColor = isLocked ? "#ef4444" : shape.stroke;
+  // Use locking user's color if available, otherwise fallback to red
+  const strokeColor = isLocked
+    ? (lockingUserColor || "#ef4444")
+    : shape.stroke;
   const strokeWidth = shape.strokeWidth / zoom;
 
   /**
@@ -182,23 +194,40 @@ export default function LineShape({
     onRenewLock();
   };
 
+  // Calculate badge position at the end of the line
+  const badgeX = Math.max(shape.x, shape.x2);
+  const badgeY = Math.min(shape.y, shape.y2);
+
   return (
-    <Line
-      ref={shapeRef}
-      points={[shape.x, shape.y, shape.x2, shape.y2]}
-      stroke={strokeColor}
-      strokeWidth={strokeWidth}
-      opacity={shape.opacity ?? 1}
-      draggable={isSelectable}
-      listening={isSelectable}
-      onClick={handleClick}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onTransform={handleTransform}
-      onTransformEnd={handleTransformEnd}
-      // Increase hit detection area for thin lines
-      hitStrokeWidth={Math.max(strokeWidth * zoom, 10)}
-    />
+    <Group>
+      <Line
+        ref={shapeRef}
+        points={[shape.x, shape.y, shape.x2, shape.y2]}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        opacity={shape.opacity ?? 1}
+        draggable={isSelectable}
+        listening={isSelectable}
+        onClick={handleClick}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
+        // Increase hit detection area for thin lines
+        hitStrokeWidth={Math.max(strokeWidth * zoom, 10)}
+      />
+
+      {/* Show locked-by badge when locked by another user */}
+      {isLocked && lockingUserColor && lockingUserName && (
+        <LockedByBadge
+          x={badgeX}
+          y={badgeY}
+          displayName={lockingUserName}
+          color={lockingUserColor}
+          zoom={zoom}
+        />
+      )}
+    </Group>
   );
 }
 

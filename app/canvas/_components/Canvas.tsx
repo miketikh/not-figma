@@ -10,6 +10,7 @@ import PropertiesPanel from "./PropertiesPanel";
 import { useObjects, PersistedRect } from "../_hooks/useObjects";
 import { useCursors } from "../_hooks/useCursors";
 import { useActiveTransforms } from "../_hooks/useActiveTransforms";
+import { usePresence } from "../_hooks/usePresence";
 import { LockManager, isLockedByOtherUser } from "../_lib/locks";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import { Plus, Minus } from "lucide-react";
@@ -112,6 +113,9 @@ export default function Canvas({ width, height }: CanvasProps) {
 
   // Active transform tracking
   const { activeTransformsWithUser } = useActiveTransforms();
+
+  // Presence tracking (for getting locking user info)
+  const { onlineUsers } = usePresence();
 
   // Update Transformer when selection changes
   useEffect(() => {
@@ -725,7 +729,12 @@ export default function Canvas({ width, height }: CanvasProps) {
             );
             const isSelectable = activeTool === "select" && !lockedByOther && !spacePressed;
             const isSelected = selectedIds.includes(obj.id);
-            
+
+            // Get locking user info from presence
+            const lockingUser = lockedByOther && obj.lockedBy
+              ? onlineUsers.find(u => u.userId === obj.lockedBy)
+              : undefined;
+
             return (
               <ShapeComponent
                 key={obj.id}
@@ -734,6 +743,8 @@ export default function Canvas({ width, height }: CanvasProps) {
                 isLocked={lockedByOther}
                 isSelectable={isSelectable}
                 zoom={viewport.zoom}
+                lockingUserColor={lockingUser?.color}
+                lockingUserName={lockingUser?.displayName || lockingUser?.email}
                 onSelect={() => {
                   setSelectedIds([obj.id]);
                 }}

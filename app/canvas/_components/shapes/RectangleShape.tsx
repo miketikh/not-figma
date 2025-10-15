@@ -1,9 +1,10 @@
 "use client";
 
-import { Rect } from "react-konva";
+import { Group, Rect } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedRect } from "../../_types/shapes";
+import LockedByBadge from "../LockedByBadge";
 
 /**
  * Props for RectangleShape component
@@ -23,6 +24,12 @@ export interface RectangleShapeProps {
 
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
+
+  /** Color of the user who locked this object (if locked) */
+  lockingUserColor?: string;
+
+  /** Display name of the user who locked this object (if locked) */
+  lockingUserName?: string;
 
   /** Callback when shape is selected */
   onSelect: () => void;
@@ -50,6 +57,8 @@ export default function RectangleShape({
   isLocked,
   isSelectable,
   zoom,
+  lockingUserColor,
+  lockingUserName,
   onSelect,
   onTransform,
   onTransformMove,
@@ -57,7 +66,10 @@ export default function RectangleShape({
   onRenewLock,
 }: RectangleShapeProps) {
   // Determine stroke color based on lock status
-  const strokeColor = isLocked ? "#ef4444" : shape.stroke;
+  // Use locking user's color if available, otherwise fallback to red
+  const strokeColor = isLocked
+    ? (lockingUserColor || "#ef4444")
+    : shape.stroke;
   const strokeWidth = shape.strokeWidth / zoom;
 
   /**
@@ -146,26 +158,39 @@ export default function RectangleShape({
   };
 
   return (
-    <Rect
-      ref={shapeRef}
-      x={shape.x}
-      y={shape.y}
-      width={shape.width}
-      height={shape.height}
-      fill={shape.fill}
-      stroke={strokeColor}
-      strokeWidth={strokeWidth}
-      rotation={shape.rotation}
-      opacity={shape.opacity ?? 1}
-      cornerRadius={shape.cornerRadius || 0}
-      draggable={isSelectable}
-      listening={isSelectable}
-      onClick={handleClick}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onTransform={handleTransform}
-      onTransformEnd={handleTransformEnd}
-    />
+    <Group>
+      <Rect
+        ref={shapeRef}
+        x={shape.x}
+        y={shape.y}
+        width={shape.width}
+        height={shape.height}
+        fill={shape.fill}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        rotation={shape.rotation}
+        opacity={shape.opacity ?? 1}
+        cornerRadius={shape.cornerRadius || 0}
+        draggable={isSelectable}
+        listening={isSelectable}
+        onClick={handleClick}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
+      />
+
+      {/* Show locked-by badge when locked by another user */}
+      {isLocked && lockingUserColor && lockingUserName && (
+        <LockedByBadge
+          x={shape.x + shape.width}
+          y={shape.y}
+          displayName={lockingUserName}
+          color={lockingUserColor}
+          zoom={zoom}
+        />
+      )}
+    </Group>
   );
 }
 

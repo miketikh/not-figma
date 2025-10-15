@@ -1,9 +1,10 @@
 "use client";
 
-import { Text } from "react-konva";
+import { Group, Text } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedText } from "../../_types/shapes";
+import LockedByBadge from "../LockedByBadge";
 
 /**
  * Props for TextShape component
@@ -23,6 +24,12 @@ export interface TextShapeProps {
 
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
+
+  /** Color of the user who locked this object (if locked) */
+  lockingUserColor?: string;
+
+  /** Display name of the user who locked this object (if locked) */
+  lockingUserName?: string;
 
   /** Callback when shape is selected */
   onSelect: () => void;
@@ -54,6 +61,8 @@ export default function TextShape({
   isLocked,
   isSelectable,
   zoom,
+  lockingUserColor,
+  lockingUserName,
   onSelect,
   onTransform,
   onTransformMove,
@@ -62,7 +71,10 @@ export default function TextShape({
   onEditRequest,
 }: TextShapeProps) {
   // Determine fill color based on lock status
-  const fillColor = isLocked ? "#ef4444" : shape.fill;
+  // Use locking user's color if available, otherwise fallback to red
+  const fillColor = isLocked
+    ? (lockingUserColor || "#ef4444")
+    : shape.fill;
 
   /**
    * Handle click to select
@@ -169,34 +181,47 @@ export default function TextShape({
   const textDecoration = shape.textDecoration !== "none" ? shape.textDecoration : undefined;
 
   return (
-    <Text
-      ref={shapeRef}
-      x={shape.x}
-      y={shape.y}
-      width={shape.width}
-      text={shape.content}
-      fontSize={shape.fontSize}
-      fontFamily={shape.fontFamily}
-      fontStyle={shape.fontStyle === "italic" ? "italic" : "normal"}
-      fontVariant={shape.fontWeight}
-      align={shape.textAlign}
-      textDecoration={textDecoration}
-      lineHeight={shape.lineHeight}
-      fill={fillColor}
-      stroke={shape.stroke}
-      strokeWidth={shape.strokeWidth}
-      rotation={shape.rotation}
-      opacity={shape.opacity ?? 1}
-      wrap="char" // Enable character-level wrapping (breaks mid-word at boundary)
-      draggable={isSelectable}
-      listening={isSelectable}
-      onClick={handleClick}
-      onDblClick={handleDblClick}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onTransform={handleTransform} // Real-time width update during resize + broadcast
-      onTransformEnd={handleTransformEnd}
-    />
+    <Group>
+      <Text
+        ref={shapeRef}
+        x={shape.x}
+        y={shape.y}
+        width={shape.width}
+        text={shape.content}
+        fontSize={shape.fontSize}
+        fontFamily={shape.fontFamily}
+        fontStyle={shape.fontStyle === "italic" ? "italic" : "normal"}
+        fontVariant={shape.fontWeight}
+        align={shape.textAlign}
+        textDecoration={textDecoration}
+        lineHeight={shape.lineHeight}
+        fill={fillColor}
+        stroke={shape.stroke}
+        strokeWidth={shape.strokeWidth}
+        rotation={shape.rotation}
+        opacity={shape.opacity ?? 1}
+        wrap="char" // Enable character-level wrapping (breaks mid-word at boundary)
+        draggable={isSelectable}
+        listening={isSelectable}
+        onClick={handleClick}
+        onDblClick={handleDblClick}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransform} // Real-time width update during resize + broadcast
+        onTransformEnd={handleTransformEnd}
+      />
+
+      {/* Show locked-by badge when locked by another user */}
+      {isLocked && lockingUserColor && lockingUserName && (
+        <LockedByBadge
+          x={shape.x + shape.width}
+          y={shape.y}
+          displayName={lockingUserName}
+          color={lockingUserColor}
+          zoom={zoom}
+        />
+      )}
+    </Group>
   );
 }
 

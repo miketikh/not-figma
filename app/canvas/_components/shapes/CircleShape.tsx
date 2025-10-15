@@ -1,9 +1,10 @@
 "use client";
 
-import { Ellipse } from "react-konva";
+import { Group, Ellipse } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedCircle } from "../../_types/shapes";
+import LockedByBadge from "../LockedByBadge";
 
 /**
  * Props for CircleShape component
@@ -23,6 +24,12 @@ export interface CircleShapeProps {
 
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
+
+  /** Color of the user who locked this object (if locked) */
+  lockingUserColor?: string;
+
+  /** Display name of the user who locked this object (if locked) */
+  lockingUserName?: string;
 
   /** Callback when shape is selected */
   onSelect: () => void;
@@ -50,6 +57,8 @@ export default function CircleShape({
   isLocked,
   isSelectable,
   zoom,
+  lockingUserColor,
+  lockingUserName,
   onSelect,
   onTransform,
   onTransformMove,
@@ -57,7 +66,10 @@ export default function CircleShape({
   onRenewLock,
 }: CircleShapeProps) {
   // Determine stroke color based on lock status
-  const strokeColor = isLocked ? "#ef4444" : shape.stroke;
+  // Use locking user's color if available, otherwise fallback to red
+  const strokeColor = isLocked
+    ? (lockingUserColor || "#ef4444")
+    : shape.stroke;
   const strokeWidth = shape.strokeWidth / zoom;
 
   /**
@@ -144,24 +156,37 @@ export default function CircleShape({
   };
 
   return (
-    <Ellipse
-      ref={shapeRef}
-      x={shape.x}
-      y={shape.y}
-      radiusX={shape.radiusX}
-      radiusY={shape.radiusY}
-      fill={shape.fill}
-      stroke={strokeColor}
-      strokeWidth={strokeWidth}
-      opacity={shape.opacity ?? 1}
-      draggable={isSelectable}
-      listening={isSelectable}
-      onClick={handleClick}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onTransform={handleTransform}
-      onTransformEnd={handleTransformEnd}
-    />
+    <Group>
+      <Ellipse
+        ref={shapeRef}
+        x={shape.x}
+        y={shape.y}
+        radiusX={shape.radiusX}
+        radiusY={shape.radiusY}
+        fill={shape.fill}
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        opacity={shape.opacity ?? 1}
+        draggable={isSelectable}
+        listening={isSelectable}
+        onClick={handleClick}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onTransform={handleTransform}
+        onTransformEnd={handleTransformEnd}
+      />
+
+      {/* Show locked-by badge when locked by another user */}
+      {isLocked && lockingUserColor && lockingUserName && (
+        <LockedByBadge
+          x={shape.x + shape.radiusX}
+          y={shape.y - shape.radiusY}
+          displayName={lockingUserName}
+          color={lockingUserColor}
+          zoom={zoom}
+        />
+      )}
+    </Group>
   );
 }
 

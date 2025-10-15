@@ -25,22 +25,28 @@ interface BaseShape {
 export interface ShapeComponentProps {
   /** The shape object to render (local representation) */
   object: BaseShape;
-  
+
   /** Whether this shape is currently selected */
   isSelected: boolean;
-  
+
   /** Whether this shape is locked by another user */
   isLocked: boolean;
-  
+
   /** Whether this shape can be selected (depends on active tool) */
   isSelectable: boolean;
-  
+
   /** Viewport zoom level (for stroke scaling) */
   zoom: number;
-  
+
+  /** Color of the user who locked this object (if locked) */
+  lockingUserColor?: string;
+
+  /** Display name of the user who locked this object (if locked) */
+  lockingUserName?: string;
+
   /** Callback when shape is selected */
   onSelect: () => void;
-  
+
   /** Callback when shape is transformed (drag/resize/rotate) */
   onTransform: (updates: any) => void;
 
@@ -49,10 +55,10 @@ export interface ShapeComponentProps {
 
   /** Ref callback for transformer attachment */
   shapeRef: (node: any) => void;
-  
+
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
-  
+
   /** Optional callback for text editing (double-click) */
   onEditRequest?: (textId: string) => void;
 }
@@ -68,6 +74,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
     isLocked,
     isSelectable,
     zoom,
+    lockingUserColor,
+    lockingUserName,
     onSelect,
     onTransform,
     onTransformMove,
@@ -86,6 +94,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           isLocked={isLocked}
           isSelectable={isSelectable}
           zoom={zoom}
+          lockingUserColor={lockingUserColor}
+          lockingUserName={lockingUserName}
           onSelect={onSelect}
           onTransform={onTransform}
           onTransformMove={onTransformMove}
@@ -102,6 +112,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           isLocked={isLocked}
           isSelectable={isSelectable}
           zoom={zoom}
+          lockingUserColor={lockingUserColor}
+          lockingUserName={lockingUserName}
           onSelect={onSelect}
           onTransform={onTransform}
           onTransformMove={onTransformMove}
@@ -118,6 +130,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           isLocked={isLocked}
           isSelectable={isSelectable}
           zoom={zoom}
+          lockingUserColor={lockingUserColor}
+          lockingUserName={lockingUserName}
           onSelect={onSelect}
           onTransform={onTransform}
           onTransformMove={onTransformMove}
@@ -134,6 +148,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           isLocked={isLocked}
           isSelectable={isSelectable}
           zoom={zoom}
+          lockingUserColor={lockingUserColor}
+          lockingUserName={lockingUserName}
           onSelect={onSelect}
           onTransform={onTransform}
           onTransformMove={onTransformMove}
