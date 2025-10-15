@@ -28,7 +28,7 @@ export default function Home() {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-balance leading-relaxed">
-              Real-time collaboration meets AI-powered design. Because it's 2025 and your design tool should
+              Real-time collaboration meets AI-powered design. Because it&apos;s 2025 and your design tool should
               have AI in it. 🤯
             </p>
           </div>
@@ -51,7 +51,7 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold text-card-foreground">Multiplayer Cursors</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              See everyone's cursor in real-time. It's like magic, but it's actually just WebSockets.
+              See everyone&apos;s cursor in real-time. It&apos;s like magic, but it&apos;s actually just WebSockets.
             </p>
           </Card>
 
@@ -71,7 +71,7 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold text-card-foreground">AI Canvas Agent</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              "Create a login form." Boom. Done. The AI builds it while you watch. Though it may just be 3 rectangles.
+              &quot;Create a login form.&quot; Boom. Done. The AI builds it while you watch. Though it may just be 3 rectangles.
             </p>
           </Card>
 

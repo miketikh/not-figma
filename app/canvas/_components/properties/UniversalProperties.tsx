@@ -45,10 +45,16 @@ export default function UniversalProperties({
     onUpdate({ zIndex: newZIndex });
   };
 
+  // Check if this is a line (lines don't have width/height/rotation)
+  const isLine = object.type === "line";
+
   // Get width/height for display (handle circle/ellipse differently)
   const getWidth = () => {
     if (object.type === "circle") {
       return Math.round((object.radiusX || 0) * 2);
+    }
+    if (object.type === "line") {
+      return 0; // Lines don't have width
     }
     return Math.round(object.width || 0);
   };
@@ -57,13 +63,16 @@ export default function UniversalProperties({
     if (object.type === "circle") {
       return Math.round((object.radiusY || 0) * 2);
     }
+    if (object.type === "line") {
+      return 0; // Lines don't have height
+    }
     return Math.round(object.height || 0);
   };
 
   const handleWidthChange = (value: number) => {
     if (object.type === "circle") {
       onUpdate({ radiusX: value / 2 });
-    } else {
+    } else if (object.type === "rectangle") {
       onUpdate({ width: value });
     }
   };
@@ -71,7 +80,7 @@ export default function UniversalProperties({
   const handleHeightChange = (value: number) => {
     if (object.type === "circle") {
       onUpdate({ radiusY: value / 2 });
-    } else {
+    } else if (object.type === "rectangle") {
       onUpdate({ height: value });
     }
   };
@@ -113,7 +122,8 @@ export default function UniversalProperties({
         </div>
       </div>
 
-      {/* Size Section */}
+      {/* Size Section - Hidden for lines */}
+      {!isLine && (
       <div>
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
           Size
@@ -153,8 +163,10 @@ export default function UniversalProperties({
           </div>
         </div>
       </div>
+      )}
 
-      {/* Rotation Section */}
+      {/* Rotation Section - Hidden for lines */}
+      {!isLine && (
       <div>
         <Label
           htmlFor="rotation"
@@ -182,6 +194,7 @@ export default function UniversalProperties({
           <span className="text-sm text-gray-500">°</span>
         </div>
       </div>
+      )}
 
       {/* Layer Section */}
       <div>
