@@ -12,7 +12,12 @@ import {
   Unsubscribe,
 } from "firebase/database";
 import { realtimeDb } from "./config";
-import type { ActiveTransform, ActiveTransformMap } from "@/app/canvas/_types/active-transform";
+import type {
+  ActiveTransform,
+  ActiveTransformMap,
+  GroupActiveTransform,
+  ObjectTransformData,
+} from "@/app/canvas/_types/active-transform";
 
 // Session ID - in production, this could be a room/canvas ID
 const SESSION_ID = "canvas-session-default";
@@ -128,4 +133,63 @@ export async function cleanupStaleTransforms(
   );
 
   await Promise.all(staleObjectIds.map((objectId) => clearTransform(objectId)));
+}
+
+// ============================================================================
+// Group Transform Functions (Multi-select optimization)
+// ============================================================================
+
+/**
+ * Broadcast a group transform for multiple objects being transformed together
+ * Reduces broadcast frequency from N objects × 20/sec to 1 × 20/sec
+ * Called during multi-select drag/resize/rotate operations
+ *
+ * @param objectIds - Array of object IDs being transformed together
+ * @param userId - The ID of the user performing the transform
+ * @param transforms - Map of objectId to transform data
+ */
+export async function broadcastGroupTransform(
+  objectIds: string[],
+  userId: string,
+  transforms: Record<string, ObjectTransformData>
+): Promise<void> {
+  const groupTransformRef = ref(realtimeDb, `sessions/${SESSION_ID}/groupTransforms/${userId}`);
+
+  const groupTransform: GroupActiveTransform = {
+    userId,
+    objectIds,
+    transforms,
+    timestamp: Date.now(),
+  };
+
+  await set(groupTransformRef, groupTransform);
+}
+
+/**
+ * Clear a group transform when transformation is complete
+ * Called on transformEnd when user stops dragging/resizing multiple objects
+ *
+ * @param userId - The ID of the user to clear group transform for
+ */
+export async function clearGroupTransform(userId: string): Promise<void> {
+  const groupTransformRef = ref(realtimeDb, `sessions/${SESSION_ID}/groupTransforms/${userId}`);
+  await remove(groupTransformRef);
+}
+
+/**
+ * Subscribe to all group transforms
+ * Returns real-time updates when any user is transforming multiple objects
+ *
+ * @param callback - Function called with updated group transforms map (userId -> GroupActiveTransform)
+ * @returns Unsubscribe function
+ */
+export function subscribeToGroupTransforms(
+  callback: (groupTransforms: Record<string, GroupActiveTransform>) => void
+): Unsubscribe {
+  const groupTransformsRef = ref(realtimeDb, `sessions/${SESSION_ID}/groupTransforms`);
+
+  return onValue(groupTransformsRef, (snapshot) => {
+    const groupTransforms: Record<string, GroupActiveTransform> = snapshot.val() || {};
+    callback(groupTransforms);
+  });
 }

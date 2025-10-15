@@ -8,6 +8,7 @@ import RemoteCursorKonva from "./RemoteCursorKonva";
 import ActiveTransformOverlay from "./ActiveTransformOverlay";
 import PropertiesPanel from "./PropertiesPanel";
 import { useObjects, PersistedRect } from "../_hooks/useObjects";
+import { batchUpdateObjects } from "@/lib/firebase/firestore";
 import { useCursors } from "../_hooks/useCursors";
 import { useActiveTransforms } from "../_hooks/useActiveTransforms";
 import { usePresence } from "../_hooks/usePresence";
@@ -31,7 +32,13 @@ import ShapeComponent from "./shapes";
 import { isDrawingTool, isShapeTool } from "../_constants/tools";
 import type { PersistedShape, PersistedText } from "../_types/shapes";
 import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
-import { broadcastTransform, clearTransform } from "@/lib/firebase/realtime-transforms";
+import {
+  broadcastTransform,
+  clearTransform,
+  broadcastGroupTransform,
+  clearGroupTransform,
+} from "@/lib/firebase/realtime-transforms";
+import type { ObjectTransformData } from "@/app/canvas/_types/active-transform";
 import { screenToCanvasCoordinates } from "../_lib/coordinates";
 import { getIntersectingObjects } from "../_lib/intersection";
 
@@ -223,23 +230,22 @@ export default function Canvas({ width, height }: CanvasProps) {
   // Throttled transform broadcasting (50ms per object)
   const broadcastThrottleTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
+  // Group transform broadcasting (shared throttle for multi-select)
+  const groupTransformThrottleTimer = useRef<NodeJS.Timeout | null>(null);
+  const pendingGroupTransforms = useRef<Record<string, ObjectTransformData>>({});
+
+  // Batch Firestore writes on transform end (multi-select optimization)
+  const transformEndBatchTimer = useRef<NodeJS.Timeout | null>(null);
+  const pendingTransformEndUpdates = useRef<Map<string, PersistedShape>>(new Map());
+
   const handleTransformMove = useCallback((objectId: string, updates: Partial<PersistedShape>) => {
     // Only broadcast if user has this object locked
     const obj = objects.find(o => o.id === objectId);
     if (!obj || !user) return;
     if (obj.lockedBy !== user.uid) return;
 
-    // Throttle broadcasts (50ms per object)
-    if (broadcastThrottleTimers.current.has(objectId)) return;
-
-    const timer = setTimeout(() => {
-      broadcastThrottleTimers.current.delete(objectId);
-    }, 50);
-
-    broadcastThrottleTimers.current.set(objectId, timer);
-
-    // Prepare transform data for broadcasting
-    const transformData: any = {
+    // Prepare transform data for this object
+    const transformData: ObjectTransformData = {
       type: obj.type,
       x: updates.x ?? obj.x,
       y: updates.y ?? obj.y,
@@ -262,20 +268,75 @@ export default function Canvas({ width, height }: CanvasProps) {
       transformData.rotation = (updates as any).rotation ?? obj.rotation;
     }
 
-    // Broadcast to Realtime Database
-    broadcastTransform(objectId, user.uid, transformData);
-  }, [objects, user]);
+    // Multi-select: Use group transform broadcasting (shared 50ms throttle)
+    if (selectedIds.length > 1) {
+      // Accumulate transforms for all selected objects
+      pendingGroupTransforms.current[objectId] = transformData;
+
+      // If throttle already active, just accumulate and return
+      if (groupTransformThrottleTimer.current) return;
+
+      // Set up shared throttle timer for the entire group
+      groupTransformThrottleTimer.current = setTimeout(() => {
+        // Broadcast all accumulated transforms as a single group
+        const transforms = { ...pendingGroupTransforms.current };
+        broadcastGroupTransform(selectedIds, user.uid, transforms);
+
+        // Clear accumulated transforms and timer
+        pendingGroupTransforms.current = {};
+        groupTransformThrottleTimer.current = null;
+      }, 50);
+    } else {
+      // Single selection: Use per-object broadcasting (existing behavior)
+      // Throttle broadcasts (50ms per object)
+      if (broadcastThrottleTimers.current.has(objectId)) return;
+
+      const timer = setTimeout(() => {
+        broadcastThrottleTimers.current.delete(objectId);
+      }, 50);
+
+      broadcastThrottleTimers.current.set(objectId, timer);
+
+      // Broadcast to Realtime Database
+      broadcastTransform(objectId, user.uid, transformData);
+    }
+  }, [objects, user, selectedIds]);
 
   const handleTransformEnd = useCallback((objectId: string) => {
-    // Clear the active transform broadcast
-    clearTransform(objectId);
-  }, []);
+    if (!user) return;
+
+    // Multi-select: Clear group transform
+    if (selectedIds.length > 1) {
+      clearGroupTransform(user.uid);
+      // Clear any pending group transforms
+      pendingGroupTransforms.current = {};
+      if (groupTransformThrottleTimer.current) {
+        clearTimeout(groupTransformThrottleTimer.current);
+        groupTransformThrottleTimer.current = null;
+      }
+    } else {
+      // Single selection: Clear individual transform
+      clearTransform(objectId);
+    }
+  }, [user, selectedIds]);
 
   // Cleanup broadcast throttle timers on unmount
   useEffect(() => {
     return () => {
       broadcastThrottleTimers.current.forEach((timer) => clearTimeout(timer));
       broadcastThrottleTimers.current.clear();
+
+      // Cleanup group transform timer
+      if (groupTransformThrottleTimer.current) {
+        clearTimeout(groupTransformThrottleTimer.current);
+        groupTransformThrottleTimer.current = null;
+      }
+
+      // Cleanup batch transform end timer
+      if (transformEndBatchTimer.current) {
+        clearTimeout(transformEndBatchTimer.current);
+        transformEndBatchTimer.current = null;
+      }
     };
   }, []);
 
@@ -862,8 +923,39 @@ export default function Canvas({ width, height }: CanvasProps) {
                     prev.map((o) => (o.id === obj.id ? updatedObj : o))
                   );
 
-                  // Persist to Firestore (will sync to other clients)
-                  updateObjectInFirestore(updatedObj);
+                  // Multi-select: Batch Firestore writes
+                  if (selectedIds.length > 1) {
+                    // Accumulate this update
+                    pendingTransformEndUpdates.current.set(obj.id, updatedObj);
+
+                    // Clear any existing timer
+                    if (transformEndBatchTimer.current) {
+                      clearTimeout(transformEndBatchTimer.current);
+                    }
+
+                    // Set a short timer to batch all updates together
+                    transformEndBatchTimer.current = setTimeout(() => {
+                      if (!user) return;
+
+                      // Collect all pending updates
+                      const updates = Array.from(pendingTransformEndUpdates.current.values()).map((obj) => ({
+                        id: obj.id,
+                        changes: obj as Partial<any>,
+                        updatedBy: user.uid,
+                        updatedAt: Date.now(),
+                      }));
+
+                      // Batch write to Firestore
+                      batchUpdateObjects(updates);
+
+                      // Clear pending updates
+                      pendingTransformEndUpdates.current.clear();
+                      transformEndBatchTimer.current = null;
+                    }, 10); // 10ms to collect all transform end events
+                  } else {
+                    // Single selection: Write immediately (existing behavior)
+                    updateObjectInFirestore(updatedObj);
+                  }
 
                   // Clear active transform broadcast
                   handleTransformEnd(obj.id);

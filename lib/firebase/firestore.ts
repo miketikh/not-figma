@@ -14,6 +14,7 @@ import {
   query,
   orderBy,
   onSnapshot,
+  writeBatch,
   Unsubscribe,
   DocumentData,
 } from "firebase/firestore";
@@ -82,12 +83,18 @@ export async function deleteObject(objectId: string): Promise<void> {
 
 /**
  * Batch update multiple objects (for performance)
+ * Uses Firestore's native writeBatch API for atomic updates
+ * This triggers a SINGLE snapshot event for collection listeners
  */
 export async function batchUpdateObjects(updates: ObjectUpdate[]): Promise<void> {
-  const updatePromises = updates.map((update) =>
-    updateObject(update.id, update.changes)
-  );
-  await Promise.all(updatePromises);
+  const batch = writeBatch(db);
+
+  updates.forEach((update) => {
+    const objectRef = doc(db, CANVAS_OBJECTS_COLLECTION, update.id);
+    batch.update(objectRef, update.changes as DocumentData);
+  });
+
+  await batch.commit();
 }
 
 /**

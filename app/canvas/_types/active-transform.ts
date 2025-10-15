@@ -87,3 +87,33 @@ export type ActiveTransformMap = Record<string, ActiveTransform>;
  * Ready for rendering
  */
 export type ActiveTransformWithUserMap = Record<string, ActiveTransformWithUser>;
+
+/**
+ * Transform data for a single object within a group transform
+ * Contains only the transformed properties (position, size, rotation)
+ */
+export interface ObjectTransformData {
+  type: "rectangle" | "circle" | "line" | "text";
+  x: number;
+  y: number;
+  // Shape-specific properties
+  width?: number;
+  height?: number;
+  rotation?: number;
+  radiusX?: number;
+  radiusY?: number;
+  x2?: number;
+  y2?: number;
+}
+
+/**
+ * Group active transform
+ * Single broadcast for multiple objects being transformed together
+ * Reduces broadcast frequency from N objects × 20/sec to 1 × 20/sec
+ */
+export interface GroupActiveTransform {
+  userId: string;
+  objectIds: string[];
+  transforms: Record<string, ObjectTransformData>; // objectId -> transform data
+  timestamp: number;
+}
