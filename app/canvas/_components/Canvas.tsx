@@ -64,6 +64,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   // Pan state
   const [isPanning, setIsPanning] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
+  const [shiftPressed, setShiftPressed] = useState(false);
   
   // Drawing state
   const [isDrawing, setIsDrawing] = useState(false);
@@ -381,6 +382,11 @@ export default function Canvas({ width, height }: CanvasProps) {
         e.preventDefault(); // Prevent page scroll
       }
 
+      // Track shift key for conditional Transformer behavior
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        setShiftPressed(true);
+      }
+
       // Escape: Deselect all and cancel selection rectangle
       if (e.code === "Escape") {
         setSelectedIds([]);
@@ -433,6 +439,10 @@ export default function Canvas({ width, height }: CanvasProps) {
         setSpacePressed(false);
         setIsPanning(false); // Stop panning when space released
       }
+
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        setShiftPressed(false);
+      }
     };
     
     window.addEventListener("keydown", handleKeyDown);
@@ -442,7 +452,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [spacePressed, selectedIds, objects, updateZIndex, deleteObjectFromFirestore, setActiveTool]);
+  }, [spacePressed, shiftPressed, selectedIds, objects, updateZIndex, deleteObjectFromFirestore, setActiveTool]);
 
   // Initialize container size
   useEffect(() => {
@@ -1004,7 +1014,12 @@ export default function Canvas({ width, height }: CanvasProps) {
           ))}
 
           {/* Transformer for selection handles */}
-          {activeTool === "select" && !spacePressed && <Transformer ref={transformerRef} />}
+          {activeTool === "select" && !spacePressed && (
+            <Transformer
+              ref={transformerRef}
+              shouldOverdrawWholeArea={!shiftPressed}
+            />
+          )}
           
           {/* Remote Cursors - rendered inside canvas */}
           {Object.entries(remoteCursors).map(([userId, cursor]) => (
