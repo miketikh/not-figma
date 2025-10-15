@@ -206,22 +206,27 @@ export default function Canvas({ width, height }: CanvasProps) {
         return;
       }
 
-      // Tool shortcuts
-      if (e.key === "v" || e.key === "V") {
-        setActiveTool("select");
-        e.preventDefault();
-      } else if (e.key === "h" || e.key === "H") {
-        setActiveTool("pan");
-        e.preventDefault();
-      } else if (e.key === "r" || e.key === "R") {
-        setActiveTool("rectangle");
-        e.preventDefault();
-      } else if (e.key === "c" || e.key === "C") {
-        setActiveTool("circle");
-        e.preventDefault();
-      } else if (e.key === "l" || e.key === "L") {
-        setActiveTool("line");
-        e.preventDefault();
+      // Tool shortcuts - ignore if any modifier key is pressed (Cmd, Ctrl, Alt, Shift)
+      // This allows browser shortcuts like Cmd+R (refresh) to work
+      const hasModifier = e.metaKey || e.ctrlKey || e.altKey || e.shiftKey;
+      
+      if (!hasModifier) {
+        if (e.key === "v" || e.key === "V") {
+          setActiveTool("select");
+          e.preventDefault();
+        } else if (e.key === "h" || e.key === "H") {
+          setActiveTool("pan");
+          e.preventDefault();
+        } else if (e.key === "r" || e.key === "R") {
+          setActiveTool("rectangle");
+          e.preventDefault();
+        } else if (e.key === "c" || e.key === "C") {
+          setActiveTool("circle");
+          e.preventDefault();
+        } else if (e.key === "l" || e.key === "L") {
+          setActiveTool("line");
+          e.preventDefault();
+        }
       }
 
       if (e.code === "Space" && !spacePressed) {
