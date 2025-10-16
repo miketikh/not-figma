@@ -1017,7 +1017,7 @@ export default function Canvas({ width, height }: CanvasProps) {
           {activeTool === "select" && !spacePressed && (
             <Transformer
               ref={transformerRef}
-              shouldOverdrawWholeArea={!shiftPressed}
+              shouldOverdrawWholeArea={!shiftPressed && selectedIds.length > 1}
             />
           )}
           
