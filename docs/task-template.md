@@ -1,137 +1,131 @@
-# [Feature Name] - Task List
+# [Feature Name] - Implementation Task List
 
 ## Context
 
-[Brief description of what changes are being made - just enough to understand the basic problem and approach. Keep to 1-2 paragraphs maximum.]
+[Brief description of what changes are being made - just enough to understand the problem and solution. Keep to 2-3 paragraphs maximum. Include any key architectural decisions or patterns being used.]
 
 ---
 
-## Process for AI
+## Instructions for AI Agent
 
-When working through this task list:
+### Workflow for Each PR
 
-1. **Start a PR**: Read all tasks in the PR before beginning
-2. **Complete all tasks**: Work through each task sequentially and check them off with `[x]`
-3. **Run lint**: Execute `npm run lint` after completing all tasks in the PR
-4. **Provide summary**: Give a summary in chat that includes:
-   - What changes were made in this PR
-   - What the user can see or test manually in the app
-   - Brief summary of what will be added in the next PR
-5. **Wait for confirmation**: Do not proceed to the next PR until user confirms
+1. **Read the entire PR first**: Review all tasks and file changes before starting
+2. **Complete all tasks sequentially**: 
+   - Work through tasks in order
+   - Mark completed tasks with `[x]`
+   - If a task references "see planning doc," check the planning document for additional context
+3. **Run linting**: Execute `npm run lint` after completing all tasks
+4. **Test manually**: Verify the changes work as expected (see "What to Test" in each PR)
+5. **Provide completion summary** with:
+   - Brief description of changes made
+   - Specific instructions for manual testing (what to click, what to look for)
+   - Any known limitations or follow-up items
+   - Preview of next PR's scope
+6. **Wait for approval**: Do not proceed to the next PR until confirmed by user
+
+### Implementation Guidelines
+
+- **Use existing patterns**: Follow the codebase's established conventions
+- **File descriptions are hints**: "Files Changed" lists likely files, but you may need to modify others
+- **Don't over-engineer**: Implement the simplest solution that works
+- **Test incrementally**: After each major task, verify it works before moving on
+- **Ask if blocked**: If requirements are unclear or you encounter unexpected issues, ask before proceeding
 
 ---
 
-## Examples of Good PRs
+## Example PR Structure
 
-### Example 1: Simple Feature Addition
-
-**PR #15: Additional Shape Types - Circles**
-**Goal:** Add circle shape type
+### PR #15: Add Circle Shape Support
+**Goal:** Enable users to create and manipulate circle shapes on canvas
 
 **Tasks:**
-- [x] Extend object types for circles
-- [x] Add circle to Toolbar
-- [x] Implement circle creation logic
-- [x] Implement circle rendering
-- [x] Add circle selection and manipulation
-- [x] Test circle creation, move, resize
-- [x] Sync circles across users
+- [x] Add CircleShape type to shape type definitions
+- [x] Create CircleShape component for rendering
+- [x] Add circle button to Toolbar with appropriate icon
+- [x] Implement circle creation handler in Canvas
+- [x] Add circle manipulation (move, resize, rotate)
+- [x] Create CircleProperties panel for circle-specific settings
+- [x] Implement real-time sync for circles
+
+**What to Test:**
+- Click circle button in toolbar
+- Draw a circle on canvas by clicking and dragging
+- Select circle and verify you can move, resize, and rotate it
+- Open another browser window and verify circles sync in real-time
+- Check that circle properties panel shows correct options
 
 **Files Changed:**
-- `app/canvas/_components/shapes/CircleShape.tsx` - NEW component for rendering circles
-- `app/canvas/_components/properties/shape-properties/CircleProperties.tsx` - NEW properties panel for circles
-- `app/canvas/_types/shapes.ts` - Add PersistedCircle type
-- `app/canvas/_lib/shapes.ts` - Add circle factory functions
-- `app/canvas/_components/Toolbar.tsx` - Add circle button
-- `app/canvas/_components/Canvas.tsx` - Handle circle creation and rendering
+- `app/canvas/_components/shapes/CircleShape.tsx` - NEW: Circle rendering component
+- `app/canvas/_components/properties/CircleProperties.tsx` - NEW: Circle settings panel
+- `app/canvas/_types/shapes.ts` - Add PersistedCircle type definition
+- `app/canvas/_lib/shapes.ts` - Add circle factory and helper functions
+- `app/canvas/_components/Toolbar.tsx` - Add circle creation button
+- `app/canvas/_components/Canvas.tsx` - Handle circle creation, selection, manipulation
+
+**Notes:**
+- Follow the same pattern as RectangleShape for consistency
+- Circles should support all standard operations (move, resize, delete, sync)
 
 ---
 
-### Example 2: Complex Feature with Multiple Steps
+## Phase 1: [Phase Name & Purpose]
 
-**PR #9: Real-Time Object Sync**
-**Goal:** Sync objects between multiple users in real-time
+### PR #1: [Descriptive PR Name]
+**Goal:** [One sentence describing what this accomplishes and why it's needed]
 
 **Tasks:**
-- [x] Set up Firestore real-time listener for objects
-- [x] Implement optimistic updates for object creation
-- [x] Broadcast object creation to other users
-- [x] Render objects created by other users
-- [x] Implement optimistic updates for object moves
-- [x] Broadcast object position changes
-- [x] Sync position changes from other users
-- [x] Implement optimistic updates for resize
-- [x] Broadcast and sync resize operations
-- [x] Implement lock-based conflict prevention
-- [x] Test with 2 users in different browsers
-- [x] Verify sync latency <100ms
+- [ ] [Specific, testable task - use action verbs]
+- [ ] [Each task should be completable independently]
+- [ ] [If a task is complex, consider breaking it into sub-tasks]
+- [ ] [Include testing as explicit tasks when needed]
+
+**What to Test:**
+[Clear, step-by-step instructions for manual testing]
+- Open [specific page/view]
+- Perform [specific action]
+- Verify [expected result]
 
 **Files Changed:**
-- `app/canvas/_hooks/useObjects.ts` - Add real-time sync + lock visual feedback
-- `app/canvas/_components/Canvas.tsx` - Add lock acquisition/release on selection
-- `lib/firebase/firestore.ts` - Lock functions already existed
+- `path/to/file1.ts` - [Brief description of what changes, not how]
+- `path/to/file2.tsx` - [e.g., "Add new component" or "Update handler logic"]
+- `path/to/file3.ts` - NEW: [indicate if file is being created]
+
+**Notes:** [Optional - any gotchas, edge cases, or context the AI should know]
 
 ---
 
-## Phase 1: [Phase Name]
-
-### PR #1: [PR Name]
-**Goal:** [One sentence describing what this PR accomplishes]
+### PR #2: [Descriptive PR Name]
+**Goal:** [What this accomplishes]
 
 **Tasks:**
-- [ ] [Specific task 1]
-- [ ] [Specific task 2]
-- [ ] [Specific task 3]
-- [ ] [etc.]
+- [ ] [Task 1]
+- [ ] [Task 2]
+- [ ] [Task 3]
+
+**What to Test:**
+- [Testing instruction 1]
+- [Testing instruction 2]
 
 **Files Changed:**
-- `path/to/file1.ts` - [description of changes]
-- `path/to/file2.tsx` - [description of changes]
-- `path/to/file3.ts` - [description of changes]
+- `path/to/file.ts` - [description]
 
 ---
 
-### PR #2: [PR Name]
-**Goal:** [One sentence describing what this PR accomplishes]
+## Phase 2: [Phase Name & Purpose]
+
+### PR #3: [Descriptive PR Name]
+**Goal:** [What this accomplishes]
 
 **Tasks:**
-- [ ] [Specific task 1]
-- [ ] [Specific task 2]
-- [ ] [Specific task 3]
+- [ ] [Task 1]
+- [ ] [Task 2]
+
+**What to Test:**
+- [Testing instruction 1]
 
 **Files Changed:**
-- `path/to/file1.ts` - [description of changes]
-- `path/to/file2.tsx` - [description of changes]
-
----
-
-## Phase 2: [Phase Name]
-
-### PR #3: [PR Name]
-**Goal:** [One sentence describing what this PR accomplishes]
-
-**Tasks:**
-- [ ] [Specific task 1]
-- [ ] [Specific task 2]
-- [ ] [Specific task 3]
-
-**Files Changed:**
-- `path/to/file1.ts` - [description of changes]
-- `path/to/file2.tsx` - [description of changes]
-
----
-
-### PR #4: [PR Name]
-**Goal:** [One sentence describing what this PR accomplishes]
-
-**Tasks:**
-- [ ] [Specific task 1]
-- [ ] [Specific task 2]
-- [ ] [Specific task 3]
-
-**Files Changed:**
-- `path/to/file1.ts` - [description of changes]
-- `path/to/file2.tsx` - [description of changes]
+- `path/to/file.ts` - [description]
 
 ---
 
@@ -139,3 +133,9 @@ When working through this task list:
 
 **Total Phases:** [Number]
 **Total PRs:** [Number]
+**Estimated Complexity:** [Low/Medium/High]
+
+**Key Dependencies:**
+- [Any external dependencies or prerequisites]
+- [Services that need to be running]
+- [Feature flags or environment variables needed]
