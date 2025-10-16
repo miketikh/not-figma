@@ -93,7 +93,8 @@ export async function setUserPresence(
   color: string
 ): Promise<void> {
   const presenceRef = ref(realtimeDb, `sessions/${SESSION_ID}/presence/${userId}`);
-  
+  const cursorRef = ref(realtimeDb, `sessions/${SESSION_ID}/cursors/${userId}`);
+
   const presence: UserPresence = {
     userId,
     displayName,
@@ -102,15 +103,19 @@ export async function setUserPresence(
     lastSeen: Date.now(),
     isOnline: true,
   };
-  
+
   await set(presenceRef, presence);
-  
+
   // Set up disconnect handler to mark user as offline
   const disconnectRef = onDisconnect(presenceRef);
   await disconnectRef.update({
     isOnline: false,
     lastSeen: serverTimestamp(),
   });
+
+  // Set up disconnect handler to remove cursor
+  const cursorDisconnectRef = onDisconnect(cursorRef);
+  await cursorDisconnectRef.remove();
 }
 
 /**

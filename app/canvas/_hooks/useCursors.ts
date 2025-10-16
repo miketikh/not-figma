@@ -14,6 +14,7 @@ import {
   setUserPresence,
   updatePresenceHeartbeat,
   generateDisplayName,
+  isUserActive,
 } from "@/lib/firebase/realtime";
 import { CursorMap } from "@/types/canvas";
 import { UserPresence } from "@/types/user";
@@ -129,12 +130,16 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
       Object.entries(cursors).forEach(([userId, cursor]) => {
         if (userId !== user.uid && cursor) {
           const presence = presenceData[userId];
-          remoteCursorData[userId] = {
-            x: cursor.x,
-            y: cursor.y,
-            displayName: presence?.displayName || "Anonymous",
-            color: presence?.color || "#888888",
-          };
+
+          // Only show cursor if user is online and active (same logic as OnlineUsers)
+          if (presence?.isOnline && isUserActive(presence.lastSeen)) {
+            remoteCursorData[userId] = {
+              x: cursor.x,
+              y: cursor.y,
+              displayName: presence.displayName || "Anonymous",
+              color: presence.color || "#888888",
+            };
+          }
         }
       });
 
