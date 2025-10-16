@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { PersistedText } from "../../../_types/shapes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +42,65 @@ export default function TextProperties({
   onUpdate,
   disabled = false,
 }: TextPropertiesProps) {
+  // Local state for content to preserve cursor position while typing
+  const [localContent, setLocalContent] = useState(shape.content);
+  const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+  const pendingValueRef = useRef<string | null>(null);
+
+  // Update local state when shape.content changes externally (e.g., from another user)
+  // but only if we're not actively typing
+  useEffect(() => {
+    if (!isTypingRef.current) {
+      setLocalContent(shape.content);
+    }
+  }, [shape.content]);
+
+  const handleContentChange = (value: string) => {
+    // Mark that we're actively typing
+    isTypingRef.current = true;
+
+    // Update local state immediately (preserves cursor position)
+    setLocalContent(value);
+
+    // Store the pending value
+    pendingValueRef.current = value;
+
+    // Throttle the update to parent (send at most every 100ms)
+    if (!throttleTimerRef.current) {
+      throttleTimerRef.current = setTimeout(() => {
+        // Send the most recent pending value
+        if (pendingValueRef.current !== null) {
+          onUpdate({ content: pendingValueRef.current });
+          pendingValueRef.current = null;
+        }
+        throttleTimerRef.current = null;
+      }, 100);
+    }
+  };
+
+  const handleBlur = () => {
+    // Flush any pending changes immediately when user leaves the field
+    if (pendingValueRef.current !== null) {
+      if (throttleTimerRef.current) {
+        clearTimeout(throttleTimerRef.current);
+        throttleTimerRef.current = null;
+      }
+      onUpdate({ content: pendingValueRef.current });
+      pendingValueRef.current = null;
+    }
+    isTypingRef.current = false;
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (throttleTimerRef.current) {
+        clearTimeout(throttleTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Content */}
@@ -51,8 +111,9 @@ export default function TextProperties({
         <textarea
           id="text-content"
           rows={4}
-          value={shape.content}
-          onChange={(e) => onUpdate({ content: e.target.value })}
+          value={localContent}
+          onChange={(e) => handleContentChange(e.target.value)}
+          onBlur={handleBlur}
           disabled={disabled}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
           placeholder="Enter text..."
