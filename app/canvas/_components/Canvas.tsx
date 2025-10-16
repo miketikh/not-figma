@@ -844,39 +844,6 @@ export default function Canvas({ width, height }: CanvasProps) {
           onMouseUp={handleMouseUp}
           onDragEnd={handleDragEnd}
         >
-          {/* Draft shape while drawing */}
-          {draftRect && activeTool && (() => {
-            const factory = getShapeFactory(activeTool);
-            if (!factory) return null;
-            
-            // Get the user's custom defaults for styling the preview
-            const styleDefaults = isShapeTool(activeTool)
-              ? defaultShapeProperties[activeTool]
-              : undefined;
-            
-            const draftData = factory.getDraftData(draftRect, styleDefaults);
-            
-            // Calculate strokeWidth (text doesn't have strokeWidth)
-            const hasStrokeWidth = styleDefaults && "strokeWidth" in styleDefaults;
-            const strokeWidth = hasStrokeWidth ? styleDefaults.strokeWidth : 2;
-            
-            const commonProps = {
-              strokeWidth: strokeWidth / viewport.zoom,
-              listening: false,
-            };
-            
-            if (draftData.type === "rect") {
-              return <Rect {...draftData.props} {...commonProps} />;
-            } else if (draftData.type === "circle") {
-              return <Circle {...draftData.props} {...commonProps} />;
-            } else if (draftData.type === "ellipse") {
-              return <Ellipse {...draftData.props} {...commonProps} />;
-            } else if (draftData.type === "line") {
-              return <Line {...draftData.props} {...commonProps} />;
-            }
-            return null;
-          })()}
-          
           {/* Persisted shapes - sorted by zIndex for correct rendering order */}
           {objects
             .slice()
@@ -988,6 +955,39 @@ export default function Canvas({ width, height }: CanvasProps) {
               />
             );
           })}
+
+          {/* Draft shape while drawing - rendered after persisted shapes so it appears on top */}
+          {draftRect && activeTool && (() => {
+            const factory = getShapeFactory(activeTool);
+            if (!factory) return null;
+
+            // Get the user's custom defaults for styling the preview
+            const styleDefaults = isShapeTool(activeTool)
+              ? defaultShapeProperties[activeTool]
+              : undefined;
+
+            const draftData = factory.getDraftData(draftRect, styleDefaults);
+
+            // Calculate strokeWidth (text doesn't have strokeWidth)
+            const hasStrokeWidth = styleDefaults && "strokeWidth" in styleDefaults;
+            const strokeWidth = hasStrokeWidth ? styleDefaults.strokeWidth : 2;
+
+            const commonProps = {
+              strokeWidth: strokeWidth / viewport.zoom,
+              listening: false,
+            };
+
+            if (draftData.type === "rect") {
+              return <Rect {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "circle") {
+              return <Circle {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "ellipse") {
+              return <Ellipse {...draftData.props} {...commonProps} />;
+            } else if (draftData.type === "line") {
+              return <Line {...draftData.props} {...commonProps} />;
+            }
+            return null;
+          })()}
 
           {/* Selection Rectangle Preview */}
           {selectionRect && (
