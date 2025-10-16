@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PersistedShape } from "../../_types/shapes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,37 @@ export default function StyleProperties({
 }: StylePropertiesProps) {
   const [showFillPicker, setShowFillPicker] = useState(false);
   const [showStrokePicker, setShowStrokePicker] = useState(false);
+
+  const fillPickerRef = useRef<HTMLDivElement>(null);
+  const strokePickerRef = useRef<HTMLDivElement>(null);
+
+  // Close color pickers when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check fill picker
+      if (
+        showFillPicker &&
+        fillPickerRef.current &&
+        !fillPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowFillPicker(false);
+      }
+
+      // Check stroke picker
+      if (
+        showStrokePicker &&
+        strokePickerRef.current &&
+        !strokePickerRef.current.contains(event.target as Node)
+      ) {
+        setShowStrokePicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFillPicker, showStrokePicker]);
 
   // Parse fill color to hex (handle rgba format)
   const getFillColor = () => {
@@ -124,7 +155,10 @@ export default function StyleProperties({
           {/* Color picker popover */}
           {showFillPicker && !isTransparent && (
             <div className="relative">
-              <div className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border">
+              <div
+                ref={fillPickerRef}
+                className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border"
+              >
                 <HexColorPicker
                   color={getFillColor()}
                   onChange={handleFillColorChange}
@@ -186,7 +220,10 @@ export default function StyleProperties({
           {/* Color picker popover */}
           {showStrokePicker && (
             <div className="relative">
-              <div className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border">
+              <div
+                ref={strokePickerRef}
+                className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border"
+              >
                 <HexColorPicker
                   color={getStrokeColor()}
                   onChange={(color) => onUpdate({ stroke: color })}
