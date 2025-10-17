@@ -3,7 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Trash2, Pencil, Lock, Globe } from "lucide-react";
 import { Canvas } from "@/types/canvas";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -25,7 +30,12 @@ interface CanvasCardProps {
  * Shows delete and edit buttons on hover
  * Supports inline editing of canvas name
  */
-export function CanvasCard({ canvas, onClick, onDelete, onRename }: CanvasCardProps) {
+export function CanvasCard({
+  canvas,
+  onClick,
+  onDelete,
+  onRename,
+}: CanvasCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(canvas.name);
@@ -108,7 +118,8 @@ export function CanvasCard({ canvas, onClick, onDelete, onRename }: CanvasCardPr
       await onRename(trimmedValue);
       setIsEditing(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to rename canvas";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to rename canvas";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -161,17 +172,13 @@ export function CanvasCard({ canvas, onClick, onDelete, onRename }: CanvasCardPr
               )}
               maxLength={MAX_CANVAS_NAME_LENGTH}
             />
-            {error && (
-              <p className="text-xs text-destructive">{error}</p>
-            )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
             {isLoading && (
               <p className="text-xs text-muted-foreground">Saving...</p>
             )}
           </div>
         ) : (
-          <CardTitle className="truncate text-xl">
-            {canvas.name}
-          </CardTitle>
+          <CardTitle className="truncate text-xl">{canvas.name}</CardTitle>
         )}
         <CardDescription className="space-y-1">
           <div className="text-sm">

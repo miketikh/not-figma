@@ -43,7 +43,11 @@ export default function ActiveTransformOverlay({
   };
 
   // Render rectangle overlay
-  if (type === "rectangle" && "width" in activeTransform && "height" in activeTransform) {
+  if (
+    type === "rectangle" &&
+    "width" in activeTransform &&
+    "height" in activeTransform
+  ) {
     const { x, y, width, height, rotation } = activeTransform;
 
     return (
@@ -80,7 +84,11 @@ export default function ActiveTransformOverlay({
   }
 
   // Render circle/ellipse overlay
-  if (type === "circle" && "radiusX" in activeTransform && "radiusY" in activeTransform) {
+  if (
+    type === "circle" &&
+    "radiusX" in activeTransform &&
+    "radiusY" in activeTransform
+  ) {
     const { x, y, radiusX, radiusY } = activeTransform;
 
     return (
@@ -150,7 +158,11 @@ export default function ActiveTransformOverlay({
   }
 
   // Render text overlay
-  if (type === "text" && "width" in activeTransform && "height" in activeTransform) {
+  if (
+    type === "text" &&
+    "width" in activeTransform &&
+    "height" in activeTransform
+  ) {
     const { x, y, width, height, rotation } = activeTransform;
 
     return (

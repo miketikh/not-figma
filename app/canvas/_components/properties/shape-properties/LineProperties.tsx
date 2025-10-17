@@ -9,9 +9,7 @@ interface LinePropertiesProps {
   disabled?: boolean;
 }
 
-export default function LineProperties({
-  shape,
-}: LinePropertiesProps) {
+export default function LineProperties({ shape }: LinePropertiesProps) {
   // Calculate line length
   const dx = shape.x2 - shape.x;
   const dy = shape.y2 - shape.y;
@@ -46,4 +44,3 @@ export default function LineProperties({
     </div>
   );
 }
-

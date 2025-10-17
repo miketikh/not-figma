@@ -28,4 +28,3 @@ export function getPropertyComponent(
 ): ComponentType<any> | undefined {
   return shapePropertyComponents[type];
 }
-

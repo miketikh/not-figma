@@ -19,8 +19,7 @@ This is a major architectural change affecting the data layer, routing, componen
    - Work through tasks in order
    - Mark completed tasks with `[x]`
    - If a task references "see planning doc," check the planning document for additional context
-3. **Run linting**: Execute `npm run lint` after completing all tasks
-4.**Update**: After, check off all the items you completed in this doc, then return a summary
+3. **Run linting**: Execute `npm run lint` after completing all tasks 4.**Update**: After, check off all the items you completed in this doc, then return a summary
 
 ### Implementation Guidelines
 
@@ -35,20 +34,24 @@ This is a major architectural change affecting the data layer, routing, componen
 ## Phase 1: Data Model & Backend Infrastructure
 
 ### PR #1: Create Canvas Type Definitions and Constants
+
 **Goal:** Establish the Canvas interface and configuration constants without touching existing functionality
 
 **Tasks:**
+
 - [x] Add `Canvas` interface to `types/canvas.ts` with fields: id, name, width, height, createdBy, createdAt, updatedAt, isPublic
 - [x] Add `canvasId` field to `BaseCanvasObject` interface in `types/canvas.ts`
 - [x] Create `lib/constants/canvas.ts` with default canvas name ("Untitled Canvas"), default dimensions (1920x1080), dimension presets array, min/max dimension values (100-10000), and max name length (100)
 - [x] Export all new types and constants
 
 **What to Test:**
+
 - Run `npm run lint` to verify TypeScript compilation
 - Import the new types in a test file to verify they're accessible
 - Check that no existing functionality is broken
 
 **Files Changed:**
+
 - `types/canvas.ts` - Add Canvas interface and update BaseCanvasObject
 - `lib/constants/canvas.ts` - NEW: Canvas configuration constants
 
@@ -57,9 +60,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #2: Create Canvas CRUD Operations
+
 **Goal:** Implement Firestore operations for canvas management using nested collection structure
 
 **Tasks:**
+
 - [x] Create `lib/firebase/canvas.ts` with canvas CRUD functions
 - [x] Implement `createCanvas(userId: string, name: string, width: number, height: number)` - creates canvas document in `canvases` collection
 - [x] Implement `getCanvas(canvasId: string)` - fetches single canvas by ID
@@ -71,12 +76,14 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Add proper error handling and TypeScript types to all functions
 
 **What to Test:**
+
 - Run `npm run lint` to verify no TypeScript errors
 - Test canvas operations in Firebase console or create a simple test script
 - Verify canvas documents are created with correct structure in Firestore
 - Check that subscriptions properly clean up listeners
 
 **Files Changed:**
+
 - `lib/firebase/canvas.ts` - NEW: Canvas CRUD operations
 - `types/canvas.ts` - May need to import Canvas type if not already
 
@@ -85,9 +92,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #3: Update Firestore Object Operations for Canvas Scoping
+
 **Goal:** Modify existing object CRUD operations to work with nested collection structure and canvas scoping
 
 **Tasks:**
+
 - [x] Update `lib/firebase/firestore.ts` to change collection path from flat `canvasObjects` to nested `canvases/{canvasId}/objects`
 - [x] Add `canvasId` parameter to `addObject(canvasId: string, object: CanvasObject)` function
 - [x] Add `canvasId` parameter to `updateObject(canvasId: string, id: string, updates: Partial<CanvasObject>)` function
@@ -99,12 +108,14 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Ensure all Firestore queries are scoped to the correct canvas
 
 **What to Test:**
+
 - Run `npm run lint` to verify TypeScript compilation
 - Temporarily test by hardcoding a canvasId and verifying object operations work
 - Check Firestore console to verify objects are created in nested structure
 - Verify that changing the canvasId creates objects in different collections
 
 **Files Changed:**
+
 - `lib/firebase/firestore.ts` - Major refactor to add canvasId parameter to all operations
 
 **Notes:** This is a breaking change to the API but doesn't affect the UI yet since we're not calling these functions with canvasId yet. The next phase will wire up the UI.
@@ -112,9 +123,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #4: Update Realtime Database for Dynamic Session IDs
+
 **Goal:** Replace hardcoded session ID with dynamic canvasId parameter for cursors and presence
 
 **Tasks:**
+
 - [x] Update `lib/firebase/realtime.ts` to remove the hardcoded `SESSION_ID = "canvas-session-default"` constant
 - [x] Add `canvasId` parameter to `updateCursorPosition(canvasId: string, userId: string, x: number, y: number)` function
 - [x] Add `canvasId` parameter to `subscribeToCursors(canvasId: string, callback: (cursors: Cursor[]) => void)` function
@@ -126,12 +139,14 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Add helper function `getSessionPath(canvasId: string, type: 'cursors' | 'presence'): string` for consistent path generation
 
 **What to Test:**
+
 - Run `npm run lint` to verify TypeScript compilation
 - Temporarily test by hardcoding a canvasId and verifying cursor/presence operations work
 - Check Realtime Database console to verify data is written to correct paths
 - Verify that changing the canvasId creates separate cursor/presence sessions
 
 **Files Changed:**
+
 - `lib/firebase/realtime.ts` - Major refactor to add canvasId parameter to all operations
 
 **Notes:** This is also a breaking change but doesn't affect UI yet. The session paths will now be dynamic based on canvasId.
@@ -141,9 +156,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ## Phase 2: Canvas Dashboard UI
 
 ### PR #5: Create useCanvases Hook
+
 **Goal:** Provide React hook interface for canvas CRUD operations with loading states and error handling
 
 **Tasks:**
+
 - [x] Create `app/canvas/_hooks/useCanvases.ts` hook
 - [x] Implement canvas list subscription using `subscribeToUserCanvases` from canvas.ts
 - [x] Add loading state while fetching canvases
@@ -154,11 +171,13 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Add proper cleanup of subscription on unmount
 
 **What to Test:**
+
 - Run `npm run lint` to verify TypeScript compilation
 - Create a test component that uses the hook to verify it returns correct data shape
 - Verify the hook properly subscribes and unsubscribes
 
 **Files Changed:**
+
 - `app/canvas/_hooks/useCanvases.ts` - NEW: Canvas list management hook
 
 **Notes:** This hook will be used by the dashboard to manage the user's canvas list
@@ -166,9 +185,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #6: Create Canvas Card Component
+
 **Goal:** Build reusable card component to display individual canvas information
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/CanvasCard.tsx` component
 - [x] Accept props: canvas (Canvas type), onClick handler, onDelete handler
 - [x] Display canvas name prominently (truncate if too long)
@@ -182,6 +203,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Add proper TypeScript types for all props
 
 **What to Test:**
+
 - Run `npm run lint` to verify no issues
 - Create a test page that renders CanvasCard with sample data
 - Verify hover state shows delete button
@@ -189,6 +211,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Test with long canvas names to ensure truncation
 
 **Files Changed:**
+
 - `app/canvas/_components/CanvasCard.tsx` - NEW: Canvas card component
 
 **Notes:** Use date-fns or similar for date formatting (check if already in package.json first)
@@ -196,9 +219,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #7: Create Canvas Creation Modal
+
 **Goal:** Build modal for creating new canvases with name and dimension inputs
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/CreateCanvasModal.tsx` component
 - [x] Accept props: open (boolean), onClose handler, onCreate handler
 - [x] Use Dialog component from shadcn/ui for modal structure
@@ -214,6 +239,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Use existing form components from shadcn/ui (Input, Label, Button, RadioGroup or Select)
 
 **What to Test:**
+
 - Run `npm run lint` to verify no issues
 - Test modal opens and closes correctly
 - Test form validation (empty name, invalid dimensions)
@@ -223,6 +249,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Test with extremely long names to verify max length
 
 **Files Changed:**
+
 - `app/canvas/_components/CreateCanvasModal.tsx` - NEW: Canvas creation modal
 
 **Notes:** Use react-hook-form if it's already in package.json, otherwise use controlled inputs with useState
@@ -230,9 +257,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #8: Transform Canvas Page into Dashboard
+
 **Goal:** Convert the current canvas page into a canvas list/dashboard with create, view, delete functionality
 
 **Tasks:**
+
 - [x] Backup current `app/canvas/page.tsx` content (we'll move it to `[canvasId]` route later)
 - [x] Completely rewrite `app/canvas/page.tsx` as canvas dashboard
 - [x] Import and use `useCanvases` hook to get user's canvas list
@@ -248,6 +277,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Use useRouter from next/navigation for navigation to `/canvas/[canvasId]`
 
 **What to Test:**
+
 - Open `/canvas` route in browser
 - Verify "New Canvas" button is visible
 - Click "New Canvas" and create a canvas with name and dimensions
@@ -259,6 +289,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` to verify no issues
 
 **Files Changed:**
+
 - `app/canvas/page.tsx` - Complete rewrite as dashboard
 - (Save old content to restore in Phase 3)
 
@@ -269,9 +300,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ## Phase 3: Dynamic Canvas Routing & Session Management
 
 ### PR #9: Create Dynamic Canvas Route with Canvas Metadata Hook
+
 **Goal:** Set up `/canvas/[canvasId]` route and create hook to fetch individual canvas metadata
 
 **Tasks:**
+
 - [x] Create `app/canvas/_hooks/useCanvas.ts` hook
 - [x] Implement canvas subscription using `subscribeToCanvas` from canvas.ts
 - [x] Add loading state while fetching canvas
@@ -288,6 +321,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Pass canvasId to Canvas component (we'll update Canvas to accept it in next PR)
 
 **What to Test:**
+
 - Run `npm run lint` to verify TypeScript compilation
 - Navigate to `/canvas/test-id` in browser
 - Verify loading state appears briefly
@@ -296,6 +330,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after all changes
 
 **Files Changed:**
+
 - `app/canvas/_hooks/useCanvas.ts` - NEW: Single canvas metadata hook
 - `app/canvas/[canvasId]/page.tsx` - NEW: Dynamic canvas route (moved from old page.tsx)
 
@@ -304,9 +339,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #10: Update Canvas Component and Hooks for Canvas Scoping
+
 **Goal:** Refactor Canvas component and related hooks to accept and use canvasId for all operations
 
 **Tasks:**
+
 - [x] Update `app/canvas/_hooks/useObjects.ts` to accept `canvasId: string` parameter
 - [x] Pass canvasId to all Firestore operations (addObject, updateObject, deleteObject, subscribeToObjects)
 - [x] Update `app/canvas/_hooks/useCursors.ts` to accept `canvasId: string` parameter
@@ -322,6 +359,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [ ] Optionally: use canvas dimensions for visual bounds or constraints (not required for v1)
 
 **What to Test:**
+
 - Create a new canvas from dashboard
 - Navigate to the canvas
 - Verify canvas loads with correct name in header
@@ -335,6 +373,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after all changes
 
 **Files Changed:**
+
 - `app/canvas/_hooks/useObjects.ts` - Add canvasId parameter
 - `app/canvas/_hooks/useCursors.ts` - Add canvasId parameter
 - `app/canvas/_hooks/usePresence.ts` - Add canvasId parameter
@@ -346,9 +385,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #11: Update Shape Factories to Include Canvas ID
+
 **Goal:** Ensure all shape creation functions include canvasId in the generated objects
 
 **Tasks:**
+
 - [x] Update `app/canvas/_lib/shapes.ts` for RectangleShapeFactory
 - [x] Modify `createDefault()` to accept `canvasId: string` parameter and include it in returned object
 - [x] Ensure `toFirestore()` includes canvasId field (should already be on object)
@@ -359,12 +400,14 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Update all callsites in Canvas.tsx that call `createDefault()` to pass canvasId
 
 **What to Test:**
+
 - Create objects of each type (rectangle, circle, line)
 - Check Firestore console to verify each object has canvasId field
 - Verify objects load correctly on page refresh
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_lib/shapes.ts` - Update all shape factories to handle canvasId
 - `app/canvas/_components/Canvas.tsx` - Pass canvasId to shape factory calls
 
@@ -375,9 +418,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ## Phase 4: Backwards Compatibility & Data Migration
 
 ### PR #12: Create Migration Script for Existing Data
+
 **Goal:** Build a migration function to move existing canvas objects to a default canvas per user
 
 **Tasks:**
+
 - [x] Create `scripts/migrate-to-canvases.ts` (or similar) migration script
 - [x] Add function to create a "Default Canvas" for a user with ID "default-canvas-{userId}"
 - [x] Set canvas name to "Default Canvas", dimensions to 1920x1080
@@ -393,6 +438,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] DO NOT delete old data yet (keep for rollback)
 
 **What to Test:**
+
 - Run migration script in dry-run mode first
 - Review logs to verify correct canvas creation and object grouping
 - Run migration for real in development environment
@@ -407,6 +453,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - DO NOT run in production yet
 
 **Files Changed:**
+
 - `scripts/migrate-to-canvases.ts` - NEW: Migration script
 
 **Notes:** Keep old data in `canvasObjects` collection for 7 days as backup before deleting. Consider adding a flag to canvas indicating it's a migrated default canvas.
@@ -414,9 +461,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #13: Add Migration Status Check and Graceful Fallback
+
 **Goal:** Make the application handle both migrated and non-migrated data gracefully
 
 **Tasks:**
+
 - [x] Update `lib/firebase/firestore.ts` to add fallback logic for objects without canvasId
 - [x] If `subscribeToObjects` is called but nested collection is empty, check old flat collection
 - [x] Add helper function `shouldMigrate()` that checks if old data exists
@@ -427,6 +476,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Migration successfully completed - all objects migrated to shared canvas
 
 **What to Test:**
+
 - Before running migration:
   - Create objects in old structure
   - Verify they still load
@@ -439,6 +489,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Create new canvas, verify it uses new structure with no fallback
 
 **Files Changed:**
+
 - `lib/firebase/firestore.ts` - Add fallback logic
 - `app/canvas/page.tsx` - Add migration banner and trigger button
 - `scripts/migrate-to-canvases.ts` - Make callable from UI if needed
@@ -450,9 +501,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ## Phase 5: Permissions, Polish & Edge Cases
 
 ### PR #14: Update Firebase Security Rules
+
 **Goal:** Add proper security rules for canvases and canvas-scoped objects
 
 **Tasks:**
+
 - [x] Update `firestore.rules` to add rules for `canvases` collection
 - [x] Allow read: authenticated user and canvas createdBy matches user ID
 - [x] Allow write: authenticated user and canvas createdBy matches user ID (for create) or resource.data.createdBy matches user ID (for update/delete)
@@ -470,6 +523,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Test rules using Firebase emulator or by attempting unauthorized access
 
 **What to Test:**
+
 - Try to access another user's canvas by URL (should fail or show permission error)
 - Try to modify another user's canvas (should fail)
 - Verify own canvases are accessible
@@ -478,6 +532,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` to verify rules syntax (if using Firebase CLI)
 
 **Files Changed:**
+
 - `firestore.rules` - Add canvas and object security rules
 - `database.rules.json` - Add cursor and presence security rules
 
@@ -486,9 +541,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #15: Add Canvas Rename Functionality
+
 **Goal:** Allow users to rename their canvases from the dashboard or canvas page
 
 **Tasks:**
+
 - [x] Add rename handler to `useCanvases` hook that calls `updateCanvas(canvasId, { name, updatedAt })`
 - [x] Update `app/canvas/_components/CanvasCard.tsx` to add edit icon button (Pencil from lucide-react)
 - [x] Add onClick handler for edit button that opens inline input or modal
@@ -500,6 +557,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [ ] Optionally: add rename option in canvas page header/settings menu
 
 **What to Test:**
+
 - Click edit icon on canvas card
 - Rename canvas and verify it saves
 - Test with empty name (should fail validation)
@@ -510,6 +568,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_hooks/useCanvases.ts` - Add renameCanvas function
 - `app/canvas/_components/CanvasCard.tsx` - Add inline rename functionality
 
@@ -518,9 +577,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #15.5: Add Public/Private Canvas Toggle
+
 **Goal:** Allow users to make canvases public or private when creating and editing them
 
 **Tasks:**
+
 - [x] Add `isPublic` toggle to CreateCanvasModal
 - [x] Add RadioGroup for "Private/Public" in the modal (using existing shadcn/ui RadioGroup component)
 - [x] Default to `false` (private) for new canvases
@@ -538,6 +599,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Test that public canvases are visible to all authenticated users (dual-query pattern implemented)
 
 **What to Test:**
+
 - Create a private canvas, verify only you see it
 - Create a public canvas, verify other users can see and edit it
 - Toggle an existing canvas from private to public
@@ -546,6 +608,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/CreateCanvasModal.tsx` - Add isPublic toggle
 - `app/canvas/_components/CanvasCard.tsx` - Add public/private badge
 - `app/canvas/_hooks/useCanvases.ts` - Add togglePublic function if needed
@@ -556,9 +619,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #16: Add Canvas Header with Breadcrumb Navigation
+
 **Goal:** Create a header component for the canvas page with navigation back to dashboard
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/CanvasHeader.tsx` component
 - [x] Accept props: canvasName (string)
 - [x] Display breadcrumb: "Dashboard > {canvasName}" (use ChevronRight icon from lucide-react)
@@ -571,6 +636,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] All tasks completed and tested
 
 **What to Test:**
+
 - Open any canvas
 - Verify header appears at top with correct canvas name
 - Click "Dashboard" breadcrumb link, verify navigation to dashboard
@@ -578,6 +644,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/CanvasHeader.tsx` - NEW: Canvas header component
 - `app/canvas/[canvasId]/page.tsx` - Import and render CanvasHeader
 
@@ -586,9 +653,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #17: Improve Delete Confirmation with Warning
+
 **Goal:** Add more robust delete confirmation to prevent accidental data loss
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/DeleteCanvasDialog.tsx` component
 - [x] Use AlertDialog component from shadcn/ui (Note: Used Dialog component as AlertDialog not installed; followed existing codebase pattern)
 - [x] Accept props: open (boolean), canvasName (string), onConfirm handler, onCancel handler
@@ -600,6 +669,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Pass canvas name to dialog
 
 **What to Test:**
+
 - Click delete on a canvas card
 - Verify dialog opens with warning
 - Try to confirm without typing name (should be disabled)
@@ -610,6 +680,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/DeleteCanvasDialog.tsx` - NEW: Delete confirmation dialog
 - `app/canvas/page.tsx` - Use DeleteCanvasDialog
 
@@ -618,9 +689,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #18: Add Empty State for Dashboard
+
 **Goal:** Create a welcoming empty state for new users with no canvases
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/EmptyCanvasState.tsx` component
 - [x] Display friendly illustration or icon (FileQuestion or PlusCircle from lucide-react, large size)
 - [x] Add heading: "No canvases yet"
@@ -630,6 +703,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Update `app/canvas/page.tsx` to conditionally show EmptyCanvasState when canvases array is empty (and not loading)
 
 **What to Test:**
+
 - Create new user account
 - Verify empty state appears on dashboard
 - Click "Create Canvas" button, verify modal opens
@@ -638,6 +712,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/EmptyCanvasState.tsx` - NEW: Empty state component
 - `app/canvas/page.tsx` - Conditionally render empty state
 
@@ -646,9 +721,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #19: Add Loading Skeletons for Dashboard
+
 **Goal:** Improve perceived performance with loading placeholders
 
 **Tasks:**
+
 - [x] Create `app/canvas/_components/CanvasCardSkeleton.tsx` component
 - [x] Use Skeleton component from shadcn/ui (or create with animated gradient background)
 - [x] Match dimensions and layout of CanvasCard
@@ -658,6 +735,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Show simple spinner or skeleton while canvas is loading
 
 **What to Test:**
+
 - Refresh dashboard and verify skeleton cards appear briefly
 - Slow down network in browser DevTools to see skeletons longer
 - Verify skeletons match card layout
@@ -665,6 +743,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/CanvasCardSkeleton.tsx` - NEW: Loading skeleton for canvas card
 - `app/canvas/page.tsx` - Show skeletons while loading
 - `app/canvas/[canvasId]/page.tsx` - Show loading state for canvas
@@ -674,9 +753,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #20: Add 404 Error Page for Canvas Not Found
+
 **Goal:** Create a helpful error page when users navigate to non-existent canvas
 
 **Tasks:**
+
 - [x] Update `app/canvas/[canvasId]/page.tsx` to handle canvas not found error from useCanvas hook
 - [x] Create error state UI component or inline JSX
 - [x] Display 404 icon (FileQuestion from lucide-react)
@@ -687,6 +768,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Handle permission denied errors similarly (different message)
 
 **What to Test:**
+
 - Navigate to `/canvas/invalid-id` in browser
 - Verify 404 page appears with correct message
 - Click "Go to Dashboard" button, verify navigation works
@@ -694,6 +776,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/[canvasId]/page.tsx` - Add 404 error handling
 
 **Notes:** Friendly error pages improve UX when things go wrong. Consider logging these errors for monitoring.
@@ -701,9 +784,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #21: Add Error Handling and Retry Logic
+
 **Goal:** Gracefully handle network errors and provide retry mechanisms
 
 **Tasks:**
+
 - [x] Update `app/canvas/_hooks/useCanvases.ts` to catch and expose errors from Firebase operations
 - [x] Add retry function for failed operations
 - [x] Update `app/canvas/_hooks/useCanvas.ts` similarly
@@ -717,6 +802,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [x] Show toast on errors: "Failed to load canvases" with retry action
 
 **What to Test:**
+
 - Disconnect network and try to load dashboard (verify error state)
 - Click retry button, verify it attempts to reload
 - Disconnect network and try to create canvas (verify error toast)
@@ -725,6 +811,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_hooks/useCanvases.ts` - Add error handling and retry
 - `app/canvas/_hooks/useCanvas.ts` - Add error handling and retry
 - `app/canvas/page.tsx` - Display error states and retry buttons
@@ -735,9 +822,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #22: Add Canvas Dimension Display and Validation
+
 **Goal:** Ensure canvas dimensions are properly displayed and enforced
 
 **Tasks:**
+
 - [ ] Update CreateCanvasModal to validate dimensions are within allowed range (100-10000) from constants
 - [ ] Show validation error messages for out-of-range dimensions
 - [ ] Update CanvasCard to display dimensions prominently (e.g., "1920 × 1080" below name)
@@ -747,6 +836,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [ ] Test that dimension presets work correctly (select preset → inputs auto-fill)
 
 **What to Test:**
+
 - Create canvas with preset dimensions, verify they're saved correctly
 - Create canvas with custom dimensions (e.g., 2000x1500), verify in Firestore
 - Try to create canvas with dimensions too small (99x99), verify validation error
@@ -756,6 +846,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after changes
 
 **Files Changed:**
+
 - `app/canvas/_components/CreateCanvasModal.tsx` - Add dimension validation
 - `app/canvas/_components/CanvasCard.tsx` - Display dimensions
 - `app/canvas/_components/CanvasHeader.tsx` - Optionally display dimensions
@@ -766,9 +857,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #23: Performance Testing and Optimization
+
 **Goal:** Verify performance with many canvases and objects, optimize if needed
 
 **Tasks:**
+
 - [ ] Create test script to generate 20+ canvases for a user
 - [ ] Create test script to generate 100+ objects in a single canvas
 - [ ] Test dashboard load time with 20+ canvases (should be < 1 second)
@@ -781,6 +874,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [ ] Test with 2+ users collaborating on same canvas with many objects
 
 **What to Test:**
+
 - Load dashboard with 20 canvases, measure load time in Network tab
 - Open canvas with 100 objects, measure load time
 - Pan and zoom canvas with many objects, check FPS in DevTools Performance tab
@@ -789,6 +883,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` after any code changes
 
 **Files Changed:**
+
 - May need to add Firestore indexes via Firebase console
 - May optimize components if performance issues found
 
@@ -797,9 +892,11 @@ This is a major architectural change affecting the data layer, routing, componen
 ---
 
 ### PR #24: Final Polish and Documentation
+
 **Goal:** Clean up code, add comments, and document the new feature
 
 **Tasks:**
+
 - [ ] Review all files changed in this feature for code quality
 - [ ] Add JSDoc comments to public functions in `lib/firebase/canvas.ts`
 - [ ] Add JSDoc comments to hooks (useCanvases, useCanvas)
@@ -814,6 +911,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - [ ] Test complete user flow one more time: signup → create canvas → edit → switch canvas → delete canvas
 
 **What to Test:**
+
 - Complete user flow from scratch
 - Verify no console errors or warnings
 - Verify all features work smoothly
@@ -822,6 +920,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Run `npm run lint` and `npm run format:check`
 
 **Files Changed:**
+
 - Multiple files for documentation and cleanup
 - `CLAUDE.md` - Update with multi-canvas architecture
 - Remove temporary migration code if no longer needed
@@ -837,6 +936,7 @@ This is a major architectural change affecting the data layer, routing, componen
 **Estimated Complexity:** High
 
 **Key Dependencies:**
+
 - Firebase Authentication (already configured)
 - Firestore with nested collections support
 - Realtime Database
@@ -844,16 +944,19 @@ This is a major architectural change affecting the data layer, routing, componen
 - Existing shape system and lock system
 
 **Critical Path:**
+
 1. Phase 1 (PRs 1-4): Data model and backend changes
 2. Phase 3 (PRs 9-11): Dynamic routing and canvas scoping
 3. Phase 4 (PRs 12-13): Data migration
 4. Phase 5 (PR 14): Security rules
 
 **Non-Critical (Can Iterate):**
+
 - Phase 2 (PRs 5-8): Dashboard UI (can be rough initially)
 - Phase 5 (PRs 15-24): Polish and UX improvements
 
 **Testing Strategy:**
+
 - Test each PR independently before proceeding
 - Manual testing required for multi-user scenarios
 - Use Firebase emulator for testing rules
@@ -861,6 +964,7 @@ This is a major architectural change affecting the data layer, routing, componen
 - Migration testing in development before production
 
 **Success Criteria:**
+
 - Users can create multiple canvases with custom dimensions
 - Objects, cursors, and presence are isolated per canvas
 - Existing data migrated without loss

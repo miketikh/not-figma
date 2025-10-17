@@ -3,7 +3,12 @@
  * Centralizes shape creation, conversion, and drawing logic
  */
 
-import { CanvasObject, RectangleObject, LineObject, TextObject } from "@/types/canvas";
+import {
+  CanvasObject,
+  RectangleObject,
+  LineObject,
+  TextObject,
+} from "@/types/canvas";
 import { generateObjectId } from "./objects";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 import type {
@@ -66,7 +71,11 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
   /**
    * Convert local PersistedRect to Firestore RectangleObject
    */
-  toFirestore: (rect: PersistedRect, userId: string, canvasId?: string): RectangleObject => {
+  toFirestore: (
+    rect: PersistedRect,
+    userId: string,
+    canvasId?: string
+  ): RectangleObject => {
     const now = Date.now();
 
     return {
@@ -249,7 +258,11 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
   /**
    * Convert local PersistedCircle to Firestore CircleObject
    */
-  toFirestore: (circle: PersistedCircle, userId: string, canvasId?: string): CanvasObject => {
+  toFirestore: (
+    circle: PersistedCircle,
+    userId: string,
+    canvasId?: string
+  ): CanvasObject => {
     const now = Date.now();
 
     // Convert radiusX and radiusY to width and height (diameter)
@@ -434,7 +447,11 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
   /**
    * Convert local PersistedLine to Firestore LineObject
    */
-  toFirestore: (line: PersistedLine, userId: string, canvasId?: string): LineObject => {
+  toFirestore: (
+    line: PersistedLine,
+    userId: string,
+    canvasId?: string
+  ): LineObject => {
     const now = Date.now();
 
     return {
@@ -521,11 +538,11 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
     const width = current.x - start.x;
     const height = current.y - start.y;
 
-    return { 
-      x: start.x, 
-      y: start.y, 
-      width, 
-      height 
+    return {
+      x: start.x,
+      y: start.y,
+      width,
+      height,
     };
   },
 
@@ -537,7 +554,12 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
     return {
       type: "line" as const,
       props: {
-        points: [draft.x, draft.y, draft.x + draft.width, draft.y + draft.height],
+        points: [
+          draft.x,
+          draft.y,
+          draft.x + draft.width,
+          draft.y + draft.height,
+        ],
         stroke: styleOverrides.stroke ?? "#a855f7",
         strokeWidth: styleOverrides.strokeWidth ?? 2,
         opacity: styleOverrides.opacity ?? 1,
@@ -604,7 +626,11 @@ export const textFactory: ShapeFactory<PersistedText> = {
   /**
    * Convert local PersistedText to Firestore TextObject
    */
-  toFirestore: (text: PersistedText, userId: string, canvasId?: string): TextObject => {
+  toFirestore: (
+    text: PersistedText,
+    userId: string,
+    canvasId?: string
+  ): TextObject => {
     const now = Date.now();
 
     return {
@@ -713,7 +739,7 @@ export const textFactory: ShapeFactory<PersistedText> = {
       x: start.x,
       y: start.y,
       width: 100,
-      height: 30
+      height: 30,
     };
   },
 
@@ -755,4 +781,3 @@ export function getShapeFactory(type: string): ShapeFactory<any> | undefined {
 export function hasShapeFactory(type: string): boolean {
   return type in shapeFactories;
 }
-

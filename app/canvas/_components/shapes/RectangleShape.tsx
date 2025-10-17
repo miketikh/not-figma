@@ -66,9 +66,7 @@ export default function RectangleShape({
 }: RectangleShapeProps) {
   // Determine stroke color based on lock status
   // Use locking user's color if available, otherwise fallback to red
-  const strokeColor = isLocked
-    ? (lockingUserColor || "#ef4444")
-    : shape.stroke;
+  const strokeColor = isLocked ? lockingUserColor || "#ef4444" : shape.stroke;
   const strokeWidth = shape.strokeWidth / zoom;
 
   /**
@@ -192,4 +190,3 @@ export default function RectangleShape({
     </Group>
   );
 }
-

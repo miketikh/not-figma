@@ -116,10 +116,7 @@ export interface CircleObject extends BaseCanvasObject {
  * Lines don't use width/height/fill properties
  */
 export interface LineObject
-  extends Omit<
-    BaseCanvasObject,
-    "width" | "height" | "fill" | "fillOpacity"
-  > {
+  extends Omit<BaseCanvasObject, "width" | "height" | "fill" | "fillOpacity"> {
   type: "line";
   x2: number;
   y2: number;
@@ -316,4 +313,3 @@ export interface HistoryState {
   future: HistoryEntry[];
   maxSize: number;
 }
-

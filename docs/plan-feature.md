@@ -1,7 +1,9 @@
 # Feature Planning Document Template
 
 ## Instructions for AI
+
 This is an **exploratory planning document**, not a formal PRD. Your goal is to:
+
 - Help brainstorm possibilities and explore the feature space
 - Identify potential user stories and implementation approaches
 - Surface questions and considerations early
@@ -19,12 +21,14 @@ When the user describes a feature they want to add, use this template to generat
 **Next Step:** Discussion → PRD Creation
 
 ## Feature Request Summary
-*Brief 2-3 sentence description of what the user wants to add*
+
+_Brief 2-3 sentence description of what the user wants to add_
 
 [AI: Restate the user's request in clear terms]
 
 ## Initial Questions & Clarifications
-*Things we should discuss before diving deeper*
+
+_Things we should discuss before diving deeper_
 
 - **Question 1:** [Key question about scope, user needs, etc.]
 - **Question 2:** [Technical constraints or preferences]
@@ -35,7 +39,8 @@ When the user describes a feature they want to add, use this template to generat
 ## Possible User Stories
 
 ### Primary Use Cases
-*The main ways users might interact with this feature*
+
+_The main ways users might interact with this feature_
 
 1. **As a [user type], I want to [action] so that [benefit]**
    - Scenario: [Describe the situation]
@@ -48,7 +53,8 @@ When the user describes a feature they want to add, use this template to generat
 [AI: Generate 3-5 primary user stories based on the feature request]
 
 ### Secondary/Future Use Cases
-*Potential extensions or related features worth considering*
+
+_Potential extensions or related features worth considering_
 
 - [User story or use case]
 - [User story or use case]
@@ -56,33 +62,41 @@ When the user describes a feature they want to add, use this template to generat
 ## Feature Possibilities
 
 ### Option A: [Approach Name]
+
 **Description:** [High-level description of this approach]
 
 **Pros:**
+
 - [Benefit]
 - [Benefit]
 
 **Cons:**
+
 - [Drawback]
 - [Drawback]
 
 **What we'd need:**
+
 - [Technical requirement]
 - [Resource or dependency]
 - [Skill or knowledge]
 
 ### Option B: [Alternative Approach]
+
 **Description:** [High-level description]
 
 **Pros:**
+
 - [Benefit]
 - [Benefit]
 
 **Cons:**
+
 - [Drawback]
 - [Drawback]
 
 **What we'd need:**
+
 - [Technical requirement]
 - [Resource or dependency]
 
@@ -91,21 +105,24 @@ When the user describes a feature they want to add, use this template to generat
 ## Technical Considerations
 
 ### Architecture Thoughts
-*High-level architectural implications*
+
+_High-level architectural implications_
 
 - [Consideration about system design]
 - [Consideration about scalability]
 - [Consideration about data flow]
 
 ### Dependencies & Integrations
-*What else in the app will this touch?*
+
+_What else in the app will this touch?_
 
 - **Existing features affected:** [List features]
 - **New dependencies needed:** [Libraries, APIs, services]
 - **Data/state management:** [How will data flow?]
 
 ### Potential Challenges
-*Things that might be tricky*
+
+_Things that might be tricky_
 
 - **Challenge 1:** [Technical or design challenge]
   - Possible solutions: [Ideas for addressing it]
@@ -115,7 +132,8 @@ When the user describes a feature they want to add, use this template to generat
 ## User Experience Sketch
 
 ### User Flow Ideas
-*Rough outline of how users might interact with this*
+
+_Rough outline of how users might interact with this_
 
 1. [Starting point]
 2. [User action/step]
@@ -124,6 +142,7 @@ When the user describes a feature they want to add, use this template to generat
 5. [Completion]
 
 ### UI/UX Considerations
+
 - **Interface elements needed:** [Buttons, forms, displays, etc.]
 - **Feedback mechanisms:** [How will users know it's working?]
 - **Error handling:** [What happens when things go wrong?]
@@ -131,7 +150,8 @@ When the user describes a feature they want to add, use this template to generat
 ## Open Questions & Discussion Points
 
 ### Decision Points
-*Things we need to decide through discussion*
+
+_Things we need to decide through discussion_
 
 - [ ] **Decision 1:** [What needs to be decided]
   - Considerations: [Factors to think about]
@@ -139,21 +159,25 @@ When the user describes a feature they want to add, use this template to generat
   - Considerations: [Factors to think about]
 
 ### Unknowns
-*Things we need to research or learn more about*
+
+_Things we need to research or learn more about_
 
 - [Unknown factor]
 - [Unknown factor]
 
 ### Trade-offs to Discuss
-*Where we might need to balance competing priorities*
+
+_Where we might need to balance competing priorities_
 
 - [Trade-off 1]: [Description]
 - [Trade-off 2]: [Description]
 
 ## Rough Implementation Thoughts
-*Very high-level technical approach (details come later in PRD)*
+
+_Very high-level technical approach (details come later in PRD)_
 
 ### Core Components Needed
+
 1. **[Component Name]**
    - Purpose: [What it does]
    - Rough approach: [General idea]
@@ -163,13 +187,15 @@ When the user describes a feature they want to add, use this template to generat
    - Rough approach: [General idea]
 
 ### Integration Points
+
 - **Frontend:** [General areas affected]
 - **Backend:** [General areas affected]
 - **Database:** [General considerations]
 - **APIs/Services:** [External or internal services]
 
 ## Success Criteria (Preliminary)
-*How will we know this feature is successful?*
+
+_How will we know this feature is successful?_
 
 - [Measurable outcome]
 - [Measurable outcome]
@@ -178,26 +204,31 @@ When the user describes a feature they want to add, use this template to generat
 ## Next Steps
 
 ### Before Moving to PRD
+
 - [ ] Discuss and decide on approach (Option A vs B vs hybrid)
 - [ ] Answer open questions
 - [ ] Validate assumptions about [specific assumptions]
 - [ ] Sketch out [specific detail if needed]
 
 ### To Prepare for PRD Creation
+
 - [Research or preparation task]
 - [Research or preparation task]
 
 ---
 
 ## Discussion Notes
-*Space to capture thoughts during the conversation*
+
+_Space to capture thoughts during the conversation_
 
 [AI: Leave this section blank for the user to fill in, or populate during discussion]
 
 ---
 
 ## Transition to PRD
+
 Once we've discussed and aligned on the approach, we'll create a formal PRD that includes:
+
 - Structured requirements
 - Phased implementation plan
 - Specific code changes and files

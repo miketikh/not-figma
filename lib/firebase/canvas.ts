@@ -45,7 +45,9 @@ function validateCanvasName(name: string): void {
     throw new Error("Canvas name is required");
   }
   if (name.length > MAX_CANVAS_NAME_LENGTH) {
-    throw new Error(`Canvas name must be ${MAX_CANVAS_NAME_LENGTH} characters or less`);
+    throw new Error(
+      `Canvas name must be ${MAX_CANVAS_NAME_LENGTH} characters or less`
+    );
   }
 }
 
@@ -54,10 +56,14 @@ function validateCanvasName(name: string): void {
  */
 function validateCanvasDimensions(width: number, height: number): void {
   if (width < MIN_CANVAS_DIMENSION || width > MAX_CANVAS_DIMENSION) {
-    throw new Error(`Canvas width must be between ${MIN_CANVAS_DIMENSION} and ${MAX_CANVAS_DIMENSION}`);
+    throw new Error(
+      `Canvas width must be between ${MIN_CANVAS_DIMENSION} and ${MAX_CANVAS_DIMENSION}`
+    );
   }
   if (height < MIN_CANVAS_DIMENSION || height > MAX_CANVAS_DIMENSION) {
-    throw new Error(`Canvas height must be between ${MIN_CANVAS_DIMENSION} and ${MAX_CANVAS_DIMENSION}`);
+    throw new Error(
+      `Canvas height must be between ${MIN_CANVAS_DIMENSION} and ${MAX_CANVAS_DIMENSION}`
+    );
   }
 }
 
@@ -195,7 +201,7 @@ export async function getUserCanvases(userId: string): Promise<Canvas[]> {
     // Execute both queries in parallel
     const [ownedSnapshot, publicSnapshot] = await Promise.all([
       getDocs(ownedQuery),
-      getDocs(publicQuery)
+      getDocs(publicQuery),
     ]);
 
     // Merge results and deduplicate by canvas ID
@@ -224,7 +230,9 @@ export async function getUserCanvases(userId: string): Promise<Canvas[]> {
     });
 
     // Convert to array and sort by creation date (newest first)
-    return Array.from(canvasMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+    return Array.from(canvasMap.values()).sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
   } catch (error) {
     console.error(`Error fetching canvases for user ${userId}:`, error);
     throw error;
@@ -394,7 +402,9 @@ export function subscribeToUserCanvases(
 
   // Helper to merge and emit canvases
   const emitCanvases = () => {
-    const canvases = Array.from(canvasMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+    const canvases = Array.from(canvasMap.values()).sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
     callback(canvases);
   };
 
@@ -423,7 +433,10 @@ export function subscribeToUserCanvases(
       emitCanvases();
     },
     (error) => {
-      console.error(`Error subscribing to owned canvases for user ${userId}:`, error);
+      console.error(
+        `Error subscribing to owned canvases for user ${userId}:`,
+        error
+      );
       onError?.(error);
     }
   );
@@ -445,7 +458,11 @@ export function subscribeToUserCanvases(
       // Remove deleted public canvases (only if not owned by user)
       const publicIds = new Set(snapshot.docs.map((doc) => doc.id));
       for (const [id, canvas] of canvasMap.entries()) {
-        if (canvas.isPublic && canvas.createdBy !== userId && !publicIds.has(id)) {
+        if (
+          canvas.isPublic &&
+          canvas.createdBy !== userId &&
+          !publicIds.has(id)
+        ) {
           canvasMap.delete(id);
         }
       }

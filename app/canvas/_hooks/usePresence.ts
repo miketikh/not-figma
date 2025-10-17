@@ -9,7 +9,9 @@ import { UserPresence } from "@/types/user";
 
 export function usePresence(canvasId: string) {
   const { user } = useAuth();
-  const [allPresence, setAllPresence] = useState<Record<string, UserPresence>>({});
+  const [allPresence, setAllPresence] = useState<Record<string, UserPresence>>(
+    {}
+  );
 
   // Subscribe to presence data
   useEffect(() => {
@@ -26,9 +28,9 @@ export function usePresence(canvasId: string) {
 
   // Get online users (excluding current user)
   const onlineUsers = Object.values(allPresence).filter(
-    (presence) => 
+    (presence) =>
       presence.userId !== user?.uid && // Exclude current user
-      presence.isOnline && 
+      presence.isOnline &&
       isUserActive(presence.lastSeen) // Active within last 5 minutes
   );
 
@@ -37,4 +39,3 @@ export function usePresence(canvasId: string) {
     onlineCount: onlineUsers.length,
   };
 }
-

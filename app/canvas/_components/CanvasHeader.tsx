@@ -21,7 +21,10 @@ interface CanvasHeaderProps {
   canvasName: string;
 }
 
-export default function CanvasHeader({ canvasId, canvasName }: CanvasHeaderProps) {
+export default function CanvasHeader({
+  canvasId,
+  canvasName,
+}: CanvasHeaderProps) {
   const router = useRouter();
   const { addToast } = useToast();
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -44,7 +47,8 @@ export default function CanvasHeader({ canvasId, canvasName }: CanvasHeaderProps
       console.error("Failed to rename canvas:", error);
       addToast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to rename canvas",
+        description:
+          error instanceof Error ? error.message : "Failed to rename canvas",
         variant: "destructive",
         duration: 5000,
       });
@@ -67,7 +71,8 @@ export default function CanvasHeader({ canvasId, canvasName }: CanvasHeaderProps
       console.error("Failed to delete canvas:", error);
       addToast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete canvas",
+        description:
+          error instanceof Error ? error.message : "Failed to delete canvas",
         variant: "destructive",
         duration: 5000,
       });

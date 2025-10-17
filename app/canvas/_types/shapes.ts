@@ -127,7 +127,11 @@ export interface PersistedText {
 /**
  * Union type for all local shape types
  */
-export type PersistedShape = PersistedRect | PersistedCircle | PersistedLine | PersistedText;
+export type PersistedShape =
+  | PersistedRect
+  | PersistedCircle
+  | PersistedLine
+  | PersistedText;
 
 /**
  * Style overrides for draft preview rendering
@@ -187,4 +191,3 @@ export interface ShapeFactory<T> {
     styleOverrides?: DraftStyleOverrides
   ) => any;
 }
-

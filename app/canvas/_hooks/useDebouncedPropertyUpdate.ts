@@ -4,9 +4,7 @@ import type { LockManager } from "../_lib/locks";
 
 interface UseDebouncedPropertyUpdateParams {
   objects: PersistedShape[];
-  setObjects: (
-    fn: (prev: PersistedShape[]) => PersistedShape[]
-  ) => void;
+  setObjects: (fn: (prev: PersistedShape[]) => PersistedShape[]) => void;
   updateObjectInFirestore: (obj: PersistedShape) => void;
   lockManager: LockManager;
   debounceMs?: number;

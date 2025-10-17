@@ -6,6 +6,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Viewport, CanvasTool } from "@/types/canvas";
+import { AIChatMessage } from "@/types/ai";
 
 // Default properties that can be customized per shape type
 export interface DefaultShapeProperties {
@@ -71,6 +72,13 @@ interface CanvasStore {
     updates: Partial<DefaultShapeProperties[T]>
   ) => void;
   resetDefaultShapeProperties: () => void;
+
+  // AI state (not persisted - session only)
+  aiChatOpen: boolean;
+  chatHistory: AIChatMessage[];
+  toggleAIChat: () => void;
+  addChatMessage: (message: AIChatMessage) => void;
+  clearChatHistory: () => void;
 }
 
 const DEFAULT_VIEWPORT: Viewport = {
@@ -161,11 +169,25 @@ export const useCanvasStore = create<CanvasStore>()(
 
       resetDefaultShapeProperties: () =>
         set({ defaultShapeProperties: DEFAULT_SHAPE_PROPERTIES }),
+
+      // AI state (not persisted - session only)
+      aiChatOpen: false,
+      chatHistory: [],
+
+      toggleAIChat: () => set((state) => ({ aiChatOpen: !state.aiChatOpen })),
+
+      addChatMessage: (message) =>
+        set((state) => ({
+          chatHistory: [...state.chatHistory, message],
+        })),
+
+      clearChatHistory: () => set({ chatHistory: [] }),
     }),
     {
       name: "canvas-viewport-storage", // localStorage key
       partialize: (state) => ({
         // Persist viewport, grid, and default shape properties
+        // Note: AI state is intentionally NOT persisted (session-only)
         viewport: state.viewport,
         showGrid: state.showGrid,
         defaultShapeProperties: state.defaultShapeProperties,
@@ -173,4 +195,3 @@ export const useCanvasStore = create<CanvasStore>()(
     }
   )
 );
-

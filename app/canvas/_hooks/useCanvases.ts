@@ -17,7 +17,12 @@ interface UseCanvasesReturn {
   canvases: Canvas[];
   loading: boolean;
   error: Error | null;
-  createCanvas: (name: string, width: number, height: number, isPublic: boolean) => Promise<string>;
+  createCanvas: (
+    name: string,
+    width: number,
+    height: number,
+    isPublic: boolean
+  ) => Promise<string>;
   deleteCanvas: (canvasId: string) => Promise<void>;
   renameCanvas: (canvasId: string, name: string) => Promise<void>;
   retry: () => void;
@@ -39,16 +44,28 @@ export function useCanvases(): UseCanvasesReturn {
    * Create a new canvas
    */
   const createCanvas = useCallback(
-    async (name: string, width: number, height: number, isPublic: boolean): Promise<string> => {
+    async (
+      name: string,
+      width: number,
+      height: number,
+      isPublic: boolean
+    ): Promise<string> => {
       if (!user) {
         throw new Error("User must be authenticated to create a canvas");
       }
 
       try {
-        const canvasId = await createCanvasFirestore(user.uid, name, width, height, isPublic);
+        const canvasId = await createCanvasFirestore(
+          user.uid,
+          name,
+          width,
+          height,
+          isPublic
+        );
         return canvasId;
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to create canvas");
+        const error =
+          err instanceof Error ? err : new Error("Failed to create canvas");
         setError(error);
         throw error;
       }
@@ -68,7 +85,8 @@ export function useCanvases(): UseCanvasesReturn {
       try {
         await deleteCanvasFirestore(canvasId);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to delete canvas");
+        const error =
+          err instanceof Error ? err : new Error("Failed to delete canvas");
         setError(error);
         throw error;
       }
@@ -88,7 +106,8 @@ export function useCanvases(): UseCanvasesReturn {
       try {
         await updateCanvasFirestore(canvasId, { name });
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Failed to rename canvas");
+        const error =
+          err instanceof Error ? err : new Error("Failed to rename canvas");
         setError(error);
         throw error;
       }

@@ -2,7 +2,15 @@
 
 import type { CanvasTool } from "@/types/canvas";
 import { useCanvasStore } from "../_store/canvas-store";
-import { MousePointer2, Hand, Square, Circle, Minus, Type } from "lucide-react";
+import {
+  MousePointer2,
+  Hand,
+  Square,
+  Circle,
+  Minus,
+  Type,
+  Sparkles,
+} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -28,7 +36,13 @@ const TOOLS: ToolButton[] = [
 ];
 
 export default function Toolbar() {
-  const { activeTool, setActiveTool, updateDefaultShapeProperty } = useCanvasStore();
+  const {
+    activeTool,
+    setActiveTool,
+    updateDefaultShapeProperty,
+    toggleAIChat,
+    aiChatOpen,
+  } = useCanvasStore();
 
   const handleToolClick = (toolId: CanvasTool) => {
     setActiveTool(toolId);
@@ -39,9 +53,7 @@ export default function Toolbar() {
   };
 
   return (
-    <div
-      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center bg-white rounded-lg overflow-hidden border shadow-lg"
-    >
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center bg-white rounded-lg overflow-hidden border shadow-lg">
       <TooltipProvider>
         {TOOLS.map((tool, index) => {
           const Icon = tool.icon;
@@ -70,14 +82,40 @@ export default function Toolbar() {
                 </TooltipContent>
               </Tooltip>
 
-              {index < TOOLS.length - 1 && <Separator orientation="vertical" className="h-full" />}
+              {index < TOOLS.length - 1 && (
+                <Separator orientation="vertical" className="h-full" />
+              )}
             </div>
           );
         })}
+
+        {/* AI Assistant Button */}
+        <Separator orientation="vertical" className="h-full" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggleAIChat}
+              className={`flex flex-col items-center justify-center px-3 py-2 hover:bg-accent transition-colors ${
+                aiChatOpen ? "bg-accent" : ""
+              }`}
+            >
+              <div className="flex items-center justify-center w-6 h-6 mb-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  A
+                </span>
+              </div>
+              <div className="flex items-center justify-center w-6 h-6">
+                <Sparkles
+                  className={`w-5 h-5 ${aiChatOpen ? "text-purple-600" : ""}`}
+                />
+              </div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>AI Assistant (A)</p>
+          </TooltipContent>
+        </Tooltip>
       </TooltipProvider>
     </div>
   );
 }
-
-
-

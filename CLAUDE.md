@@ -9,6 +9,7 @@ Not-Figma is a real-time collaborative design canvas built with Next.js 15, Fire
 ## Commands
 
 ### Development
+
 ```bash
 npm run dev          # Start dev server with Turbopack at localhost:3000
 npm run build        # Build for production
@@ -19,25 +20,30 @@ npm run format:check # Check Prettier formatting
 ```
 
 ### Firebase Setup
+
 - Create Firebase project with Authentication (email/password), Firestore, and Realtime Database
 - Copy `.env.example` to `.env.local` and add Firebase credentials
 - Deploy `firestore.rules` and `database.rules.json` to Firebase Console
 
 ### Testing Multiplayer
+
 Open app in multiple browser windows/tabs (use incognito for different users) to test real-time collaboration.
 
 ## Architecture
 
 ### Real-Time Data Layer
+
 - **Firestore**: Persistent storage for canvas objects with real-time listeners (subscribeToObjects)
 - **Realtime Database**: High-frequency updates for cursors (50ms throttle) and presence (30s heartbeat)
 - **Lock System**: Distributed locks prevent edit conflicts. Users acquire locks on selection (acquireLock), automatically released after LOCK_TIMEOUT_MS or on deselection (releaseLock)
 
 ### State Management
+
 - **Zustand Store** (`app/canvas/_store/canvas-store.ts`): Viewport, active tool, drawing state, and default shape properties. Persists viewport and defaults to localStorage.
 - **Local Canvas State**: Managed by Konva Stage/Layer in Canvas.tsx. Shapes are represented as Konva nodes (react-konva components).
 
 ### Data Flow
+
 1. User interaction triggers shape factory to create local shape
 2. `useObjects` hook converts shape to CanvasObject via factory's `toFirestore()`
 3. Firestore CRUD operations in `lib/firebase/firestore.ts`
@@ -45,17 +51,20 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 5. Canvas component updates Konva nodes
 
 ### Shape System
+
 - **Shape Factories** (`app/canvas/_lib/shapes.ts`): Each shape type has a factory with `toFirestore()` and `fromFirestore()` converters
 - **Shape Components** (`app/canvas/_components/shapes/`): Konva components (KonvaRectangle, KonvaCircle, KonvaLine, KonvaText)
 - **Type System** (`types/canvas.ts`): BaseCanvasObject extended by RectangleObject, CircleObject, LineObject, TextObject
 
 ### Lock System
+
 - Locks stored as fields on CanvasObject: `lockedBy`, `lockedAt`, `lockTimeout`
 - Functions in `lib/firebase/firestore.ts`: acquireLock, releaseLock, renewLock, canEdit, isLockExpired
 - Lock timeout constant in `lib/constants/locks.ts`
 - Expired locks can be taken over by any user
 
 ### File Organization (Next.js App Router)
+
 - **Feature co-location**: Canvas code lives in `app/canvas/` with `_components/`, `_hooks/`, `_lib/`, `_store/`, `_types/` subdirectories
 - **Global shared code**: `components/ui/` (shadcn/ui), `lib/` (Firebase, constants), `hooks/` (useAuth), `types/` (shared types)
 - **Auth route group**: `app/(auth)/` contains login/signup with shared `_lib/` helpers
@@ -64,6 +73,7 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 ## Code Conventions
 
 ### From .cursor/rules/global.mdc:
+
 - **Locality principle**: Keep components/hooks closest to their concern. If only used in one page, put in that page's `_components/`. If used across a feature (e.g. all auth pages), put in feature folder. If global, put at top level.
 - **Clean components**: Extract helper functions to `_lib/` folders, don't embed logic in components
 - **Check before writing**: Search for existing helpers (date formatters, converters) in `lib/` folders before creating new ones
@@ -72,11 +82,13 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 - **Library consistency**: Check package.json and stick with existing libraries (e.g. use lucide-react for icons, not alternatives)
 
 ### TypeScript
+
 - Strict mode enabled
 - Full type safety required
 - Types in `types/` for global types, `_types/` for feature-local types
 
 ### Performance
+
 - Konva renders at 60 FPS with 500+ objects
 - Cursor updates throttled to 50ms
 - Presence heartbeats every 30s
@@ -85,6 +97,7 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 ## Current State
 
 ### Working Features ✅
+
 - Canvas pan/zoom, shape creation (rectangle, circle, line)
 - Multi-user collaboration with live cursors
 - Properties panel with position, size, rotation, colors, opacity, stroke
@@ -94,16 +107,19 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 - Auto-save to Firebase
 
 ### In Progress 🚧
+
 - Text layers (see `planning/add_text_object.md`)
 - Multi-select (see `planning/multi_select.md`)
 
 ### Planned 📅
+
 - Copy/paste
 - Undo/redo
 - AI-powered commands (natural language object creation)
 - AI templates (generate forms, layouts)
 
 ## Known Issues
+
 - Text layers not yet implemented
 - Multi-select not yet available
 - Copy/paste not yet functional
@@ -111,6 +127,7 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 - Stroke dash styles not implemented
 
 ## Key Files Reference
+
 - Canvas component: `app/canvas/_components/Canvas.tsx`
 - Firestore operations: `lib/firebase/firestore.ts`
 - Shape factories: `app/canvas/_lib/shapes.ts`

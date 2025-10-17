@@ -5,6 +5,7 @@
 After examining the current shape infrastructure and the line implementation, here's what I found for implementing text objects:
 
 ### Current Shape Architecture:
+
 1. **Type Definitions** (`app/canvas/_types/shapes.ts`): Defines local shape representations (PersistedRect, PersistedCircle, PersistedLine)
 2. **Shape Factories** (`app/canvas/_lib/shapes.ts`): Factory pattern for each shape with methods for creation, conversion, validation, and draft preview
 3. **Firestore Types** (`types/canvas.ts`): Defines Firestore object types (TextObject already exists!)
@@ -17,6 +18,7 @@ After examining the current shape infrastructure and the line implementation, he
 10. **Default Properties** (`app/canvas/_store/canvas-store.ts`): Stores default properties for each shape tool
 
 ### Key Differences for Text:
+
 - Text is **click-to-place**, not click-and-drag like rectangles/circles
 - Text has unique properties: `content` and `fontSize` (MVP - more typography options postponed)
 - Text uses `fill` for text color (stroke/outline postponed for MVP)
@@ -28,6 +30,7 @@ After examining the current shape infrastructure and the line implementation, he
 - **Initial Interaction**: Click once to place text with default "Text" content
 
 ### Text Interaction Flow (MVP):
+
 1. **Activate text tool** (click toolbar or press "T")
 2. **Click on canvas** - Places text with default "Text" content
 3. **Text automatically selected** - Properties panel appears
@@ -42,6 +45,7 @@ After examining the current shape infrastructure and the line implementation, he
 ## Task List
 
 ### 1. Add Text Type Definition ✅
+
 **File:** `app/canvas/_types/shapes.ts`
 
 - [x] Add `PersistedText` interface after `PersistedLine`
@@ -66,6 +70,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 2. Create Text Factory ✅
+
 **File:** `app/canvas/_lib/shapes.ts`
 
 - [x] Import `TextObject` from `@/types/canvas`
@@ -112,6 +117,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 3. Update Tool Constants ✅
+
 **File:** `app/canvas/_constants/tools.ts`
 
 - [x] **Do NOT** add `"text"` to `DRAWING_TOOLS` array (text is click-to-place, not drag-to-draw)
@@ -122,6 +128,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 4. Add Text to Toolbar ✅
+
 **File:** `app/canvas/_components/Toolbar.tsx`
 
 - [x] Import `Type` icon from lucide-react
@@ -134,6 +141,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 5. Add Text Keyboard Shortcut ✅
+
 **File:** `app/canvas/_components/Canvas.tsx`
 
 - [x] In keyboard handler, add text tool shortcut:
@@ -147,6 +155,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 6. Create TextShape Component ✅
+
 **File:** `app/canvas/_components/shapes/TextShape.tsx` (NEW)
 
 - [x] Import `Text` from `react-konva`
@@ -177,6 +186,7 @@ After examining the current shape infrastructure and the line implementation, he
 - [x] Export as default
 
 **POSTPONED for future PR:**
+
 - [ ] Double-click to enter inline edit mode
 - [ ] HTML textarea overlay for editing
 - [ ] All typography controls in component
@@ -184,6 +194,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 7. Update Shape Router ✅
+
 **File:** `app/canvas/_components/shapes/index.tsx`
 
 - [x] Import `TextShape` from `./TextShape`
@@ -209,6 +220,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 8. Update Canvas Interaction Logic ✅
+
 **File:** `app/canvas/_components/Canvas.tsx`
 
 - [x] Update mouse handlers for text tool:
@@ -223,12 +235,14 @@ After examining the current shape infrastructure and the line implementation, he
 - [x] Text objects render automatically via ShapeComponent router
 
 **MVP: Properties Panel Editing Only**
+
 - Click to place text with default "Text" content
 - Text is automatically selected, properties panel appears
 - User edits content and fontSize via properties panel
 - Simple and works with existing infrastructure
 
 **POSTPONED for future PR:**
+
 - [ ] Inline edit mode with HTML overlay
 - [ ] Double-click to edit
 - [ ] Edit state management
@@ -236,6 +250,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 9. Create TextProperties Component ✅
+
 **File:** `app/canvas/_components/properties/shape-properties/TextProperties.tsx` (NEW)
 
 - [x] Create `TextPropertiesProps` interface:
@@ -255,6 +270,7 @@ After examining the current shape infrastructure and the line implementation, he
 - [x] Export as default
 
 **POSTPONED for future PR:**
+
 - [ ] Font Family dropdown
 - [ ] Font Weight dropdown
 - [ ] Font Style toggle (italic)
@@ -266,6 +282,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 10. Register Text Properties Component ✅
+
 **File:** `app/canvas/_components/properties/shape-properties/index.ts`
 
 - [x] Import `TextProperties` from `./TextProperties`
@@ -277,6 +294,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 11. Update Default Properties Store ✅
+
 **File:** `app/canvas/_store/canvas-store.ts`
 
 - [x] Add `text` to `DefaultShapeProperties` interface **(MVP - minimal)**:
@@ -286,7 +304,7 @@ After examining the current shape infrastructure and the line implementation, he
     fontSize: number;
     fill: string; // text color
     opacity: number;
-  };
+  }
   ```
 - [x] Add `text` to `DEFAULT_SHAPE_PROPERTIES`:
   ```typescript
@@ -303,6 +321,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 12. Update PropertiesPanel Type ✅
+
 **File:** `app/canvas/_components/PropertiesPanel.tsx`
 
 - [x] Update `defaultShapeProperties` type to include `text`
@@ -325,6 +344,7 @@ After examining the current shape infrastructure and the line implementation, he
 ---
 
 ### 13. Update StyleProperties for Text ✅
+
 **File:** `app/canvas/_components/properties/StyleProperties.tsx`
 
 - [x] Text objects have `fill` (text color) - keep fill section visible
@@ -340,13 +360,11 @@ After examining the current shape infrastructure and the line implementation, he
   - [ ] Click text tool in toolbar activates text mode
   - [ ] Keyboard shortcut "T" activates text tool
   - [ ] Text tool shows highlighted in toolbar when active
-  
 - [ ] **Text Placement**
   - [ ] Click on canvas places text at click position
   - [ ] Text shows with default "Text" content
   - [ ] Text is automatically selected after placement
   - [ ] Properties panel appears for editing
-  
 - [ ] **Selection & Manipulation**
   - [ ] Can click to select text (in select tool mode)
   - [ ] Selected text shows transformer handles
@@ -354,48 +372,40 @@ After examining the current shape infrastructure and the line implementation, he
   - [ ] Can resize bounding box (text scales or wraps)
   - [ ] Can rotate text
   - [ ] Text properties panel shows when text is selected
-  
 - [ ] **Editing (MVP - Properties Panel Only)**
   - [ ] Can edit text content via textarea in properties panel
   - [ ] Can change font size via number input
   - [ ] Changes save to Firestore correctly
   - [ ] Text updates in real-time for other users
-  
 - [ ] **Properties Panel - Typography (MVP)**
   - [ ] Shows content textarea
   - [ ] Shows fontSize number input
   - [ ] All changes update canvas immediately
-  
 - [ ] **Properties Panel - Style**
   - [ ] Can change text fill color
   - [ ] Can change text stroke (outline)
   - [ ] Can change stroke width
   - [ ] Can change opacity
   - [ ] Shows as "Text Color" instead of "Fill"
-  
 - [ ] **Default Properties**
   - [ ] With text tool active and nothing selected, shows default text properties
   - [ ] Can change default content placeholder
   - [ ] Can change default font settings
   - [ ] Can change default colors
   - [ ] New text objects use updated defaults
-  
 - [ ] **Locking**
   - [ ] Text locked by another user shows red color
   - [ ] Locked text cannot be selected/edited
   - [ ] Locked text shows lock indicator in properties
-  
 - [ ] **Real-time Sync**
   - [ ] Text created by one user appears for other users
   - [ ] Text edits sync in real-time
   - [ ] Text moves/transforms sync correctly
   - [ ] Text deletions sync correctly
-  
 - [ ] **Layer Management**
   - [ ] Text respects z-index ordering
   - [ ] Can bring text to front/send to back
   - [ ] Layer controls work in properties panel
-  
 - [ ] **Persistence**
   - [ ] Text persists to Firestore correctly
   - [ ] Page refresh loads text correctly
@@ -409,6 +419,7 @@ After examining the current shape infrastructure and the line implementation, he
 **All 13 implementation tasks finished!**
 
 ### Summary of Changes:
+
 1. ✅ **Type Definitions** - Added `PersistedText` interface
 2. ✅ **Text Factory** - Complete factory with all methods (hardcoded typography for MVP)
 3. ✅ **Tool Constants** - Added text to shape tools
@@ -424,6 +435,7 @@ After examining the current shape infrastructure and the line implementation, he
 13. ✅ **StyleProperties** - Renamed "Fill" to "Text Color", hidden "No Fill" checkbox
 
 ### MVP Text Tool Features ⭐
+
 - **Click-to-place interaction** - One click to create text
 - **Auto-select after creation** - Properties panel appears immediately
 - **Edit via properties panel:**
@@ -441,6 +453,7 @@ After examining the current shape infrastructure and the line implementation, he
   - Real-time sync
 
 ### Hardcoded Typography (MVP):
+
 - Font Family: Arial
 - Font Weight: normal
 - Font Style: normal
@@ -451,6 +464,7 @@ After examining the current shape infrastructure and the line implementation, he
 These can be added in future PRs!
 
 ### No Lint Errors! ✨
+
 All TypeScript errors resolved. Code is clean and ready for testing.
 
 ---
@@ -460,12 +474,14 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ### Text Editing Approaches
 
 **Option A: Inline HTML Editing (Complex but Best UX)**
+
 - Use HTML overlay (textarea or contenteditable div) positioned over Konva text
 - Requires coordinate transformation to match Konva coordinates
 - Needs to handle zoom/pan
 - Best user experience - edit text in place
 
 **Option B: Properties Panel Editing (Simple for MVP)**
+
 - Click to place text with default content
 - Edit text content via textarea in properties panel
 - Simpler to implement
@@ -473,6 +489,7 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 - Add inline editing in future PR
 
 **Option C: Modal/Prompt Editing (Simplest)**
+
 - Use browser `prompt()` or modal dialog
 - Very simple but poor UX
 - Not recommended
@@ -482,6 +499,7 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ### Text Rendering Considerations
 
 **Konva Text Component:**
+
 - Supports all standard text properties (fontSize, fontFamily, align, etc.)
 - Auto-wraps text based on `width`
 - Can measure text bounds automatically
@@ -489,6 +507,7 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 - Fill = text color, stroke = text outline
 
 **Width/Height Behavior:**
+
 - Option A: **Fixed width, auto height** - Set width, let height adjust to content
 - Option B: **Auto width and height** - Text determines its own size
 - Option C: **Fixed bounding box** - Text wraps within box
@@ -498,11 +517,13 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ### Font Loading
 
 **System Fonts (Simple):**
+
 - Use web-safe fonts: Arial, Helvetica, Times New Roman, Courier, Verdana, Georgia
 - Always available, no loading needed
 - Generic fallbacks: sans-serif, serif, monospace
 
 **Custom Fonts (Advanced):**
+
 - Use Google Fonts or custom web fonts
 - Requires font loading and ready state checking
 - Can add in future PR
@@ -512,12 +533,14 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ### Text Selection & Transformer
 
 **Konva Transformer with Text:**
+
 - Default transformer allows resize, rotate
 - Resizing can change bounding box width
 - Text reflows automatically
 - Rotation works fine with text
 
 **Text-Specific Transformer Settings:**
+
 - May want to constrain proportions differently
 - Consider adding padding around text box
 - Test transformer behavior with text
@@ -525,12 +548,14 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ### Performance Considerations
 
 **Text Rendering:**
+
 - Konva Text is performant for reasonable amounts of text
 - Short labels/titles are fine
 - Very long text blocks may impact performance
 - Monitor performance with many text objects
 
 **Real-time Sync:**
+
 - Debounce text content updates during editing
 - Don't sync every keystroke - wait for pause or blur
 - Use same locking mechanism as shapes
@@ -538,10 +563,12 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 ---
 
 ## Files to Create
+
 1. `app/canvas/_components/shapes/TextShape.tsx`
 2. `app/canvas/_components/properties/shape-properties/TextProperties.tsx`
 
 ## Files to Modify
+
 1. `app/canvas/_types/shapes.ts` - Add PersistedText type
 2. `app/canvas/_lib/shapes.ts` - Add textFactory
 3. `app/canvas/_constants/tools.ts` - Add text to tools, create CLICK_TO_PLACE_TOOLS
@@ -554,9 +581,11 @@ All TypeScript errors resolved. Code is clean and ready for testing.
 10. `app/canvas/_components/properties/StyleProperties.tsx` - Consider text-specific labeling
 
 ## Estimated Complexity
+
 **Medium** (was High, but simplified with MVP approach)
 
 Original complexity reduced by:
+
 1. ✅ **Properties panel editing** - No inline edit mode needed for MVP
 2. ✅ **Minimal typography** - Only fontSize, everything else hardcoded
 3. ✅ **Simple properties UI** - Just 2 inputs (content textarea, fontSize number)
@@ -564,6 +593,7 @@ Original complexity reduced by:
 5. ✅ **Click-to-place** - Simpler than drag interactions
 
 **Remaining Complexity:**
+
 1. Different interaction (click-to-place vs drag)
 2. New shape type integration
 3. Text rendering with Konva
@@ -572,6 +602,7 @@ Original complexity reduced by:
 **Time Estimate:** Similar to line implementation (~2-3 hours)
 
 ## Success Criteria
+
 - [ ] Can place text on canvas by clicking
 - [ ] Can edit text content (via properties panel for MVP)
 - [ ] Text persists to Firestore and reloads correctly
@@ -591,6 +622,7 @@ Original complexity reduced by:
 To make initial implementation manageable, we're implementing **only the essentials**:
 
 ### ✅ **MVP Includes:**
+
 1. **Content editing** - Via textarea in properties panel
 2. **Font size control** - Via number input (8-200px)
 3. **Text color** - Via fill color picker (inherited from StyleProperties)
@@ -601,6 +633,7 @@ To make initial implementation manageable, we're implementing **only the essenti
 ### ⏸️ **POSTPONED for Future PRs:**
 
 **Typography Controls (Future PR #1):**
+
 - [ ] Font family dropdown (Arial, Helvetica, etc.)
 - [ ] Font weight (normal, bold, lighter, bolder)
 - [ ] Font style (normal, italic)
@@ -609,12 +642,14 @@ To make initial implementation manageable, we're implementing **only the essenti
 - [ ] Line height control
 
 **Inline Editing (Future PR #2):**
+
 - [ ] Double-click to edit
 - [ ] HTML textarea overlay
 - [ ] Edit mode state management
 - [ ] Escape to exit edit mode
 
 **Advanced Features (Future PR #3+):**
+
 - [ ] Google Fonts support
 - [ ] Rich text formatting
 - [ ] Text auto-sizing modes
@@ -622,6 +657,7 @@ To make initial implementation manageable, we're implementing **only the essenti
 - [ ] Text on path
 
 ### Why This Approach?
+
 - **Faster to implement** - Get text working quickly
 - **Test the infrastructure** - Verify factory pattern works for text
 - **Gather feedback** - See what typography controls users actually need
@@ -632,12 +668,14 @@ To make initial implementation manageable, we're implementing **only the essenti
 ## Comparison to Line Implementation
 
 **Similar to Line:**
+
 - Both are non-standard shape tools
 - Both need special handling in Canvas.tsx
 - Both have unique properties not shared with rect/circle
 - Both already have Firestore types defined
 
 **Different from Line:**
+
 - Text is click-to-place, not click-and-drag
 - Text needs edit mode (line does not)
 - Text has many more properties
@@ -645,6 +683,7 @@ To make initial implementation manageable, we're implementing **only the essenti
 - Text properties panel is much more complex
 
 **Lessons from Line:**
+
 - Factory pattern works well
 - Type definitions should be comprehensive upfront
 - Draft preview optional for non-drag tools
@@ -656,13 +695,14 @@ To make initial implementation manageable, we're implementing **only the essenti
 ## Package Dependencies
 
 Check if additional packages needed:
+
 - [ ] `react-konva-utils` - For HTML overlays (if doing inline editing)
 - [ ] Font loading libraries (if using Google Fonts)
 
 Currently have:
+
 - ✅ `konva` - Text component available
 - ✅ `react-konva` - Text component available
 - ✅ `lucide-react` - Type icon available
 
 **For MVP: No new dependencies needed!**
-

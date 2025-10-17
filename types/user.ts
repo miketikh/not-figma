@@ -21,12 +21,19 @@ export interface UserSession {
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string
+  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   updateDisplayName: (displayName: string) => Promise<void>;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  updatePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
 }
 
 export interface UserPresence {
@@ -37,4 +44,3 @@ export interface UserPresence {
   lastSeen: number; // Timestamp
   isOnline: boolean;
 }
-

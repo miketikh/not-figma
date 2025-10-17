@@ -71,9 +71,7 @@ export default function TextShape({
 }: TextShapeProps) {
   // Determine fill color based on lock status
   // Use locking user's color if available, otherwise fallback to red
-  const fillColor = isLocked
-    ? (lockingUserColor || "#ef4444")
-    : shape.fill;
+  const fillColor = isLocked ? lockingUserColor || "#ef4444" : shape.fill;
 
   /**
    * Handle click to select
@@ -177,7 +175,8 @@ export default function TextShape({
   };
 
   // Determine text decoration style
-  const textDecoration = shape.textDecoration !== "none" ? shape.textDecoration : undefined;
+  const textDecoration =
+    shape.textDecoration !== "none" ? shape.textDecoration : undefined;
 
   return (
     <Group>
@@ -223,4 +222,3 @@ export default function TextShape({
     </Group>
   );
 }
-

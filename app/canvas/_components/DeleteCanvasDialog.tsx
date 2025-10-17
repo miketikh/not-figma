@@ -77,15 +77,20 @@ export function DeleteCanvasDialog({
             <DialogTitle>Delete Canvas</DialogTitle>
           </div>
           <DialogDescription className="pt-2">
-            Are you sure you want to delete <span className="font-semibold text-foreground">&quot;{canvasName}&quot;</span>?
-            This will permanently delete the canvas and all objects in it. This action cannot be undone.
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">
+              &quot;{canvasName}&quot;
+            </span>
+            ? This will permanently delete the canvas and all objects in it.
+            This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="confirmation-text">
-              Type <span className="font-semibold">{canvasName}</span> to confirm
+              Type <span className="font-semibold">{canvasName}</span> to
+              confirm
             </Label>
             <Input
               id="confirmation-text"

@@ -42,17 +42,38 @@ function getObjectRef(canvasId: string, objectId: string) {
 // ============================================================================
 
 /**
+ * Remove undefined values from an object
+ * Firebase doesn't accept undefined values in documents
+ */
+function removeUndefinedValues<T extends Record<string, any>>(obj: T): T {
+  const cleaned: Record<string, any> = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+  return cleaned as T;
+}
+
+/**
  * Create a new canvas object
  */
-export async function createObject(canvasId: string, object: CanvasObject): Promise<void> {
+export async function createObject(
+  canvasId: string,
+  object: CanvasObject
+): Promise<void> {
   const objectRef = getObjectRef(canvasId, object.id);
-  await setDoc(objectRef, object);
+  const cleanedObject = removeUndefinedValues(object);
+  await setDoc(objectRef, cleanedObject);
 }
 
 /**
  * Get a single object by ID
  */
-export async function getObject(canvasId: string, objectId: string): Promise<CanvasObject | null> {
+export async function getObject(
+  canvasId: string,
+  objectId: string
+): Promise<CanvasObject | null> {
   const objectRef = getObjectRef(canvasId, objectId);
   const objectSnap = await getDoc(objectRef);
 
@@ -68,7 +89,11 @@ export async function getObject(canvasId: string, objectId: string): Promise<Can
  */
 export async function getAllObjects(canvasId: string): Promise<CanvasObject[]> {
   const objectsRef = collection(db, getObjectsCollectionPath(canvasId));
-  const q = query(objectsRef, orderBy("zIndex", "asc"), orderBy("createdAt", "asc"));
+  const q = query(
+    objectsRef,
+    orderBy("zIndex", "asc"),
+    orderBy("createdAt", "asc")
+  );
   const querySnapshot = await getDocs(q);
 
   return querySnapshot.docs.map((doc) => doc.data() as CanvasObject);
@@ -89,7 +114,10 @@ export async function updateObject(
 /**
  * Delete an object
  */
-export async function deleteObject(canvasId: string, objectId: string): Promise<void> {
+export async function deleteObject(
+  canvasId: string,
+  objectId: string
+): Promise<void> {
   const objectRef = getObjectRef(canvasId, objectId);
   await deleteDoc(objectRef);
 }
@@ -99,7 +127,10 @@ export async function deleteObject(canvasId: string, objectId: string): Promise<
  * Uses Firestore's native writeBatch API for atomic updates
  * This triggers a SINGLE snapshot event for collection listeners
  */
-export async function batchUpdateObjects(canvasId: string, updates: ObjectUpdate[]): Promise<void> {
+export async function batchUpdateObjects(
+  canvasId: string,
+  updates: ObjectUpdate[]
+): Promise<void> {
   const batch = writeBatch(db);
 
   updates.forEach((update) => {
@@ -113,7 +144,10 @@ export async function batchUpdateObjects(canvasId: string, updates: ObjectUpdate
 /**
  * Delete multiple objects
  */
-export async function batchDeleteObjects(canvasId: string, objectIds: string[]): Promise<void> {
+export async function batchDeleteObjects(
+  canvasId: string,
+  objectIds: string[]
+): Promise<void> {
   const deletePromises = objectIds.map((id) => deleteObject(canvasId, id));
   await Promise.all(deletePromises);
 }
@@ -132,7 +166,11 @@ export function subscribeToObjects(
   onError?: (error: Error) => void
 ): Unsubscribe {
   const objectsRef = collection(db, getObjectsCollectionPath(canvasId));
-  const q = query(objectsRef, orderBy("zIndex", "asc"), orderBy("createdAt", "asc"));
+  const q = query(
+    objectsRef,
+    orderBy("zIndex", "asc"),
+    orderBy("createdAt", "asc")
+  );
 
   return onSnapshot(
     q,
@@ -185,7 +223,12 @@ export async function acquireLock(
   canvasId: string,
   objectId: string,
   userId: string
-): Promise<{ success: boolean; lockedBy: string | null; expiresAt: number | null; message?: string }> {
+): Promise<{
+  success: boolean;
+  lockedBy: string | null;
+  expiresAt: number | null;
+  message?: string;
+}> {
   const now = Date.now();
   const objectRef = getObjectRef(canvasId, objectId);
   const objectSnap = await getDoc(objectRef);
@@ -301,16 +344,15 @@ export function isLockExpired(lockedAt: number, lockTimeout: number): boolean {
 export function canEdit(object: CanvasObject, userId: string): boolean {
   // Not locked = anyone can edit
   if (!object.lockedBy) return true;
-  
+
   // I own the lock = I can edit
   if (object.lockedBy === userId) return true;
-  
+
   // Lock is expired = anyone can edit
   if (object.lockedAt && isLockExpired(object.lockedAt, object.lockTimeout)) {
     return true;
   }
-  
+
   // Someone else has an active lock = cannot edit
   return false;
 }
-

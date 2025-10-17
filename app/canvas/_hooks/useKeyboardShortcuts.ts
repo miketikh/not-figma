@@ -21,11 +21,13 @@ interface UseKeyboardShortcutsParams {
     tool: CanvasTool,
     properties: Record<string, any>
   ) => void;
+  toggleAIChat: () => void;
 }
 
 /**
  * Manages all keyboard shortcuts for the canvas
  * - Tool shortcuts (V, H, R, C, L, T)
+ * - A key for AI Assistant
  * - Space key for pan mode
  * - Shift key tracking
  * - Escape to deselect/cancel selection
@@ -47,6 +49,7 @@ export function useKeyboardShortcuts({
   isSelecting,
   cancelSelection,
   updateDefaultShapeProperty,
+  toggleAIChat,
 }: UseKeyboardShortcutsParams) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,6 +85,9 @@ export function useKeyboardShortcuts({
           setActiveTool("text");
           // Reset text content to default when activating text tool
           updateDefaultShapeProperty("text", { content: "Text" });
+          e.preventDefault();
+        } else if (e.key === "a" || e.key === "A") {
+          toggleAIChat();
           e.preventDefault();
         }
       }
@@ -176,5 +182,6 @@ export function useKeyboardShortcuts({
     isSelecting,
     cancelSelection,
     updateDefaultShapeProperty,
+    toggleAIChat,
   ]);
 }

@@ -56,7 +56,7 @@ export function getAuthErrorMessage(error: unknown): string {
 
     case "auth/requires-recent-login":
       return "For security, please sign out and sign in again to complete this action.";
-    
+
     case "auth/wrong-password":
       return "Incorrect password. Please try again.";
 
@@ -117,4 +117,3 @@ export function validateDisplayName(name: string): string | null {
 
   return null;
 }
-

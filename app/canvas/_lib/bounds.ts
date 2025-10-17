@@ -31,12 +31,7 @@ export function isBoundsInCanvas(
   const bottom = y + height;
 
   // If any part of the shape overlaps with canvas, return true
-  return !(
-    right < 0 ||
-    x > canvasWidth ||
-    bottom < 0 ||
-    y > canvasHeight
-  );
+  return !(right < 0 || x > canvasWidth || bottom < 0 || y > canvasHeight);
 }
 
 /**
@@ -109,12 +104,7 @@ export function isLineInBounds(
   const minY = Math.min(y, y2);
   const maxY = Math.max(y, y2);
 
-  return !(
-    maxX < 0 ||
-    minX > canvasWidth ||
-    maxY < 0 ||
-    minY > canvasHeight
-  );
+  return !(maxX < 0 || minX > canvasWidth || maxY < 0 || minY > canvasHeight);
 }
 
 /**

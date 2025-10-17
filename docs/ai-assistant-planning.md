@@ -59,17 +59,20 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 **Description:** Add a slide-out chat panel (similar to properties panel) that appears when user clicks AI button in toolbar. Chat interface stays visible while user can still interact with canvas. AI commands create objects that immediately appear on canvas.
 
 **Pros:**
+
 - Non-disruptive to existing workflow - users can toggle AI on/off easily
 - Familiar chat interface pattern
 - Can see AI responses and command history
 - Users maintain visual connection to canvas while issuing commands
 
 **Cons:**
+
 - Takes up screen real estate (though can be collapsible)
 - May be harder to focus on AI interaction if canvas is visible/distracting
 - Need to design panel layout and position carefully
 
 **What we'd need:**
+
 - New ChatPanel component (probably in `app/canvas/_components/`)
 - Canvas store state for `aiModeActive` and `chatHistory`
 - WebSocket or API route to OpenAI
@@ -81,18 +84,21 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 **Description:** Clicking AI button opens a full-screen or large modal overlay with chat interface. Canvas dims in background. User focuses entirely on AI interaction. Modal closes when done, returning to canvas.
 
 **Pros:**
+
 - Full focus on AI conversation without distractions
 - More space for rich AI responses (images, previews, suggestions)
 - Clearer "mode" distinction - you're either in AI mode or canvas mode
 - Easier to implement initially (less layout complexity)
 
 **Cons:**
+
 - Disruptive to workflow - can't see canvas while chatting
 - Harder to do incremental refinements while seeing results
 - May feel heavyweight for simple commands
 - Users might want to reference existing objects while talking to AI
 
 **What we'd need:**
+
 - Modal component with chat interface
 - State management for modal visibility
 - Same API/parsing infrastructure as Option A
@@ -103,12 +109,14 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 **Description:** Pressing a keyboard shortcut (Cmd+K, Cmd+/) opens a command bar overlay at top of canvas. User types command, hits enter, command executes, bar disappears. No persistent chat history - focused on quick commands.
 
 **Pros:**
+
 - Minimal UI - doesn't take permanent space
 - Very fast for power users (keyboard-driven)
 - Fits well with existing keyboard shortcuts
 - Similar to familiar command palettes (VS Code, Figma)
 
 **Cons:**
+
 - Not conversational - each command is independent
 - No visual history of what AI did
 - Harder to do complex multi-step commands
@@ -116,6 +124,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Doesn't support back-and-forth refinement easily
 
 **What we'd need:**
+
 - Command bar component (like shadcn Command component)
 - Keyboard shortcut handling
 - Command parser with simpler interface
@@ -126,18 +135,21 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 **Description:** Combine Option C's command bar for quick actions with an optional chat history drawer that can be opened to see previous commands and have longer conversations.
 
 **Pros:**
+
 - Best of both worlds - quick commands AND conversational mode
 - Progressive disclosure - simple for basic use, powerful for advanced
 - Command bar feels lightweight, history drawer provides context
 - Fits multiple user workflows
 
 **Cons:**
+
 - More complex to implement - two UI systems
 - More state management complexity
 - Users need to learn both interaction patterns
 - Risk of confusing UX if not designed carefully
 
 **What we'd need:**
+
 - Command bar component + chat drawer component
 - Unified state management for both
 - Smart routing of simple vs complex queries
@@ -148,17 +160,20 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### Architecture Thoughts
 
 **AI Request Pipeline:**
+
 1. User input → Command parser → Context builder → AI API call
 2. AI response → Command interpreter → Shape factory calls → Firestore write
 3. Real-time listener picks up changes → Canvas updates
 
 **Context Management:**
+
 - Need to serialize current canvas state for AI (objects, positions, properties)
 - Should we send full object details or summarized metadata?
 - How to handle large canvases (100+ objects) - do we filter/limit context?
 - Need to track user's selection/focus to understand commands like "make it bigger"
 
 **Command Execution:**
+
 - Direct execution vs. preview/confirmation
 - Error handling (AI generates invalid positions, unsupported properties)
 - Atomic operations (all objects in "create login form" should be created together)
@@ -167,6 +182,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### Dependencies & Integrations
 
 **Existing features affected:**
+
 - Canvas store (need AI mode state, chat history)
 - Shape factories (AI will call these to create objects)
 - Lock system (should AI-created objects be locked? Who owns them?)
@@ -174,6 +190,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Keyboard shortcuts (need to add AI activation shortcut)
 
 **New dependencies needed:**
+
 - **Vercel AI SDK** (`ai` package) - DECIDED: Core SDK for AI integration
 - **OpenAI Provider** (`@ai-sdk/openai` package) - DECIDED: OpenAI integration for Vercel AI SDK
 - **Zod** (`zod` package) - For schema validation and tool parameter definitions
@@ -183,6 +200,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Rate limiting (Vercel AI SDK + Vercel KV/Upstash)
 
 **Data/state management:**
+
 - New store slice or separate store for AI state
 - Chat history (keep in memory or persist to Firestore?)
 - Command history (for undo/redo context)
@@ -191,6 +209,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### Potential Challenges
 
 **Challenge 1: Prompt Engineering for Consistent Output**
+
 - AI needs to return structured JSON commands, not free-form text
 - Need to design prompt that teaches AI about available shapes, properties, coordinate system
 - How to handle ambiguity (user says "red" - which red? #FF0000? #CC0000?)
@@ -201,6 +220,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
   - Fallback to asking clarifying questions
 
 **Challenge 2: Complex Commands & Object Relationships**
+
 - "Create a login form" requires AI to understand UI patterns, spacing, hierarchy
 - Need to teach AI about grouping, relative positioning, z-index
 - Risk of generating layouts that don't look good or have overlapping objects
@@ -211,6 +231,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
   - Implement smart positioning algorithm (auto-layout helpers)
 
 **Challenge 3: Real-time Collaboration + AI**
+
 - If User A's AI is creating objects, User B sees them appear in real-time
 - Could be confusing or disruptive
 - Locks might conflict (AI tries to modify object locked by another user)
@@ -221,6 +242,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
   - AI commands are attributed to user who invoked them
 
 **Challenge 4: Cost & Rate Limiting**
+
 - OpenAI API calls cost money
 - Users could spam commands or have very long conversations
 - Need backend logic to track usage
@@ -231,6 +253,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
   - Use cheaper models for simple commands, GPT-4 for complex ones
 
 **Challenge 5: Context Window Limitations**
+
 - Large canvases might exceed token limits when sending context
 - AI needs enough context to understand references ("the blue circle")
 - Possible solutions:
@@ -257,6 +280,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### UI/UX Considerations
 
 **Interface elements needed:**
+
 - AI button in toolbar (icon: sparkle/star/brain/wand?)
 - Chat panel or modal with message list
 - Text input field with send button
@@ -267,6 +291,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Settings for AI (model selection, verbosity, auto-execute vs confirm)
 
 **Feedback mechanisms:**
+
 - Visual confirmation when objects are created (flash/highlight?)
 - Error messages when commands fail (invalid position, object not found)
 - AI explains what it did ("Created 5 objects and grouped them")
@@ -274,6 +299,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Success toasts for completed commands
 
 **Error handling:**
+
 - AI doesn't understand command → asks for clarification
 - AI generates invalid data → catches and asks user to rephrase
 - API rate limit hit → shows error, suggests trying again later
@@ -318,18 +344,22 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### Trade-offs to Discuss
 
 **Simplicity vs Power:**
+
 - Simple command bar is faster to build but less capable
 - Full chat interface is more powerful but more complex
 
 **Auto-execute vs Safety:**
+
 - Auto-executing feels magical and fast
 - Confirmation steps are safer but interrupt flow
 
 **Context vs Cost:**
+
 - Sending full canvas details gives AI more context
 - Summarized context saves tokens and money
 
 **MVP Scope:**
+
 - Start with simple shape commands (faster to market)
 - vs. Include complex patterns like "login form" (more impressive demo)
 
@@ -364,6 +394,7 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 ### Integration Points
 
 **Frontend:**
+
 - Canvas component needs to render AI button and panel
 - Toolbar needs new AI button
 - Canvas store needs AI state
@@ -371,17 +402,20 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 - Shape factories extended with AI command format converters
 
 **Backend:**
+
 - Next.js API route for OpenAI proxy (`app/api/ai/`)
 - Environment variables for API keys
 - Possibly middleware for rate limiting
 - Could use Vercel Edge Functions for streaming
 
 **Database:**
+
 - Optional: Store chat history in Firestore (per user? per canvas?)
 - Optional: Store AI-generated object metadata (tagging which objects were AI-created)
 - Lock system integration (AI respects existing locks)
 
 **APIs/Services:**
+
 - OpenAI API (GPT-4 or GPT-3.5-turbo)
 - Future: OpenAI Whisper API for voice-to-text
 
@@ -391,77 +425,91 @@ Add an AI-powered assistant to the canvas that allows users to create and manipu
 Using Vercel AI SDK's `tool()` helper with Zod schemas for type-safe tool calling:
 
 ```typescript
-import { generateText, tool } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { z } from 'zod';
+import { generateText, tool } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
 
 const result = await generateText({
-  model: openai('gpt-4'),
+  model: openai("gpt-4"),
   maxSteps: 5, // Allow multi-step tool execution for complex commands
   tools: {
     createRectangle: tool({
-      description: 'Create a rectangle on the canvas',
+      description: "Create a rectangle on the canvas",
       parameters: z.object({
-        x: z.number().describe('X position (canvas origin is top-left)'),
-        y: z.number().describe('Y position'),
-        width: z.number().describe('Width in pixels'),
-        height: z.number().describe('Height in pixels'),
-        fill: z.string().describe('Fill color (CSS color name or hex)').optional(),
-        stroke: z.string().describe('Stroke color').optional(),
+        x: z.number().describe("X position (canvas origin is top-left)"),
+        y: z.number().describe("Y position"),
+        width: z.number().describe("Width in pixels"),
+        height: z.number().describe("Height in pixels"),
+        fill: z
+          .string()
+          .describe("Fill color (CSS color name or hex)")
+          .optional(),
+        stroke: z.string().describe("Stroke color").optional(),
         strokeWidth: z.number().optional(),
-        rotation: z.number().describe('Rotation in degrees').optional()
+        rotation: z.number().describe("Rotation in degrees").optional(),
       }),
       execute: async (params) => {
-        const object = await createCanvasObject('rectangle', params);
-        return { success: true, id: object.id, message: `Created rectangle at (${params.x}, ${params.y})` };
-      }
+        const object = await createCanvasObject("rectangle", params);
+        return {
+          success: true,
+          id: object.id,
+          message: `Created rectangle at (${params.x}, ${params.y})`,
+        };
+      },
     }),
 
     createCircle: tool({
-      description: 'Create a circle on the canvas',
+      description: "Create a circle on the canvas",
       parameters: z.object({
-        x: z.number().describe('X position of center'),
-        y: z.number().describe('Y position of center'),
-        radius: z.number().describe('Radius in pixels'),
+        x: z.number().describe("X position of center"),
+        y: z.number().describe("Y position of center"),
+        radius: z.number().describe("Radius in pixels"),
         fill: z.string().optional(),
         stroke: z.string().optional(),
-        strokeWidth: z.number().optional()
+        strokeWidth: z.number().optional(),
       }),
       execute: async (params) => {
-        const object = await createCanvasObject('circle', params);
+        const object = await createCanvasObject("circle", params);
         return { success: true, id: object.id };
-      }
+      },
     }),
 
     getCanvasObjects: tool({
-      description: 'Get information about objects currently on the canvas',
+      description: "Get information about objects currently on the canvas",
       parameters: z.object({
-        filter: z.enum(['all', 'selected', 'visible']).optional()
+        filter: z.enum(["all", "selected", "visible"]).optional(),
       }),
-      execute: async ({ filter = 'all' }) => {
+      execute: async ({ filter = "all" }) => {
         const objects = await fetchCanvasObjects(filter);
-        return { objects: objects.map(obj => ({ id: obj.id, type: obj.type, x: obj.x, y: obj.y })) };
-      }
+        return {
+          objects: objects.map((obj) => ({
+            id: obj.id,
+            type: obj.type,
+            x: obj.x,
+            y: obj.y,
+          })),
+        };
+      },
     }),
 
     updateObject: tool({
-      description: 'Update properties of an existing object',
+      description: "Update properties of an existing object",
       parameters: z.object({
-        objectId: z.string().describe('ID of the object to update'),
+        objectId: z.string().describe("ID of the object to update"),
         properties: z.object({
           x: z.number().optional(),
           y: z.number().optional(),
           width: z.number().optional(),
           height: z.number().optional(),
           fill: z.string().optional(),
-          rotation: z.number().optional()
-        })
+          rotation: z.number().optional(),
+        }),
       }),
       execute: async ({ objectId, properties }) => {
         await updateCanvasObject(objectId, properties);
         return { success: true, message: `Updated object ${objectId}` };
-      }
-    })
+      },
+    }),
   },
   system: `You are an AI assistant for a collaborative design canvas.
 
@@ -472,11 +520,12 @@ const result = await generateText({
   For commands like "make it bigger", first call getCanvasObjects to see what's selected.
 
   Be concise and friendly. Confirm what you did after executing commands.`,
-  prompt: userMessage
+  prompt: userMessage,
 });
 ```
 
 **Advantages of Vercel AI SDK approach:**
+
 - **Automatic multi-step execution:** `maxSteps: 5` allows AI to call multiple tools in sequence
 - **Type-safe parameters:** Zod schemas provide runtime validation + TypeScript types
 - **Clean tool execution:** `execute` functions directly call Firebase/Firestore
@@ -551,6 +600,7 @@ const result = await generateText({
    - OpenAI SDK: Good but more boilerplate, no multi-provider support
 
 **Next Steps:**
+
 - Move to PRD creation with these decisions locked in
 - Define detailed tool specifications
 - Design chat panel UI wireframes
@@ -561,6 +611,7 @@ const result = await generateText({
 ## Transition to PRD
 
 Once we've discussed and aligned on the approach, we'll create a formal PRD that includes:
+
 - Structured requirements
 - Phased implementation plan (Phase 1: Simple commands, Phase 2: Complex patterns, Phase 3: Voice)
 - Specific code changes and files

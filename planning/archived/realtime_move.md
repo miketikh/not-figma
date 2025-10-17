@@ -9,10 +9,12 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 ---
 
 ## PR #1: Core Infrastructure
+
 **Branch:** `feature/realtime-transforms-infrastructure`
 **Goal:** Create Realtime Database helpers and type definitions
 
 **Tasks:**
+
 - [x] Create active transform type definitions
   - [x] Define `ActiveTransform` interface with shape-specific properties
   - [x] Define `ActiveTransformMap` type
@@ -26,16 +28,19 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 - [x] Test basic broadcast/subscribe flow
 
 **Files Created:**
+
 - `app/canvas/_types/active-transform.ts` (NEW)
 - `lib/firebase/realtime-transforms.ts` (NEW)
 
 ---
 
 ## PR #2: Broadcasting from Shape Components
+
 **Branch:** `feature/realtime-transforms-broadcast`
 **Goal:** Add transform broadcasting from local user's shape interactions
 
 **Tasks:**
+
 - [x] Modify RectangleShape component
   - [x] Add `onTransformMove` prop
   - [x] Add `onDragMove` handler to broadcast position during drag
@@ -62,6 +67,7 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 - [x] Test broadcasting with console logs
 
 **Files Modified:**
+
 - `app/canvas/_components/shapes/RectangleShape.tsx`
 - `app/canvas/_components/shapes/CircleShape.tsx`
 - `app/canvas/_components/shapes/LineShape.tsx`
@@ -71,10 +77,12 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 ---
 
 ## PR #3: Receiving Remote Transforms
+
 **Branch:** `feature/realtime-transforms-receive`
 **Goal:** Subscribe to and process remote user transforms
 
 **Tasks:**
+
 - [x] Create useActiveTransforms hook
   - [x] Subscribe to `activeTransforms` in Realtime DB
   - [x] Filter out own user's transforms (by userId)
@@ -89,9 +97,11 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 - [x] Test receiving transforms from multiple users
 
 **Files Created:**
+
 - `app/canvas/_hooks/useActiveTransforms.ts` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx`
 - `app/canvas/_components/shapes/index.tsx`
 - `app/canvas/_types/active-transform.ts` (type fix)
@@ -99,10 +109,12 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 ---
 
 ## PR #4: Rendering Active Transform Overlays
+
 **Branch:** `feature/realtime-transforms-render`
 **Goal:** Render semi-transparent overlays for active transforms
 
 **Tasks:**
+
 - [x] Create ActiveTransformOverlay component
   - [x] Accept `activeTransform` and `zoom` props
   - [x] Render Rectangle overlay with semi-transparent fill
@@ -122,18 +134,22 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 - [x] Verify overlays don't interfere with interactions
 
 **Files Created:**
+
 - `app/canvas/_components/ActiveTransformOverlay.tsx` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx`
 
 ---
 
 ## PR #5: Polish & Edge Cases
+
 **Branch:** `feature/realtime-transforms-polish`
 **Goal:** Handle edge cases and add visual polish
 
 **Tasks:**
+
 - [ ] Handle edge cases
   - [ ] Verify only locked objects broadcast transforms
   - [ ] Handle mid-transform disconnections (onDisconnect cleanup)
@@ -157,6 +173,7 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
   - [ ] Verify final state matches after transform complete
 
 **Files Modified:**
+
 - `lib/firebase/realtime-transforms.ts` (edge case handling)
 - `app/canvas/_components/ActiveTransformOverlay.tsx` (visual polish)
 - `app/canvas/_hooks/useActiveTransforms.ts` (cleanup logic)
@@ -167,18 +184,23 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 ## Implementation Checklist
 
 ### Phase 1: Infrastructure
+
 - [x] PR #1: Core Infrastructure
 
 ### Phase 2: Broadcasting
+
 - [x] PR #2: Broadcasting from Shape Components
 
 ### Phase 3: Receiving
+
 - [x] PR #3: Receiving Remote Transforms
 
 ### Phase 4: Rendering
+
 - [x] PR #4: Rendering Active Transform Overlays
 
 ### Phase 5: Finalization
+
 - [ ] PR #5: Polish & Edge Cases
 
 ---
@@ -191,6 +213,7 @@ The implementation uses Firebase Realtime Database (like cursors) with 50ms thro
 **Latency Target:** Sub-100ms typical
 
 **Database Structure:**
+
 ```
 sessions/{sessionId}/activeTransforms/{objectId}
   - userId: string

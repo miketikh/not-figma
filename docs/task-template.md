@@ -11,7 +11,7 @@
 ### Workflow for Each PR
 
 1. **Read the entire PR first**: Review all tasks and file changes before starting
-2. **Complete all tasks sequentially**: 
+2. **Complete all tasks sequentially**:
    - Work through tasks in order
    - Mark completed tasks with `[x]`
    - If a task references "see planning doc," check the planning document for additional context
@@ -37,9 +37,11 @@
 ## Example PR Structure
 
 ### PR #15: Add Circle Shape Support
+
 **Goal:** Enable users to create and manipulate circle shapes on canvas
 
 **Tasks:**
+
 - [x] Add CircleShape type to shape type definitions
 - [x] Create CircleShape component for rendering
 - [x] Add circle button to Toolbar with appropriate icon
@@ -49,6 +51,7 @@
 - [x] Implement real-time sync for circles
 
 **What to Test:**
+
 - Click circle button in toolbar
 - Draw a circle on canvas by clicking and dragging
 - Select circle and verify you can move, resize, and rotate it
@@ -56,6 +59,7 @@
 - Check that circle properties panel shows correct options
 
 **Files Changed:**
+
 - `app/canvas/_components/shapes/CircleShape.tsx` - NEW: Circle rendering component
 - `app/canvas/_components/properties/CircleProperties.tsx` - NEW: Circle settings panel
 - `app/canvas/_types/shapes.ts` - Add PersistedCircle type definition
@@ -64,6 +68,7 @@
 - `app/canvas/_components/Canvas.tsx` - Handle circle creation, selection, manipulation
 
 **Notes:**
+
 - Follow the same pattern as RectangleShape for consistency
 - Circles should support all standard operations (move, resize, delete, sync)
 
@@ -72,9 +77,11 @@
 ## Phase 1: [Phase Name & Purpose]
 
 ### PR #1: [Descriptive PR Name]
+
 **Goal:** [One sentence describing what this accomplishes and why it's needed]
 
 **Tasks:**
+
 - [ ] [Specific, testable task - use action verbs]
 - [ ] [Each task should be completable independently]
 - [ ] [If a task is complex, consider breaking it into sub-tasks]
@@ -82,11 +89,13 @@
 
 **What to Test:**
 [Clear, step-by-step instructions for manual testing]
+
 - Open [specific page/view]
 - Perform [specific action]
 - Verify [expected result]
 
 **Files Changed:**
+
 - `path/to/file1.ts` - [Brief description of what changes, not how]
 - `path/to/file2.tsx` - [e.g., "Add new component" or "Update handler logic"]
 - `path/to/file3.ts` - NEW: [indicate if file is being created]
@@ -96,18 +105,22 @@
 ---
 
 ### PR #2: [Descriptive PR Name]
+
 **Goal:** [What this accomplishes]
 
 **Tasks:**
+
 - [ ] [Task 1]
 - [ ] [Task 2]
 - [ ] [Task 3]
 
 **What to Test:**
+
 - [Testing instruction 1]
 - [Testing instruction 2]
 
 **Files Changed:**
+
 - `path/to/file.ts` - [description]
 
 ---
@@ -115,16 +128,20 @@
 ## Phase 2: [Phase Name & Purpose]
 
 ### PR #3: [Descriptive PR Name]
+
 **Goal:** [What this accomplishes]
 
 **Tasks:**
+
 - [ ] [Task 1]
 - [ ] [Task 2]
 
 **What to Test:**
+
 - [Testing instruction 1]
 
 **Files Changed:**
+
 - `path/to/file.ts` - [description]
 
 ---
@@ -136,6 +153,7 @@
 **Estimated Complexity:** [Low/Medium/High]
 
 **Key Dependencies:**
+
 - [Any external dependencies or prerequisites]
 - [Services that need to be running]
 - [Feature flags or environment variables needed]

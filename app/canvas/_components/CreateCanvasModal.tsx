@@ -24,7 +24,12 @@ import {
 interface CreateCanvasModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string, width: number, height: number, isPublic: boolean) => void;
+  onCreate: (
+    name: string,
+    width: number,
+    height: number,
+    isPublic: boolean
+  ) => void;
 }
 
 type PresetValue = "preset-0" | "preset-1" | "preset-2" | "custom";
@@ -166,7 +171,9 @@ export function CreateCanvasModal({
               <Label>Dimensions</Label>
               <RadioGroup
                 value={selectedPreset}
-                onValueChange={(value) => setSelectedPreset(value as PresetValue)}
+                onValueChange={(value) =>
+                  setSelectedPreset(value as PresetValue)
+                }
                 disabled={loading}
               >
                 {CANVAS_DIMENSION_PRESETS.map((preset, index) => (
@@ -188,7 +195,10 @@ export function CreateCanvasModal({
                 ))}
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="custom" id="custom" />
-                  <Label htmlFor="custom" className="font-normal cursor-pointer">
+                  <Label
+                    htmlFor="custom"
+                    className="font-normal cursor-pointer"
+                  >
                     Custom
                   </Label>
                 </div>
@@ -243,13 +253,19 @@ export function CreateCanvasModal({
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="private" id="private" />
-                  <Label htmlFor="private" className="font-normal cursor-pointer">
+                  <Label
+                    htmlFor="private"
+                    className="font-normal cursor-pointer"
+                  >
                     Private
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="public" id="public" />
-                  <Label htmlFor="public" className="font-normal cursor-pointer">
+                  <Label
+                    htmlFor="public"
+                    className="font-normal cursor-pointer"
+                  >
                     Public
                   </Label>
                 </div>

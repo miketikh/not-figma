@@ -73,7 +73,11 @@ function ToastContainer({
   return (
     <div className="fixed bottom-0 right-0 z-50 p-4 space-y-4 max-w-md w-full pointer-events-none">
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
+        <ToastItem
+          key={toast.id}
+          toast={toast}
+          onClose={() => removeToast(toast.id)}
+        />
       ))}
     </div>
   );
@@ -82,8 +86,10 @@ function ToastContainer({
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const variantStyles = {
     default: "bg-background text-foreground",
-    destructive: "border-destructive/50 text-destructive dark:border-destructive",
-    success: "border-green-500/50 text-green-700 dark:text-green-400 dark:border-green-500",
+    destructive:
+      "border-destructive/50 text-destructive dark:border-destructive",
+    success:
+      "border-green-500/50 text-green-700 dark:text-green-400 dark:border-green-500",
     info: "border-blue-500/50 text-blue-700 dark:text-blue-400 dark:border-blue-500",
   };
 

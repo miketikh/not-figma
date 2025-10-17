@@ -105,7 +105,10 @@ export default function TextProperties({
     <div className="space-y-4">
       {/* Content */}
       <div>
-        <Label htmlFor="text-content" className="text-xs text-gray-500 mb-2 block">
+        <Label
+          htmlFor="text-content"
+          className="text-xs text-gray-500 mb-2 block"
+        >
           Content
         </Label>
         <textarea
@@ -246,7 +249,9 @@ export default function TextProperties({
           <Button
             type="button"
             size="sm"
-            variant={shape.textDecoration === "underline" ? "default" : "outline"}
+            variant={
+              shape.textDecoration === "underline" ? "default" : "outline"
+            }
             onClick={() =>
               onUpdate({
                 textDecoration:
@@ -303,4 +308,3 @@ export default function TextProperties({
     </div>
   );
 }
-

@@ -1,9 +1,11 @@
 # Canvas.tsx Refactoring Plan
 
 ## 🎯 Progress Summary
+
 **Status**: ALL PHASES COMPLETE ✅
 
 **Final Results**:
+
 - ✅ Canvas.tsx reduced from **1,248 lines to 531 lines** (57% reduction, 717 lines removed)
 - ✅ All custom hooks extracted and integrated (7 hooks)
 - ✅ All helper libraries extracted and integrated (4 libraries)
@@ -12,6 +14,7 @@
 - ✅ Build succeeds with no errors
 
 **Files Created** (17 total):
+
 - `_types/interactions.ts`
 - `_lib/cursor-helpers.ts`
 - `_lib/drawing-helpers.ts`
@@ -31,9 +34,11 @@
 - `_components/SelectionRectRenderer.tsx`
 
 ## Overview
+
 Canvas.tsx has grown to **1,248 lines** and contains too many responsibilities. This document outlines potential abstractions and cleanup strategies to improve maintainability.
 
 ## Current Issues
+
 - **Multiple concerns mixed together**: Drawing, selection, panning, zooming, keyboard shortcuts, lock management, transform broadcasting
 - **Large event handlers**: Mouse handlers are 50-100+ lines each
 - **Complex state management**: 20+ useState/useRef hooks in one component
@@ -41,7 +46,9 @@ Canvas.tsx has grown to **1,248 lines** and contains too many responsibilities. 
 - **Difficult to understand**: Too much cognitive load to grasp the entire file
 
 ## Successful Patterns Already in Use ✅
+
 The codebase already has good examples of extracted logic:
+
 - `_lib/bounds.ts` - `isPointInBounds`, `clampPointToBounds`
 - `_lib/viewport-constraints.ts` - `constrainViewport`
 - `_lib/coordinates.ts` - `screenToCanvasCoordinates`
@@ -59,14 +66,16 @@ The codebase already has good examples of extracted logic:
 
 ## Proposed Extractions
 
-### 1. Custom Hooks (app/canvas/_hooks/)
+### 1. Custom Hooks (app/canvas/\_hooks/)
 
 #### ✅ `useDrawing.ts` (Priority: HIGH) - COMPLETED
+
 **Purpose**: Extract all drawing state and logic for shapes (rectangle, circle, line)
 
 **Lines to extract**: 77-80, 614-621, 691-718, 752-787
 
 **State**:
+
 ```typescript
 const [isDrawing, setIsDrawing] = useState(false);
 const [draftRect, setDraftRect] = useState<DraftRect | null>(null);
@@ -74,6 +83,7 @@ const drawStartRef = useRef({ x: 0, y: 0 });
 ```
 
 **Interface**:
+
 ```typescript
 export function useDrawing({
   stageRef,
@@ -96,6 +106,7 @@ export function useDrawing({
 ```
 
 **Benefits**:
+
 - Isolates drawing logic from mouse event handlers
 - Makes drawing testable independently
 - Reduces Canvas.tsx by ~80 lines
@@ -103,11 +114,13 @@ export function useDrawing({
 ---
 
 #### ✅ `useSelection.ts` (Priority: HIGH) - COMPLETED
+
 **Purpose**: Extract selection rectangle (drag-to-select) logic
 
 **Lines to extract**: 82-90, 583-590, 668-689, 723-749
 
 **State**:
+
 ```typescript
 const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null);
 const [isSelecting, setIsSelecting] = useState(false);
@@ -115,6 +128,7 @@ const selectionStartRef = useRef({ x: 0, y: 0 });
 ```
 
 **Interface**:
+
 ```typescript
 export function useSelection({
   objects,
@@ -135,6 +149,7 @@ export function useSelection({
 ```
 
 **Benefits**:
+
 - Separates multi-select UI logic
 - Easier to add marquee selection features later
 - Reduces Canvas.tsx by ~60 lines
@@ -142,11 +157,13 @@ export function useSelection({
 ---
 
 #### ✅ `useZoom.ts` (Priority: MEDIUM) - COMPLETED
+
 **Purpose**: Extract all zoom controls and wheel zoom logic
 
 **Lines to extract**: 517-560, 830-923
 
 **Interface**:
+
 ```typescript
 export function useZoom({
   stageRef,
@@ -166,6 +183,7 @@ export function useZoom({
 ```
 
 **Benefits**:
+
 - Consolidates all zoom logic in one place
 - Makes it easy to add zoom presets (50%, 100%, 200%)
 - Reduces Canvas.tsx by ~100 lines
@@ -173,11 +191,13 @@ export function useZoom({
 ---
 
 #### ✅ `useKeyboardShortcuts.ts` (Priority: HIGH) - COMPLETED
+
 **Purpose**: Extract all keyboard event handling
 
 **Lines to extract**: 356-466
 
 **Interface**:
+
 ```typescript
 export function useKeyboardShortcuts({
   activeTool,
@@ -200,6 +220,7 @@ export function useKeyboardShortcuts({
 ```
 
 **Benefits**:
+
 - Huge file - 110 lines of keyboard logic
 - Easy to see all shortcuts in one place
 - Could generate keyboard shortcut documentation from this hook
@@ -208,11 +229,13 @@ export function useKeyboardShortcuts({
 ---
 
 #### ✅ `useTransformBroadcast.ts` (Priority: MEDIUM) - COMPLETED
+
 **Purpose**: Extract real-time transform broadcasting logic with throttling
 
 **Lines to extract**: 242-353
 
 **State**:
+
 ```typescript
 const broadcastThrottleTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 const groupTransformThrottleTimer = useRef<NodeJS.Timeout | null>(null);
@@ -220,6 +243,7 @@ const pendingGroupTransforms = useRef<Record<string, ObjectTransformData>>({});
 ```
 
 **Interface**:
+
 ```typescript
 export function useTransformBroadcast({
   canvasId,
@@ -235,6 +259,7 @@ export function useTransformBroadcast({
 ```
 
 **Benefits**:
+
 - Complex throttling logic isolated
 - Easier to tune performance characteristics
 - Reduces Canvas.tsx by ~110 lines
@@ -242,11 +267,13 @@ export function useTransformBroadcast({
 ---
 
 #### ✅ `useDebouncedPropertyUpdate.ts` (Priority: LOW) - COMPLETED
+
 **Purpose**: Extract debounced property updates for properties panel
 
 **Lines to extract**: 204-240
 
 **Interface**:
+
 ```typescript
 export function useDebouncedPropertyUpdate({
   objects,
@@ -262,6 +289,7 @@ export function useDebouncedPropertyUpdate({
 ```
 
 **Benefits**:
+
 - Reusable pattern for debounced updates
 - Could be used elsewhere in the app
 - Reduces Canvas.tsx by ~35 lines
@@ -269,11 +297,13 @@ export function useDebouncedPropertyUpdate({
 ---
 
 #### ✅ `useLockManager.ts` (Priority: MEDIUM) - COMPLETED
+
 **Purpose**: Extract lock manager initialization and selection-based lock acquisition
 
 **Lines to extract**: 101-106, 163-185, 478-492
 
 **Interface**:
+
 ```typescript
 export function useLockManager({
   canvasId,
@@ -291,18 +321,21 @@ export function useLockManager({
 ```
 
 **Benefits**:
+
 - Encapsulates lock lifecycle management
 - Auto-acquires/releases locks based on selection
 - Reduces Canvas.tsx by ~40 lines
 
 ---
 
-### 2. Helper Libraries (app/canvas/_lib/)
+### 2. Helper Libraries (app/canvas/\_lib/)
 
 #### ✅ `zoom-helpers.ts` (Priority: MEDIUM) - COMPLETED
+
 **Purpose**: Pure functions for zoom calculations
 
 **Extract from `useZoom` hook**:
+
 ```typescript
 export function calculateZoomToPoint(
   currentZoom: number,
@@ -322,12 +355,14 @@ export function clampZoom(zoom: number, min = 0.1, max = 5): number;
 ```
 
 **Benefits**:
+
 - Testable zoom math separate from React
 - Can be reused if we add zoom slider or zoom presets
 
 ---
 
 #### ✅ `cursor-helpers.ts` (Priority: LOW) - COMPLETED
+
 **Purpose**: Cursor style utilities
 
 **Lines to extract**: 927-933
@@ -341,6 +376,7 @@ export function getCursorStyle(
 ```
 
 **Benefits**:
+
 - Simple utility function
 - Reduces Canvas.tsx by ~7 lines
 - Could add cursor logic for different states
@@ -348,6 +384,7 @@ export function getCursorStyle(
 ---
 
 #### ✅ `drawing-helpers.ts` (Priority: LOW) - COMPLETED
+
 **Purpose**: Drawing validation and draft shape utilities
 
 ```typescript
@@ -364,12 +401,14 @@ export function createDraftRect(
 ```
 
 **Benefits**:
+
 - Pure functions for drawing logic
 - Testable without Konva/React
 
 ---
 
 #### ✅ `selection-helpers.ts` (Priority: LOW) - COMPLETED
+
 **Purpose**: Selection calculation utilities
 
 ```typescript
@@ -386,19 +425,22 @@ export function mergeSelection(
 ```
 
 **Benefits**:
+
 - Pure functions for selection math
 - Easier to add selection modes (intersect, contain, etc.)
 
 ---
 
-### 3. Component Extractions (app/canvas/_components/)
+### 3. Component Extractions (app/canvas/\_components/)
 
 #### `ZoomControls.tsx` (Priority: MEDIUM)
+
 **Purpose**: Extract zoom UI (bottom-right corner)
 
 **Lines to extract**: 1195-1236
 
 **Benefits**:
+
 - Reusable UI component
 - Reduces Canvas.tsx JSX complexity
 - Could add more zoom features (slider, presets)
@@ -406,33 +448,39 @@ export function mergeSelection(
 ---
 
 #### `GridToggle.tsx` (Priority: LOW)
+
 **Purpose**: Extract grid toggle button (top-left corner)
 
 **Lines to extract**: 1159-1179
 
 **Benefits**:
+
 - Simple UI extraction
 - Reduces Canvas.tsx by ~20 lines
 
 ---
 
 #### `CanvasLoadingState.tsx` (Priority: LOW)
+
 **Purpose**: Extract loading state UI
 
 **Lines to extract**: 1238-1244
 
 **Benefits**:
+
 - Could add more sophisticated loading states
 - Consistent loading UI across app
 
 ---
 
 #### `DraftShapeRenderer.tsx` (Priority: MEDIUM)
+
 **Purpose**: Extract draft shape rendering logic
 
 **Lines to extract**: 1077-1107
 
 **Benefits**:
+
 - Complex rendering logic isolated
 - Easier to add draft shape features (snap to grid, etc.)
 - Reduces Canvas.tsx by ~30 lines
@@ -440,11 +488,13 @@ export function mergeSelection(
 ---
 
 #### `SelectionRectRenderer.tsx` (Priority: LOW)
+
 **Purpose**: Extract selection rectangle rendering
 
 **Lines to extract**: 1110-1122
 
 **Benefits**:
+
 - Isolated UI component
 - Could add more selection styles
 
@@ -453,11 +503,13 @@ export function mergeSelection(
 ### 4. Event Handler Refactoring
 
 #### ✅ `useMouseHandlers.ts` (Priority: HIGH) - COMPLETED
+
 **Purpose**: Extract complex mouse event logic
 
 **Lines to extract**: 563-661, 664-719, 722-790
 
 **Option A**: Create a `useMouseHandlers` hook:
+
 ```typescript
 export function useMouseHandlers({
   stageRef,
@@ -486,15 +538,17 @@ export function useMouseHandlers({
 **Option B**: Create helper functions in `_lib/mouse-handlers.ts` and keep hooks in Canvas.tsx but delegate to helpers
 
 **Benefits**:
+
 - Massive cleanup - ~230 lines of mouse logic
 - Easier to understand interaction flow
 - Better separation of concerns
 
 ---
 
-### 5. Type Extractions (app/canvas/_types/)
+### 5. Type Extractions (app/canvas/\_types/)
 
 #### ✅ `interactions.ts` (Priority: LOW) - COMPLETED
+
 **Purpose**: Extract interaction-related types
 
 ```typescript
@@ -512,10 +566,11 @@ export interface SelectionRect {
   height: number;
 }
 
-export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
+export type CursorMode = "default" | "grab" | "grabbing" | "crosshair";
 ```
 
 **Benefits**:
+
 - Types are separate from implementation
 - Can be reused across components
 
@@ -524,6 +579,7 @@ export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
 ## Refactoring Strategy
 
 ### Phase 1: Extract Custom Hooks (High Priority)
+
 1. ✅ Extract `useKeyboardShortcuts.ts` - Biggest win, 110 lines
 2. ✅ Extract `useDrawing.ts` - Core drawing logic, 80 lines
 3. ✅ Extract `useSelection.ts` - Multi-select logic, 60 lines
@@ -532,6 +588,7 @@ export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
 **Estimated reduction**: ~480 lines
 
 ### Phase 2: Extract Helper Libraries (Medium Priority)
+
 1. ✅ Create `zoom-helpers.ts` and extract `useZoom.ts` hook - 100 lines
 2. ✅ Extract `useTransformBroadcast.ts` - Complex throttling, 110 lines
 3. ✅ Extract `useLockManager.ts` - Lock lifecycle, 40 lines
@@ -540,6 +597,7 @@ export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
 **Estimated reduction**: ~270 lines
 
 ### Phase 3: Extract UI Components (Lower Priority)
+
 1. ✅ Extract `ZoomControls.tsx` - 40 lines
 2. ✅ Extract `DraftShapeRenderer.tsx` - 30 lines
 3. ✅ Extract `GridToggle.tsx`, `SelectionRectRenderer.tsx` - 30 lines
@@ -547,6 +605,7 @@ export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
 **Estimated reduction**: ~100 lines
 
 ### Phase 4: Final Cleanup
+
 1. ✅ Extract remaining utility functions
 2. ✅ Extract types to `_types/interactions.ts`
 3. ✅ Add JSDoc comments to extracted code
@@ -560,6 +619,7 @@ export type CursorMode = 'default' | 'grab' | 'grabbing' | 'crosshair';
 ## Testing Considerations
 
 After refactoring, we'll be able to unit test:
+
 - ✅ **Zoom calculations** (pure functions)
 - ✅ **Selection rectangle math** (pure functions)
 - ✅ **Drawing logic** (hooks with mock stage)

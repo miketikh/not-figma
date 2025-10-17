@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Not-Figma",
-  description: "A real-time collaborative design canvas with AI-powered features",
+  description:
+    "A real-time collaborative design canvas with AI-powered features",
   icons: {
     icon: "/favicon/favicon-32x32.png",
     apple: "/favicon/apple-touch-icon.png",

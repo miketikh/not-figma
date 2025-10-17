@@ -5,6 +5,7 @@
 After examining the current shape infrastructure, here's what I found:
 
 ### Current Shape Architecture:
+
 1. **Type Definitions** (`app/canvas/_types/shapes.ts`): Defines local shape representations (PersistedRect, PersistedCircle)
 2. **Shape Factories** (`app/canvas/_lib/shapes.ts`): Factory pattern for each shape with methods for creation, conversion, validation, and draft preview
 3. **Firestore Types** (`types/canvas.ts`): Defines Firestore object types (RectangleObject, CircleObject, LineObject already exists!)
@@ -17,6 +18,7 @@ After examining the current shape infrastructure, here's what I found:
 10. **Default Properties** (`app/canvas/_store/canvas-store.ts`): Stores default properties for each shape tool
 
 ### Key Differences for Lines:
+
 - Lines are drawn from point-to-point (x1,y1 to x2,y2), not bounded by width/height
 - Lines don't have a fill property (only stroke)
 - Lines need special handling in normalization (no negative width/height concept)
@@ -28,6 +30,7 @@ After examining the current shape infrastructure, here's what I found:
 ## Task List
 
 ### 1. Add Line Type Definition ✅
+
 **File:** `app/canvas/_types/shapes.ts`
 
 - [x] Add `PersistedLine` interface after `PersistedCircle`
@@ -43,6 +46,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 2. Create Line Factory ✅
+
 **File:** `app/canvas/_lib/shapes.ts`
 
 - [x] Import `LineObject` from `@/types/canvas`
@@ -86,6 +90,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 3. Update Tool Constants ✅
+
 **File:** `app/canvas/_constants/tools.ts`
 
 - [x] Add `"line"` to `DRAWING_TOOLS` array
@@ -95,6 +100,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 4. Add Line to Toolbar ✅
+
 **File:** `app/canvas/_components/Toolbar.tsx`
 
 - [x] Import `Minus` icon from lucide-react
@@ -107,6 +113,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 5. Add Line Keyboard Shortcut ✅
+
 **File:** `app/canvas/_components/Canvas.tsx`
 
 - [x] In keyboard handler (around line 220), add line tool shortcut:
@@ -121,6 +128,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 6. Create LineShape Component ✅
+
 **File:** `app/canvas/_components/shapes/LineShape.tsx` (NEW)
 
 - [x] Import `Line` from `react-konva`
@@ -157,6 +165,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 7. Update Shape Router ✅
+
 **File:** `app/canvas/_components/shapes/index.tsx`
 
 - [x] Import `LineShape` from `./LineShape`
@@ -182,6 +191,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 8. Update Canvas Drawing Logic ✅
+
 **File:** `app/canvas/_components/Canvas.tsx`
 
 - [x] Import `Line` from `react-konva`
@@ -195,6 +205,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 9. Create LineProperties Component ✅
+
 **File:** `app/canvas/_components/properties/shape-properties/LineProperties.tsx` (NEW)
 
 - [x] Create `LinePropertiesProps` interface:
@@ -215,6 +226,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 10. Register Line Properties Component ✅
+
 **File:** `app/canvas/_components/properties/shape-properties/index.ts`
 
 - [x] Import `LineProperties` from `./LineProperties`
@@ -226,6 +238,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 11. Update Default Properties Store ✅
+
 **File:** `app/canvas/_store/canvas-store.ts`
 
 - [x] Add `line` to `DefaultShapeProperties` interface
@@ -243,6 +256,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 12. Update PropertiesPanel Type ✅
+
 **File:** `app/canvas/_components/PropertiesPanel.tsx`
 
 - [x] Update `defaultShapeProperties` type to include `line`:
@@ -251,7 +265,7 @@ After examining the current shape infrastructure, here's what I found:
     stroke: string;
     strokeWidth: number;
     opacity: number;
-  };
+  }
   ```
 - [x] Update `onUpdateDefaults` type signature to accept `"rectangle" | "circle" | "line"`
 - [x] Update mock shape creation for line in default properties view:
@@ -271,6 +285,7 @@ After examining the current shape infrastructure, here's what I found:
 ---
 
 ### 13. Update StyleProperties for Lines ✅
+
 **File:** `app/canvas/_components/properties/StyleProperties.tsx`
 
 - [x] Add conditional logic to hide fill-related inputs for lines
@@ -288,21 +303,18 @@ After examining the current shape infrastructure, here's what I found:
   - [ ] Click line tool in toolbar activates line mode
   - [ ] Keyboard shortcut "L" activates line tool
   - [ ] Line tool shows highlighted in toolbar when active
-  
 - [ ] **Drawing**
   - [ ] Can drag to create a line from point A to point B
   - [ ] Line preview shows correctly while dragging
   - [ ] Can drag in any direction (up, down, left, right, diagonal)
   - [ ] Line appears after releasing mouse
   - [ ] Very short lines (< 10px) are rejected
-  
 - [ ] **Selection & Manipulation**
   - [ ] Can click to select a line (in select tool mode)
   - [ ] Selected line shows transformer handles
   - [ ] Can drag to move line (both endpoints move together)
   - [ ] Transformer resize may need special handling (test behavior)
   - [ ] Line properties panel shows when line is selected
-  
 - [ ] **Properties Panel**
   - [ ] Shows line-specific properties (length, angle)
   - [ ] Shows stroke color and can change it
@@ -310,29 +322,24 @@ After examining the current shape infrastructure, here's what I found:
   - [ ] Shows opacity and can change it
   - [ ] Does NOT show fill controls
   - [ ] Changes sync to canvas immediately
-  
 - [ ] **Default Properties**
   - [ ] With line tool active and nothing selected, shows default line properties
   - [ ] Can change default stroke color
   - [ ] Can change default stroke width
   - [ ] Can change default opacity
   - [ ] New lines use updated defaults
-  
 - [ ] **Locking**
   - [ ] Line locked by another user shows red stroke
   - [ ] Locked lines cannot be selected
   - [ ] Locked lines show lock indicator in properties
-  
 - [ ] **Real-time Sync**
   - [ ] Lines created by one user appear for other users
   - [ ] Line moves/updates sync in real-time
   - [ ] Line deletions sync correctly
-  
 - [ ] **Layer Management**
   - [ ] Lines respect z-index ordering
   - [ ] Can bring line to front/send to back
   - [ ] Layer controls work in properties panel
-  
 - [ ] **Persistence**
   - [ ] Lines persist to Firestore correctly
   - [ ] Page refresh loads lines correctly
@@ -343,29 +350,37 @@ After examining the current shape infrastructure, here's what I found:
 ## Implementation Notes
 
 ### Line Rotation Considerations
+
 Lines are inherently rotational (defined by two points). Adding a separate `rotation` property complicates things:
+
 - **Option A:** Skip rotation property, let line angle be defined by endpoints (RECOMMENDED for MVP)
 - **Option B:** Add rotation and apply transform matrix to calculate rotated x2,y2
 - For MVP: **Skip rotation**, set to 0 always. Lines rotate naturally by dragging endpoints.
 
 ### Line Transformer Behavior
+
 Konva Transformer on lines can be tricky:
+
 - **Default behavior:** Creates bounding box around line (not ideal)
 - **Better behavior:** Show anchors only at line endpoints
-- **MVP approach:** 
+- **MVP approach:**
   - Allow drag to move entire line
   - Test default transformer behavior
   - If problematic, consider custom transformer config or disable transformer for lines
   - Future: Add endpoint drag handles for line editing
 
 ### Line Endpoint Editing
+
 For future enhancement:
+
 - Add custom anchors at x,y and x2,y2
 - Allow dragging individual endpoints
 - This would be a separate PR after basic line support works
 
 ### Arrow Heads
+
 Not included in this PR, but could be future enhancement:
+
 - Add `arrowStart` and `arrowEnd` boolean properties
 - Use Konva's built-in arrow support
 - Add to line properties panel
@@ -373,10 +388,12 @@ Not included in this PR, but could be future enhancement:
 ---
 
 ## Files to Create
+
 1. `app/canvas/_components/shapes/LineShape.tsx`
 2. `app/canvas/_components/properties/shape-properties/LineProperties.tsx`
 
 ## Files to Modify
+
 1. `app/canvas/_types/shapes.ts` - Add PersistedLine type
 2. `app/canvas/_lib/shapes.ts` - Add lineFactory
 3. `app/canvas/_constants/tools.ts` - Add line to drawing tools
@@ -389,12 +406,15 @@ Not included in this PR, but could be future enhancement:
 10. `app/canvas/_components/properties/StyleProperties.tsx` - Hide fill for lines
 
 ## Estimated Complexity
+
 **Medium** - Lines are simpler than rectangles/circles (no fill, no corner radius) but have unique coordinate system (x1,y1,x2,y2 vs x,y,w,h). The main challenges are:
+
 1. Coordinate conversion between bounding box and point-to-point
 2. Transformer behavior may need customization
 3. Draft preview uses Line component instead of Rect/Ellipse
 
 ## Success Criteria
+
 - ✅ Can create lines by dragging on canvas
 - ✅ Lines persist to Firestore and reload correctly
 - ✅ Lines sync in real-time between users
@@ -411,6 +431,7 @@ Not included in this PR, but could be future enhancement:
 **All 13 implementation tasks finished + Interaction improvements!**
 
 ### Summary of Changes:
+
 1. ✅ **Type Definitions** - Added `PersistedLine` interface
 2. ✅ **Line Factory** - Complete factory with all methods
 3. ✅ **Tool Constants** - Added line to drawing tools
@@ -426,20 +447,24 @@ Not included in this PR, but could be future enhancement:
 13. ✅ **StyleProperties** - Hidden fill section for lines
 
 ### Special Line Tool Interaction ⭐
+
 Unlike rectangles/circles (click-and-drag), the line tool uses **click-to-place**:
+
 1. **First click** - Anchors the start point
 2. **Move cursor** - Line preview follows cursor from anchor point
 3. **Second click** - Places the end point and creates the line
 4. **Press Escape** or **switch tools** - Cancels line drawing
 
 ### Bug Fixes:
+
 - Fixed runtime error when `defaultShapeProperties.line` was undefined (localStorage migration issue)
 - Added defensive checks with fallback values
 - Exported `DefaultShapeProperties` type from store for type safety
 
 ### No Lint Errors! ✨
+
 All TypeScript errors resolved. Code is clean and ready for testing.
 
 ### Next Steps:
-Task 14 provides a comprehensive testing checklist to verify all functionality works correctly.
 
+Task 14 provides a comprehensive testing checklist to verify all functionality works correctly.

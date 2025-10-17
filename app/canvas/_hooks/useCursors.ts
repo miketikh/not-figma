@@ -35,8 +35,12 @@ interface CursorData {
 
 export function useCursors({ canvasId, stageRef, isReady }: UseCursorsProps) {
   const { user } = useAuth();
-  const [remoteCursors, setRemoteCursors] = useState<Record<string, CursorData>>({});
-  const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
+  const [remoteCursors, setRemoteCursors] = useState<
+    Record<string, CursorData>
+  >({});
+  const [presenceData, setPresenceData] = useState<
+    Record<string, UserPresence>
+  >({});
   const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set user presence in Realtime Database and maintain heartbeat
@@ -96,7 +100,10 @@ export function useCursors({ canvasId, stageRef, isReady }: UseCursorsProps) {
       const pointerX = e.clientX - containerRect.left;
       const pointerY = e.clientY - containerRect.top;
 
-      const canvasPoint = screenToCanvasCoordinates(stage, { x: pointerX, y: pointerY });
+      const canvasPoint = screenToCanvasCoordinates(stage, {
+        x: pointerX,
+        y: pointerY,
+      });
       if (!canvasPoint) return;
 
       // Update cursor position in Realtime Database

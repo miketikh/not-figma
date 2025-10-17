@@ -14,4 +14,3 @@ export const LOCK_TIMEOUT_MS = 30000; // 30 seconds
  * How often to check for expired locks
  */
 export const LOCK_CHECK_INTERVAL_MS = 1000; // 5 seconds
-

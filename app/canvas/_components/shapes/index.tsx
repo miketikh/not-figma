@@ -3,7 +3,12 @@
  * Delegates rendering to the appropriate shape component based on object type
  */
 
-import type { PersistedRect, PersistedCircle, PersistedLine, PersistedText } from "../../_types/shapes";
+import type {
+  PersistedRect,
+  PersistedCircle,
+  PersistedLine,
+  PersistedText,
+} from "../../_types/shapes";
 import RectangleShape from "./RectangleShape";
 import CircleShape from "./CircleShape";
 import LineShape from "./LineShape";

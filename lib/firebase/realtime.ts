@@ -29,7 +29,10 @@ import { UserPresence } from "@/types/user";
 /**
  * Generate consistent database path for canvas sessions
  */
-function getSessionPath(canvasId: string, type: 'cursors' | 'presence'): string {
+function getSessionPath(
+  canvasId: string,
+  type: "cursors" | "presence"
+): string {
   return `sessions/${canvasId}/${type}`;
 }
 
@@ -46,7 +49,10 @@ export async function updateCursorPosition(
   x: number,
   y: number
 ): Promise<void> {
-  const cursorRef = ref(realtimeDb, `${getSessionPath(canvasId, 'cursors')}/${userId}`);
+  const cursorRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "cursors")}/${userId}`
+  );
   await set(cursorRef, {
     userId,
     x,
@@ -58,8 +64,14 @@ export async function updateCursorPosition(
 /**
  * Remove cursor for current user
  */
-export async function removeCursor(canvasId: string, userId: string): Promise<void> {
-  const cursorRef = ref(realtimeDb, `${getSessionPath(canvasId, 'cursors')}/${userId}`);
+export async function removeCursor(
+  canvasId: string,
+  userId: string
+): Promise<void> {
+  const cursorRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "cursors")}/${userId}`
+  );
   await remove(cursorRef);
 }
 
@@ -71,7 +83,7 @@ export function subscribeToCursors(
   canvasId: string,
   callback: (cursors: CursorMap) => void
 ): Unsubscribe {
-  const cursorsRef = ref(realtimeDb, getSessionPath(canvasId, 'cursors'));
+  const cursorsRef = ref(realtimeDb, getSessionPath(canvasId, "cursors"));
 
   return onValue(cursorsRef, (snapshot) => {
     const cursors: CursorMap = snapshot.val() || {};
@@ -83,7 +95,7 @@ export function subscribeToCursors(
  * Get current cursor positions (one-time read)
  */
 export async function getCursors(canvasId: string): Promise<CursorMap> {
-  const cursorsRef = ref(realtimeDb, getSessionPath(canvasId, 'cursors'));
+  const cursorsRef = ref(realtimeDb, getSessionPath(canvasId, "cursors"));
   const snapshot = await get(cursorsRef);
   return snapshot.val() || {};
 }
@@ -102,8 +114,14 @@ export async function setUserPresence(
   email: string,
   color: string
 ): Promise<void> {
-  const presenceRef = ref(realtimeDb, `${getSessionPath(canvasId, 'presence')}/${userId}`);
-  const cursorRef = ref(realtimeDb, `${getSessionPath(canvasId, 'cursors')}/${userId}`);
+  const presenceRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "presence")}/${userId}`
+  );
+  const cursorRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "cursors")}/${userId}`
+  );
 
   const presence: UserPresence = {
     userId,
@@ -131,8 +149,14 @@ export async function setUserPresence(
 /**
  * Update user's last seen timestamp (heartbeat)
  */
-export async function updatePresenceHeartbeat(canvasId: string, userId: string): Promise<void> {
-  const presenceRef = ref(realtimeDb, `${getSessionPath(canvasId, 'presence')}/${userId}`);
+export async function updatePresenceHeartbeat(
+  canvasId: string,
+  userId: string
+): Promise<void> {
+  const presenceRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "presence")}/${userId}`
+  );
   const snapshot = await get(presenceRef);
 
   if (snapshot.exists()) {
@@ -148,9 +172,18 @@ export async function updatePresenceHeartbeat(canvasId: string, userId: string):
 /**
  * Remove user presence (on sign out)
  */
-export async function removeUserPresence(canvasId: string, userId: string): Promise<void> {
-  const presenceRef = ref(realtimeDb, `${getSessionPath(canvasId, 'presence')}/${userId}`);
-  const cursorRef = ref(realtimeDb, `${getSessionPath(canvasId, 'cursors')}/${userId}`);
+export async function removeUserPresence(
+  canvasId: string,
+  userId: string
+): Promise<void> {
+  const presenceRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "presence")}/${userId}`
+  );
+  const cursorRef = ref(
+    realtimeDb,
+    `${getSessionPath(canvasId, "cursors")}/${userId}`
+  );
 
   // Update to offline instead of deleting (keeps history)
   const snapshot = await get(presenceRef);
@@ -175,7 +208,7 @@ export function subscribeToPresence(
   canvasId: string,
   callback: (presence: Record<string, UserPresence>) => void
 ): Unsubscribe {
-  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, 'presence'));
+  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, "presence"));
 
   return onValue(presenceRef, (snapshot) => {
     const presence: Record<string, UserPresence> = snapshot.val() || {};
@@ -186,8 +219,10 @@ export function subscribeToPresence(
 /**
  * Get current online users (one-time read)
  */
-export async function getOnlineUsers(canvasId: string): Promise<UserPresence[]> {
-  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, 'presence'));
+export async function getOnlineUsers(
+  canvasId: string
+): Promise<UserPresence[]> {
+  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, "presence"));
   const snapshot = await get(presenceRef);
   const presenceMap: Record<string, UserPresence> = snapshot.val() || {};
 
@@ -198,7 +233,7 @@ export async function getOnlineUsers(canvasId: string): Promise<UserPresence[]> 
  * Get all users (online and recently offline)
  */
 export async function getAllUsers(canvasId: string): Promise<UserPresence[]> {
-  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, 'presence'));
+  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, "presence"));
   const snapshot = await get(presenceRef);
   const presenceMap: Record<string, UserPresence> = snapshot.val() || {};
 
@@ -238,17 +273,17 @@ export function generateUserColor(userId: string): string {
     "#F8B739", // Orange
     "#52B788", // Green
   ];
-  
+
   // Simple hash function to convert userId to a number
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = (hash << 5) - hash + userId.charCodeAt(i);
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
+
   // Use absolute value and modulo to get an index
   const index = Math.abs(hash) % cursorColors.length;
-  
+
   return cursorColors[index];
 }
 
@@ -264,7 +299,7 @@ export function isUserActive(lastSeen: number): boolean {
  * Clean up inactive users (admin function, can be called periodically)
  */
 export async function cleanupInactiveUsers(canvasId: string): Promise<void> {
-  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, 'presence'));
+  const presenceRef = ref(realtimeDb, getSessionPath(canvasId, "presence"));
   const snapshot = await get(presenceRef);
   const presenceMap: Record<string, UserPresence> = snapshot.val() || {};
 
@@ -273,9 +308,11 @@ export async function cleanupInactiveUsers(canvasId: string): Promise<void> {
   for (const [userId, presence] of Object.entries(presenceMap)) {
     const inactive = Date.now() - presence.lastSeen > thirtyMinutes;
     if (inactive && !presence.isOnline) {
-      const userRef = ref(realtimeDb, `${getSessionPath(canvasId, 'presence')}/${userId}`);
+      const userRef = ref(
+        realtimeDb,
+        `${getSessionPath(canvasId, "presence")}/${userId}`
+      );
       await remove(userRef);
     }
   }
 }
-

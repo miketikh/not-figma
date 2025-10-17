@@ -55,7 +55,7 @@ export default function StyleProperties({
   const getFillColor = () => {
     // Lines don't have fill
     if (!("fill" in object)) return "#000000";
-    
+
     const fill = object.fill;
     if (fill.startsWith("#")) return fill;
     if (fill === "transparent") return "#000000";
@@ -71,7 +71,7 @@ export default function StyleProperties({
   const getStrokeColor = () => {
     // Check if object has stroke property (text might not have it in defaults)
     if (!("stroke" in object)) return "#000000";
-    
+
     const stroke = object.stroke;
     if (typeof stroke === "string" && stroke.startsWith("#")) return stroke;
     return stroke || "#000000";
@@ -92,22 +92,23 @@ export default function StyleProperties({
   const handleNoFillChange = (checked: boolean) => {
     // Lines don't have fill
     if (!("fill" in object)) return;
-    
+
     if (checked) {
       onUpdate({ fill: "transparent" });
     } else {
       // Restore to a default color - use blue as fallback if currently transparent
       const currentColor = getFillColor();
-      const restoredColor = object.fill === "transparent" ? "#3b82f6" : currentColor;
+      const restoredColor =
+        object.fill === "transparent" ? "#3b82f6" : currentColor;
       onUpdate({ fill: restoredColor });
     }
   };
 
-  const isTransparent = ("fill" in object) && object.fill === "transparent";
-  
+  const isTransparent = "fill" in object && object.fill === "transparent";
+
   // Lines don't have fill, only stroke
   const isLine = object.type === "line";
-  
+
   // Text has fill but no "No Fill" option (text always needs color)
   const isText = object.type === "text";
 
@@ -115,83 +116,85 @@ export default function StyleProperties({
     <div className="space-y-4">
       {/* Fill Section - Hidden for lines, simplified for text */}
       {!isLine && (
-      <div>
-        <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-          {isText ? "Text Color" : "Fill"}
-        </Label>
-        
-        <div className="space-y-2">
-          {/* Color preview/button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (disabled) return;
-              if (isTransparent) {
-                // If transparent, restore a default color
-                handleNoFillChange(false);
-              } else {
-                setShowFillPicker(!showFillPicker);
-              }
-            }}
-            disabled={disabled}
-            className="w-full h-8 rounded border border-gray-300 flex items-center px-2 gap-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div
-              className="w-5 h-5 rounded border border-gray-300"
-              style={{
-                backgroundColor: isTransparent ? "transparent" : object.fill,
-                backgroundImage: isTransparent
-                  ? "linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)"
-                  : "none",
-                backgroundSize: "10px 10px",
-                backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+        <div>
+          <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+            {isText ? "Text Color" : "Fill"}
+          </Label>
+
+          <div className="space-y-2">
+            {/* Color preview/button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (disabled) return;
+                if (isTransparent) {
+                  // If transparent, restore a default color
+                  handleNoFillChange(false);
+                } else {
+                  setShowFillPicker(!showFillPicker);
+                }
               }}
-            />
-            <span className="text-sm flex-1 text-left">
-              {isTransparent ? "No Fill (click to restore)" : getFillColor().toUpperCase()}
-            </span>
-          </button>
-
-          {/* Color picker popover */}
-          {showFillPicker && !isTransparent && (
-            <div className="relative">
-              <div
-                ref={fillPickerRef}
-                className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border"
-              >
-                <HexColorPicker
-                  color={getFillColor()}
-                  onChange={handleFillColorChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowFillPicker(false)}
-                  className="mt-2 w-full text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* No Fill checkbox - Hidden for text (text always needs color) */}
-          {!isText && (
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="no-fill"
-              checked={isTransparent}
-              onChange={(e) => handleNoFillChange(e.target.checked)}
               disabled={disabled}
-              className="rounded"
-            />
-            <Label htmlFor="no-fill" className="text-sm cursor-pointer">
-              No Fill
-            </Label>
+              className="w-full h-8 rounded border border-gray-300 flex items-center px-2 gap-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div
+                className="w-5 h-5 rounded border border-gray-300"
+                style={{
+                  backgroundColor: isTransparent ? "transparent" : object.fill,
+                  backgroundImage: isTransparent
+                    ? "linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)"
+                    : "none",
+                  backgroundSize: "10px 10px",
+                  backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+                }}
+              />
+              <span className="text-sm flex-1 text-left">
+                {isTransparent
+                  ? "No Fill (click to restore)"
+                  : getFillColor().toUpperCase()}
+              </span>
+            </button>
+
+            {/* Color picker popover */}
+            {showFillPicker && !isTransparent && (
+              <div className="relative">
+                <div
+                  ref={fillPickerRef}
+                  className="absolute top-0 left-0 z-10 bg-white p-2 rounded-lg shadow-lg border"
+                >
+                  <HexColorPicker
+                    color={getFillColor()}
+                    onChange={handleFillColorChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowFillPicker(false)}
+                    className="mt-2 w-full text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* No Fill checkbox - Hidden for text (text always needs color) */}
+            {!isText && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="no-fill"
+                  checked={isTransparent}
+                  onChange={(e) => handleNoFillChange(e.target.checked)}
+                  disabled={disabled}
+                  className="rounded"
+                />
+                <Label htmlFor="no-fill" className="text-sm cursor-pointer">
+                  No Fill
+                </Label>
+              </div>
+            )}
           </div>
-          )}
         </div>
-      </div>
       )}
 
       {/* Stroke Section - Now visible for text (outline support added) */}
@@ -199,7 +202,7 @@ export default function StyleProperties({
         <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
           {isText ? "Text Outline" : "Stroke"}
         </Label>
-        
+
         <div className="space-y-2">
           {/* Color preview/button */}
           <button
@@ -284,4 +287,3 @@ export default function StyleProperties({
     </div>
   );
 }
-

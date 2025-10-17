@@ -88,25 +88,27 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
   // Error state - canvas not found or permission denied
   if (error || !canvas) {
     // Check if it's a permission denied error
-    const isPermissionDenied = error?.message?.includes("permission-denied") ||
-                               error?.message?.includes("Missing or insufficient permissions");
+    const isPermissionDenied =
+      error?.message?.includes("permission-denied") ||
+      error?.message?.includes("Missing or insufficient permissions");
 
     // Check if it's a network error (can retry)
-    const isNetworkError = error?.message?.includes("network") ||
-                          error?.message?.includes("offline") ||
-                          error?.message?.includes("Failed to fetch");
+    const isNetworkError =
+      error?.message?.includes("network") ||
+      error?.message?.includes("offline") ||
+      error?.message?.includes("Failed to fetch");
 
     const errorTitle = isPermissionDenied
       ? "Access Denied"
       : isNetworkError
-      ? "Connection Error"
-      : "Canvas Not Found";
+        ? "Connection Error"
+        : "Canvas Not Found";
 
     const errorMessage = isPermissionDenied
       ? "You don't have permission to view this canvas. It may be private or you may not be invited to collaborate."
       : isNetworkError
-      ? "Unable to load the canvas. Please check your internet connection and try again."
-      : "This canvas doesn't exist or has been deleted.";
+        ? "Unable to load the canvas. Please check your internet connection and try again."
+        : "This canvas doesn't exist or has been deleted.";
 
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -117,7 +119,10 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
                 <AlertCircle className="h-16 w-16 text-destructive" />
               </div>
             ) : (
-              <FileQuestion className="h-24 w-24 text-muted-foreground" strokeWidth={1.5} />
+              <FileQuestion
+                className="h-24 w-24 text-muted-foreground"
+                strokeWidth={1.5}
+              />
             )}
           </div>
 
@@ -136,7 +141,12 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
                 Retry
               </Button>
             )}
-            <Button asChild size="lg" variant={isNetworkError ? "outline" : "default"} className="gap-2">
+            <Button
+              asChild
+              size="lg"
+              variant={isNetworkError ? "outline" : "default"}
+              className="gap-2"
+            >
               <Link href="/canvas">
                 <Home className="h-4 w-4" />
                 Go to Dashboard
@@ -153,64 +163,66 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
       <div className="flex flex-col h-screen bg-background">
         {/* Main Header - Logo, Online Users, User Info */}
         <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
-        <div className="h-full px-6 flex items-center justify-between">
-          {/* Left Side - Logo */}
-          <div className="flex items-center gap-2">
-            <Image
-              src="/favicon/apple-touch-icon.png"
-              alt="Not-Figma Logo"
-              width={32}
-              height={32}
-              className="rounded"
-            />
-            <h1 className="text-xl font-semibold text-foreground">
-              Not-Figma
-            </h1>
+          <div className="h-full px-6 flex items-center justify-between">
+            {/* Left Side - Logo */}
+            <div className="flex items-center gap-2">
+              <Image
+                src="/favicon/apple-touch-icon.png"
+                alt="Not-Figma Logo"
+                width={32}
+                height={32}
+                className="rounded"
+              />
+              <h1 className="text-xl font-semibold text-foreground">
+                Not-Figma
+              </h1>
+            </div>
+
+            {/* Center - Online Users */}
+            <div className="flex-1 flex justify-center">
+              <OnlineUsers canvasId={canvasId} />
+            </div>
+
+            {/* Right Side - User Info */}
+            <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                    {/* User Avatar */}
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                      style={{ backgroundColor: user?.color }}
+                    >
+                      {(user?.displayName ||
+                        user?.email ||
+                        "U")[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {user?.displayName || user?.email}
+                    </span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push("/profile")}>
+                    Update profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
+        </header>
 
-          {/* Center - Online Users */}
-          <div className="flex-1 flex justify-center">
-            <OnlineUsers canvasId={canvasId} />
-          </div>
+        {/* Canvas Header with Breadcrumb */}
+        <CanvasHeader canvasId={canvasId} canvasName={canvas.name} />
 
-          {/* Right Side - User Info */}
-          <div className="flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
-                  {/* User Avatar */}
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                    style={{ backgroundColor: user?.color }}
-                  >
-                    {(user?.displayName || user?.email || 'U')[0].toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {user?.displayName || user?.email}
-                  </span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push("/profile")}>
-                  Update profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut}>
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      {/* Canvas Header with Breadcrumb */}
-      <CanvasHeader canvasId={canvasId} canvasName={canvas.name} />
-
-      {/* Canvas Area */}
-      <main className="flex-1 overflow-hidden">
-        <Canvas canvasId={canvasId} canvas={canvas} />
-      </main>
-    </div>
+        {/* Canvas Area */}
+        <main className="flex-1 overflow-hidden">
+          <Canvas canvasId={canvasId} canvas={canvas} />
+        </main>
+      </div>
     </ToastProvider>
   );
 }

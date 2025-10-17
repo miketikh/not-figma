@@ -1,6 +1,7 @@
 # Testing Strategy for CollabCanvas
 
 ## Current State
+
 - **No testing setup exists**
 - No test files
 - No testing libraries installed
@@ -9,6 +10,7 @@
 ## Testing Goals
 
 ### Phase 1: Canvas Interaction Tests (This Document)
+
 - Render canvas page as logged-in user
 - Test rectangle creation (draw)
 - Test multiple rectangle creation
@@ -16,6 +18,7 @@
 - Test rectangle deletion
 
 ### Phase 2: Future Tests (Not Covered Here)
+
 - Real-time sync between users
 - Firebase persistence
 - Cursor sync
@@ -27,7 +30,9 @@
 ## Technology Choices
 
 ### Option 1: Jest + React Testing Library (Recommended for Unit/Integration)
+
 **Pros:**
+
 - Standard in React ecosystem
 - Good for component testing
 - Fast feedback loop
@@ -35,12 +40,15 @@
 - Test user interactions
 
 **Cons:**
+
 - Canvas/Fabric.js is hard to test (needs DOM, canvas API)
 - May need to mock Fabric.js extensively
 - jsdom doesn't fully support canvas
 
 ### Option 2: Playwright (Recommended for E2E)
+
 **Pros:**
+
 - Real browser testing (full canvas support!)
 - Can actually draw and interact with Fabric.js
 - Test authentication flow realistically
@@ -49,18 +57,22 @@
 - Can test multi-user scenarios (multiple browser contexts)
 
 **Cons:**
+
 - Slower than Jest
 - Requires more setup
 - Need test Firebase project
 
 ### Option 3: Vitest + React Testing Library
+
 **Pros:**
+
 - Faster than Jest
 - Better TypeScript support
 - Similar API to Jest
 - Works well with Next.js
 
 **Cons:**
+
 - Same canvas/Fabric.js limitations as Jest
 
 ---
@@ -76,6 +88,7 @@
 5. **Future-proof** - Can test multiplayer features with multiple contexts
 
 **Strategy:**
+
 - Use Playwright for E2E tests (canvas interactions, auth, sync)
 - Add Jest/Vitest later for pure logic functions (if needed)
 
@@ -84,16 +97,19 @@
 ## Step-by-Step Implementation Plan
 
 ### Step 1: Install Playwright
+
 ```bash
 npm install -D @playwright/test
 npx playwright install
 ```
 
 **Files Created:**
+
 - `playwright.config.ts`
 - `tests/` directory
 
 **package.json changes:**
+
 - Add test scripts
 
 ---
@@ -101,6 +117,7 @@ npx playwright install
 ### Step 2: Configure Playwright
 
 Create `playwright.config.ts`:
+
 - Set baseURL to `http://localhost:3000`
 - Configure browser (chromium, firefox, webkit)
 - Set timeout (canvas operations can be slow)
@@ -108,6 +125,7 @@ Create `playwright.config.ts`:
 - Set up test directory structure
 
 **Key Configuration:**
+
 ```typescript
 {
   testDir: './tests',
@@ -129,12 +147,14 @@ Create `playwright.config.ts`:
 **Options:**
 
 **A. Use Firebase Emulators (Recommended for CI/CD)**
+
 - Run local Firebase emulators
 - Fast, isolated, free
 - No API rate limits
 - Perfect for testing
 
 **B. Separate Test Firebase Project**
+
 - Create `collabcanvas-test` project
 - Use different credentials
 - Real Firebase, isolated data
@@ -143,6 +163,7 @@ Create `playwright.config.ts`:
 **For our initial tests, we'll use Option B (simpler to start).**
 
 **Steps:**
+
 1. Create test Firebase project
 2. Copy credentials to `.env.test`
 3. Playwright will use these credentials
@@ -155,6 +176,7 @@ Create `playwright.config.ts`:
 **Challenge:** Tests need to be logged in to access canvas
 
 **Solution:** Create authentication helper that:
+
 1. Signs up/signs in test user before tests
 2. Stores auth state/cookies
 3. Reuses auth across tests (fast!)
@@ -162,6 +184,7 @@ Create `playwright.config.ts`:
 **File:** `tests/helpers/auth.ts`
 
 Functions needed:
+
 - `getAuthenticatedContext()` - Returns logged-in browser context
 - `createTestUser()` - Creates user for testing
 - `cleanupTestUser()` - Removes test user after tests
@@ -173,8 +196,9 @@ Functions needed:
 **File:** `tests/canvas/render.spec.ts`
 
 **Test:**
+
 ```typescript
-test('renders canvas page for logged-in user', async ({ page }) => {
+test("renders canvas page for logged-in user", async ({ page }) => {
   // 1. Log in as test user
   // 2. Navigate to /canvas
   // 3. Wait for canvas to initialize
@@ -185,6 +209,7 @@ test('renders canvas page for logged-in user', async ({ page }) => {
 ```
 
 **Run test:**
+
 ```bash
 npm test
 ```
@@ -198,8 +223,9 @@ npm test
 **File:** `tests/canvas/rectangle-creation.spec.ts`
 
 **Test: Draw a single rectangle**
+
 ```typescript
-test('can draw a rectangle', async ({ page }) => {
+test("can draw a rectangle", async ({ page }) => {
   // 1. Log in
   // 2. Navigate to /canvas
   // 3. Click rectangle tool
@@ -213,11 +239,13 @@ test('can draw a rectangle', async ({ page }) => {
 ```
 
 **Challenges:**
+
 - Need to interact with Fabric.js canvas
 - May need to expose canvas state for testing
 - Or query DOM for visual elements
 
 **Solution:**
+
 - Add `data-testid` attributes
 - Expose canvas object count via data attribute or global
 - Or use Playwright's visual comparison
@@ -229,8 +257,9 @@ test('can draw a rectangle', async ({ page }) => {
 **File:** `tests/canvas/rectangle-creation.spec.ts`
 
 **Test: Draw multiple rectangles**
+
 ```typescript
-test('can draw multiple rectangles', async ({ page }) => {
+test("can draw multiple rectangles", async ({ page }) => {
   // 1. Log in
   // 2. Navigate to /canvas
   // 3. Click rectangle tool
@@ -249,8 +278,9 @@ test('can draw multiple rectangles', async ({ page }) => {
 **File:** `tests/canvas/rectangle-interaction.spec.ts`
 
 **Test: Select and move a rectangle**
+
 ```typescript
-test('can select and move a rectangle', async ({ page }) => {
+test("can select and move a rectangle", async ({ page }) => {
   // 1. Log in
   // 2. Navigate to /canvas
   // 3. Draw a rectangle
@@ -264,6 +294,7 @@ test('can select and move a rectangle', async ({ page }) => {
 ```
 
 **Key interactions:**
+
 - `page.click('[data-testid="select-tool"]')`
 - `page.locator('canvas').click({ position: { x, y } })`
 - `page.mouse.move(x, y)` for dragging
@@ -275,8 +306,9 @@ test('can select and move a rectangle', async ({ page }) => {
 **File:** `tests/canvas/rectangle-interaction.spec.ts`
 
 **Test: Delete a selected rectangle**
+
 ```typescript
-test('can delete a rectangle with Delete key', async ({ page }) => {
+test("can delete a rectangle with Delete key", async ({ page }) => {
   // 1. Log in
   // 2. Navigate to /canvas
   // 3. Draw a rectangle
@@ -286,7 +318,7 @@ test('can delete a rectangle with Delete key', async ({ page }) => {
   // 7. Take screenshot showing empty canvas
 });
 
-test('can delete a rectangle with Backspace key', async ({ page }) => {
+test("can delete a rectangle with Backspace key", async ({ page }) => {
   // Same as above but press Backspace
 });
 ```
@@ -298,6 +330,7 @@ test('can delete a rectangle with Backspace key', async ({ page }) => {
 **Add helper functions:**
 
 **File:** `tests/helpers/canvas.ts`
+
 ```typescript
 // Helper to wait for canvas initialization
 export async function waitForCanvasReady(page: Page) {
@@ -317,7 +350,7 @@ export async function getObjectCount(page: Page): Promise<number> {
 }
 
 // Helper to select tool
-export async function selectTool(page: Page, tool: 'select' | 'rectangle') {
+export async function selectTool(page: Page, tool: "select" | "rectangle") {
   // Click the tool button
 }
 ```
@@ -327,11 +360,12 @@ export async function selectTool(page: Page, tool: 'select' | 'rectangle') {
 ### Step 11: Add Test Data Attributes to Components
 
 **Modify Canvas.tsx:**
+
 ```typescript
 // Add data-testid for test queries
 <div data-testid="canvas-container" data-canvas-ready={isReady}>
   <canvas ref={canvasRef} data-testid="main-canvas" />
-  
+
   {isReady && (
     <Toolbar data-testid="toolbar" />
   )}
@@ -339,6 +373,7 @@ export async function selectTool(page: Page, tool: 'select' | 'rectangle') {
 ```
 
 **Modify Toolbar.tsx:**
+
 ```typescript
 <button
   data-testid={`tool-${tool.id}`}
@@ -357,29 +392,34 @@ export async function selectTool(page: Page, tool: 'select' | 'rectangle') {
 **Challenge:** How do we assert objects were created/deleted?
 
 **Option A: Window Global (Simple)**
+
 ```typescript
 // In Canvas.tsx, only in test/dev mode
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   (window as any).__fabricCanvas = fabricCanvasRef.current;
 }
 ```
 
 **Option B: Data Attributes (Better)**
+
 ```typescript
 // Update data attribute when objects change
-<div 
-  data-testid="canvas-container" 
+<div
+  data-testid="canvas-container"
   data-object-count={fabricCanvasRef.current?.getObjects().length ?? 0}
 >
 ```
 
 **Option C: Custom Events (Best)**
+
 ```typescript
 // Dispatch custom events on object changes
-canvas.on('object:added', () => {
-  window.dispatchEvent(new CustomEvent('canvas:changed', { 
-    detail: { count: canvas.getObjects().length }
-  }));
+canvas.on("object:added", () => {
+  window.dispatchEvent(
+    new CustomEvent("canvas:changed", {
+      detail: { count: canvas.getObjects().length },
+    })
+  );
 });
 ```
 
@@ -402,6 +442,7 @@ canvas.on('object:added', () => {
 ```
 
 **Usage:**
+
 - `npm test` - Run all tests headless
 - `npm run test:ui` - Interactive UI mode
 - `npm run test:headed` - See browser while testing
@@ -413,22 +454,23 @@ canvas.on('object:added', () => {
 ### Step 14: Run Tests in CI/CD (Future)
 
 **GitHub Actions workflow:**
+
 ```yaml
 - name: Install dependencies
   run: npm ci
-  
+
 - name: Install Playwright browsers
   run: npx playwright install --with-deps
-  
+
 - name: Start dev server
   run: npm run dev &
-  
+
 - name: Wait for server
   run: npx wait-on http://localhost:3000
-  
+
 - name: Run tests
   run: npm test
-  
+
 - name: Upload test results
   uses: actions/upload-artifact@v3
   if: always()
@@ -463,6 +505,7 @@ not-figma/
 ## Testing Checklist
 
 ### Setup Phase
+
 - [ ] Install Playwright
 - [ ] Create playwright.config.ts
 - [ ] Set up test Firebase project
@@ -471,12 +514,14 @@ not-figma/
 - [ ] Create tests/ directory structure
 
 ### Helper Phase
+
 - [ ] Create auth helper (login/signup)
 - [ ] Create canvas helper (draw, select, etc)
 - [ ] Add data-testid attributes to components
 - [ ] Expose canvas state for assertions
 
 ### Test Implementation Phase
+
 - [ ] Write: Render canvas test
 - [ ] Write: Draw single rectangle test
 - [ ] Write: Draw multiple rectangles test
@@ -485,6 +530,7 @@ not-figma/
 - [ ] Write: Delete rectangle test (Backspace key)
 
 ### Validation Phase
+
 - [ ] Run all tests locally (headless)
 - [ ] Run tests in headed mode (visual verification)
 - [ ] Run tests in debug mode (step through)
@@ -492,6 +538,7 @@ not-figma/
 - [ ] Tests run in <30 seconds
 
 ### Documentation Phase
+
 - [ ] Document how to run tests in README
 - [ ] Add test coverage badge (optional)
 - [ ] Document test patterns for future tests
@@ -502,47 +549,51 @@ not-figma/
 
 ```typescript
 // tests/canvas/rectangle-creation.spec.ts
-import { test, expect } from '@playwright/test';
-import { getAuthenticatedPage } from '../helpers/auth';
-import { waitForCanvasReady, drawRectangle, getObjectCount } from '../helpers/canvas';
+import { test, expect } from "@playwright/test";
+import { getAuthenticatedPage } from "../helpers/auth";
+import {
+  waitForCanvasReady,
+  drawRectangle,
+  getObjectCount,
+} from "../helpers/canvas";
 
-test.describe('Rectangle Creation', () => {
-  test('can draw a single rectangle', async ({ browser }) => {
+test.describe("Rectangle Creation", () => {
+  test("can draw a single rectangle", async ({ browser }) => {
     // Get authenticated page
     const page = await getAuthenticatedPage(browser);
-    
+
     // Navigate to canvas
-    await page.goto('/canvas');
-    
+    await page.goto("/canvas");
+
     // Wait for canvas to be ready
     await waitForCanvasReady(page);
-    
+
     // Draw a rectangle
     await drawRectangle(page, 100, 100, 200, 200);
-    
+
     // Assert one object exists
     const count = await getObjectCount(page);
     expect(count).toBe(1);
-    
+
     // Take screenshot for visual verification
-    await page.screenshot({ path: 'test-results/single-rectangle.png' });
+    await page.screenshot({ path: "test-results/single-rectangle.png" });
   });
-  
-  test('can draw multiple rectangles', async ({ browser }) => {
+
+  test("can draw multiple rectangles", async ({ browser }) => {
     const page = await getAuthenticatedPage(browser);
-    await page.goto('/canvas');
+    await page.goto("/canvas");
     await waitForCanvasReady(page);
-    
+
     // Draw three rectangles
     await drawRectangle(page, 100, 100, 200, 200);
     await drawRectangle(page, 300, 100, 400, 200);
     await drawRectangle(page, 100, 300, 200, 400);
-    
+
     // Assert three objects exist
     const count = await getObjectCount(page);
     expect(count).toBe(3);
-    
-    await page.screenshot({ path: 'test-results/multiple-rectangles.png' });
+
+    await page.screenshot({ path: "test-results/multiple-rectangles.png" });
   });
 });
 ```
@@ -562,24 +613,28 @@ test.describe('Rectangle Creation', () => {
 ## Future Testing Considerations
 
 ### Phase 2: Multiplayer Testing
+
 - Test with 2+ browser contexts simultaneously
 - Verify real-time sync
 - Test cursor sync
 - Test presence tracking
 
 ### Phase 3: Firebase Testing
+
 - Mock Firebase for faster tests
 - Use Firebase emulators
 - Test offline/online transitions
 - Test reconnection logic
 
 ### Phase 4: AI Testing
+
 - Mock AI API responses
 - Test AI command parsing
 - Test AI object creation
 - Test error handling
 
 ### Phase 5: Performance Testing
+
 - Test with 100+ objects
 - Measure FPS during interactions
 - Test zoom/pan performance
@@ -590,21 +645,27 @@ test.describe('Rectangle Creation', () => {
 ## Common Issues & Solutions
 
 ### Issue: Canvas doesn't render in test
+
 **Solution:** Ensure dev server is running, wait for canvas initialization
 
 ### Issue: Mouse events don't work
+
 **Solution:** Use `page.mouse` API, ensure coordinates are within canvas bounds
 
 ### Issue: Fabric.js state not accessible
+
 **Solution:** Expose via data attributes or window global in test mode
 
 ### Issue: Tests are flaky
+
 **Solution:** Add explicit waits, use `waitForSelector`, increase timeouts
 
 ### Issue: Firebase auth fails in tests
+
 **Solution:** Verify .env.test credentials, check Firebase project settings
 
 ### Issue: Tests are too slow
+
 **Solution:** Reuse browser contexts, use `fullyParallel: true` in config
 
 ---
@@ -625,8 +686,6 @@ test.describe('Rectangle Creation', () => {
 ✅ Visual screenshots generated on failure  
 ✅ Easy to add new tests (good helper functions)  
 ✅ Tests catch real bugs (not just passing)  
-✅ Other developers can run tests easily  
+✅ Other developers can run tests easily
 
 Once these criteria are met, testing infrastructure is complete and we can expand coverage incrementally.
-
-

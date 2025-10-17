@@ -86,7 +86,8 @@ export default function StageContainer({
             width: canvasWidth * scale,
             height: canvasHeight * scale,
             backgroundColor: "#ffffff",
-            backgroundImage: "radial-gradient(circle, #d1d5db 1px, transparent 1px)",
+            backgroundImage:
+              "radial-gradient(circle, #d1d5db 1px, transparent 1px)",
             backgroundSize: `${20 * scale}px ${20 * scale}px`,
             backgroundPosition: "0px 0px",
             pointerEvents: "none",
@@ -111,77 +112,76 @@ export default function StageContainer({
         onMouseUp={onMouseUp}
         onDragEnd={onDragEnd}
       >
-      {/* Background layer - shows canvas boundaries */}
-      {canvasWidth && canvasHeight && (
-        <Layer listening={false}>
-          {/* Canvas background with shadow (white bg handled by CSS grid) */}
-          {!showGrid && (
+        {/* Background layer - shows canvas boundaries */}
+        {canvasWidth && canvasHeight && (
+          <Layer listening={false}>
+            {/* Canvas background with shadow (white bg handled by CSS grid) */}
+            {!showGrid && (
+              <Rect
+                x={0}
+                y={0}
+                width={canvasWidth}
+                height={canvasHeight}
+                fill="#ffffff"
+                shadowColor="rgba(0, 0, 0, 0.2)"
+                shadowBlur={30 / scale}
+                shadowOffset={{ x: 0, y: 0 }}
+                shadowOpacity={0.8}
+              />
+            )}
+
+            {/* Shadow rect when grid is visible */}
+            {showGrid && (
+              <Rect
+                x={0}
+                y={0}
+                width={canvasWidth}
+                height={canvasHeight}
+                fill="transparent"
+                shadowColor="rgba(0, 0, 0, 0.2)"
+                shadowBlur={30 / scale}
+                shadowOffset={{ x: 0, y: 0 }}
+                shadowOpacity={0.8}
+              />
+            )}
+
+            {/* Canvas border - prominent dark border */}
             <Rect
               x={0}
               y={0}
               width={canvasWidth}
               height={canvasHeight}
+              stroke="#374151"
+              strokeWidth={3 / scale}
+              listening={false}
+            />
+
+            {/* Dimension label - top left corner with background */}
+            <Rect
+              x={10}
+              y={10}
+              width={120 / scale}
+              height={30 / scale}
+              fill="#374151"
+              cornerRadius={4 / scale}
+              opacity={0.9}
+              listening={false}
+            />
+            <Text
+              x={20}
+              y={18}
+              text={`${canvasWidth} × ${canvasHeight}`}
+              fontSize={14 / scale}
+              fontFamily="Inter, system-ui, sans-serif"
               fill="#ffffff"
-              shadowColor="rgba(0, 0, 0, 0.2)"
-              shadowBlur={30 / scale}
-              shadowOffset={{ x: 0, y: 0 }}
-              shadowOpacity={0.8}
+              listening={false}
             />
-          )}
+          </Layer>
+        )}
 
-          {/* Shadow rect when grid is visible */}
-          {showGrid && (
-            <Rect
-              x={0}
-              y={0}
-              width={canvasWidth}
-              height={canvasHeight}
-              fill="transparent"
-              shadowColor="rgba(0, 0, 0, 0.2)"
-              shadowBlur={30 / scale}
-              shadowOffset={{ x: 0, y: 0 }}
-              shadowOpacity={0.8}
-            />
-          )}
-
-          {/* Canvas border - prominent dark border */}
-          <Rect
-            x={0}
-            y={0}
-            width={canvasWidth}
-            height={canvasHeight}
-            stroke="#374151"
-            strokeWidth={3 / scale}
-            listening={false}
-          />
-
-          {/* Dimension label - top left corner with background */}
-          <Rect
-            x={10}
-            y={10}
-            width={120 / scale}
-            height={30 / scale}
-            fill="#374151"
-            cornerRadius={4 / scale}
-            opacity={0.9}
-            listening={false}
-          />
-          <Text
-            x={20}
-            y={18}
-            text={`${canvasWidth} × ${canvasHeight}`}
-            fontSize={14 / scale}
-            fontFamily="Inter, system-ui, sans-serif"
-            fill="#ffffff"
-            listening={false}
-          />
-        </Layer>
-      )}
-
-      {/* Main drawing layer for shapes */}
-      <Layer>{children}</Layer>
-    </Stage>
+        {/* Main drawing layer for shapes */}
+        <Layer>{children}</Layer>
+      </Stage>
     </>
   );
 }
-

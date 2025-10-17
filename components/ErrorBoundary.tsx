@@ -18,7 +18,10 @@ interface ErrorBoundaryState {
  * Error Boundary component to catch React errors
  * Provides a fallback UI with retry functionality
  */
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -56,7 +59,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </h1>
 
             <p className="text-muted-foreground mb-6 text-base leading-relaxed">
-              An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
+              An unexpected error occurred. Please try refreshing the page or
+              contact support if the problem persists.
             </p>
 
             {this.state.error && (

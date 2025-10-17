@@ -42,7 +42,8 @@ export interface CircleActiveTransform extends BaseActiveTransform {
  * Active transform for lines
  * Stores both endpoints
  */
-export interface LineActiveTransform extends Omit<BaseActiveTransform, "rotation"> {
+export interface LineActiveTransform
+  extends Omit<BaseActiveTransform, "rotation"> {
   type: "line";
   x2: number;
   y2: number;
@@ -86,7 +87,10 @@ export type ActiveTransformMap = Record<string, ActiveTransform>;
  * Map of object IDs to active transforms with user info
  * Ready for rendering
  */
-export type ActiveTransformWithUserMap = Record<string, ActiveTransformWithUser>;
+export type ActiveTransformWithUserMap = Record<
+  string,
+  ActiveTransformWithUser
+>;
 
 /**
  * Transform data for a single object within a group transform

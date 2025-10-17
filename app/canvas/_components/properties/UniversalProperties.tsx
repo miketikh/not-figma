@@ -4,12 +4,7 @@ import { PersistedShape } from "../../_types/shapes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronsUp,
-  ChevronUp,
-  ChevronDown,
-  ChevronsDown,
-} from "lucide-react";
+import { ChevronsUp, ChevronUp, ChevronDown, ChevronsDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -122,76 +117,76 @@ export default function UniversalProperties({
 
       {/* Size Section - Hidden for lines */}
       {!isLine && (
-      <div>
-        <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
-          Size
-        </Label>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label htmlFor="size-w" className="text-xs text-gray-500">
-              Width
-            </Label>
-            <Input
-              id="size-w"
-              type="number"
-              min="1"
-              value={getWidth()}
-              onChange={(e) =>
-                handleWidthChange(parseFloat(e.target.value) || 1)
-              }
-              disabled={disabled}
-              className="h-8"
-            />
-          </div>
-          <div>
-            <Label htmlFor="size-h" className="text-xs text-gray-500">
-              Height
-            </Label>
-            <Input
-              id="size-h"
-              type="number"
-              min="1"
-              value={getHeight()}
-              onChange={(e) =>
-                handleHeightChange(parseFloat(e.target.value) || 1)
-              }
-              disabled={disabled}
-              className="h-8"
-            />
+        <div>
+          <Label className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block">
+            Size
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="size-w" className="text-xs text-gray-500">
+                Width
+              </Label>
+              <Input
+                id="size-w"
+                type="number"
+                min="1"
+                value={getWidth()}
+                onChange={(e) =>
+                  handleWidthChange(parseFloat(e.target.value) || 1)
+                }
+                disabled={disabled}
+                className="h-8"
+              />
+            </div>
+            <div>
+              <Label htmlFor="size-h" className="text-xs text-gray-500">
+                Height
+              </Label>
+              <Input
+                id="size-h"
+                type="number"
+                min="1"
+                value={getHeight()}
+                onChange={(e) =>
+                  handleHeightChange(parseFloat(e.target.value) || 1)
+                }
+                disabled={disabled}
+                className="h-8"
+              />
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* Rotation Section - Hidden for lines */}
       {!isLine && (
-      <div>
-        <Label
-          htmlFor="rotation"
-          className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block"
-        >
-          Rotation
-        </Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="rotation"
-            type="number"
-            min="0"
-            max="360"
-            value={Math.round(object.rotation || 0)}
-            onChange={(e) => {
-              let value = parseFloat(e.target.value) || 0;
-              // Normalize to 0-360
-              value = value % 360;
-              if (value < 0) value += 360;
-              onUpdate({ rotation: value });
-            }}
-            disabled={disabled}
-            className="h-8"
-          />
-          <span className="text-sm text-gray-500">°</span>
+        <div>
+          <Label
+            htmlFor="rotation"
+            className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2 block"
+          >
+            Rotation
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="rotation"
+              type="number"
+              min="0"
+              max="360"
+              value={Math.round(object.rotation || 0)}
+              onChange={(e) => {
+                let value = parseFloat(e.target.value) || 0;
+                // Normalize to 0-360
+                value = value % 360;
+                if (value < 0) value += 360;
+                onUpdate({ rotation: value });
+              }}
+              disabled={disabled}
+              className="h-8"
+            />
+            <span className="text-sm text-gray-500">°</span>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Layer Section */}
@@ -237,7 +232,8 @@ export default function UniversalProperties({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  Bring Forward <span className="text-muted-foreground">(⌘])</span>
+                  Bring Forward{" "}
+                  <span className="text-muted-foreground">(⌘])</span>
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -258,7 +254,8 @@ export default function UniversalProperties({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  Send Backward <span className="text-muted-foreground">(⌘[)</span>
+                  Send Backward{" "}
+                  <span className="text-muted-foreground">(⌘[)</span>
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -288,4 +285,3 @@ export default function UniversalProperties({
     </div>
   );
 }
-

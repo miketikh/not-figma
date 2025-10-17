@@ -24,13 +24,29 @@ import {
 function CanvasDashboardContent() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { canvases, loading, error, createCanvas, deleteCanvas, renameCanvas, retry } = useCanvases();
+  const {
+    canvases,
+    loading,
+    error,
+    createCanvas,
+    deleteCanvas,
+    renameCanvas,
+    retry,
+  } = useCanvases();
   const { addToast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [canvasToDelete, setCanvasToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [canvasToDelete, setCanvasToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Handle canvas creation
-  const handleCreateCanvas = async (name: string, width: number, height: number, isPublic: boolean) => {
+  const handleCreateCanvas = async (
+    name: string,
+    width: number,
+    height: number,
+    isPublic: boolean
+  ) => {
     try {
       const canvasId = await createCanvas(name, width, height, isPublic);
       addToast({
@@ -43,7 +59,10 @@ function CanvasDashboardContent() {
       console.error("Failed to create canvas:", error);
       addToast({
         title: "Failed to create canvas",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
@@ -74,7 +93,10 @@ function CanvasDashboardContent() {
       console.error("Failed to delete canvas:", error);
       addToast({
         title: "Failed to delete canvas",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
     }
@@ -98,7 +120,10 @@ function CanvasDashboardContent() {
       console.error("Failed to rename canvas:", error);
       addToast({
         title: "Failed to rename canvas",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
         variant: "destructive",
       });
       throw error; // Re-throw to let CanvasCard handle the UI
@@ -109,7 +134,11 @@ function CanvasDashboardContent() {
   if (loading) {
     return (
       <div className="flex flex-col h-screen bg-background">
-        <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
+        <DashboardHeader
+          user={user}
+          signOut={signOut}
+          onCreateClick={() => setIsCreateModalOpen(true)}
+        />
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -127,23 +156,34 @@ function CanvasDashboardContent() {
   if (error) {
     return (
       <div className="flex flex-col h-screen bg-background">
-        <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
+        <DashboardHeader
+          user={user}
+          signOut={signOut}
+          onCreateClick={() => setIsCreateModalOpen(true)}
+        />
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="mb-6 p-4 rounded-full bg-destructive/10">
                 <AlertCircle className="h-12 w-12 text-destructive" />
               </div>
-              <h2 className="text-2xl font-semibold mb-2">Failed to load canvases</h2>
+              <h2 className="text-2xl font-semibold mb-2">
+                Failed to load canvases
+              </h2>
               <p className="text-muted-foreground mb-6 max-w-md">
-                {error.message || "An unexpected error occurred while loading your canvases."}
+                {error.message ||
+                  "An unexpected error occurred while loading your canvases."}
               </p>
               <div className="flex gap-3">
                 <Button onClick={retry} size="lg">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Retry
                 </Button>
-                <Button onClick={() => window.location.reload()} variant="outline" size="lg">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  size="lg"
+                >
                   Reload Page
                 </Button>
               </div>
@@ -158,10 +198,16 @@ function CanvasDashboardContent() {
   if (canvases.length === 0) {
     return (
       <div className="flex flex-col h-screen bg-background">
-        <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
+        <DashboardHeader
+          user={user}
+          signOut={signOut}
+          onCreateClick={() => setIsCreateModalOpen(true)}
+        />
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
-            <EmptyCanvasState onCreateClick={() => setIsCreateModalOpen(true)} />
+            <EmptyCanvasState
+              onCreateClick={() => setIsCreateModalOpen(true)}
+            />
           </div>
         </main>
         <CreateCanvasModal
@@ -182,7 +228,11 @@ function CanvasDashboardContent() {
   // Canvas grid
   return (
     <div className="flex flex-col h-screen bg-background">
-      <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
+      <DashboardHeader
+        user={user}
+        signOut={signOut}
+        onCreateClick={() => setIsCreateModalOpen(true)}
+      />
       <main className="flex-1 overflow-auto p-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -238,14 +288,10 @@ function DashboardHeader({
               height={32}
               className="rounded"
             />
-            <h1 className="text-xl font-semibold text-foreground">
-              Not-Figma
-            </h1>
+            <h1 className="text-xl font-semibold text-foreground">Not-Figma</h1>
           </div>
           <div className="h-6 w-px bg-border" />
-          <h2 className="text-lg font-medium text-foreground">
-            My Canvases
-          </h2>
+          <h2 className="text-lg font-medium text-foreground">My Canvases</h2>
         </div>
 
         {/* Right Side - New Canvas Button and User Info */}
@@ -274,9 +320,7 @@ function DashboardHeader({
               <DropdownMenuItem onClick={() => router.push("/profile")}>
                 Update profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={signOut}>
-                Sign out
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -5,9 +5,11 @@ This document outlines the implementation plan for adding a properties panel to 
 ---
 
 ## PR #1: Type Definitions & Dependencies ✅
+
 **Goal:** Add type definitions for new properties and install required dependencies
 
 **Tasks:**
+
 - [x] Install `react-colorful` package for color pickers
 - [x] Extend `PersistedRect` type with new properties:
   - [x] `opacity` (number, 0-1) - single opacity for entire shape
@@ -19,15 +21,18 @@ This document outlines the implementation plan for adding a properties panel to 
 - [x] Update `PersistedShape` union type to reflect changes
 
 **Files Created/Modified:**
+
 - `package.json` (add react-colorful)
 - `app/canvas/_types/shapes.ts` (extend types)
 
 ---
 
 ## PR #2: Shape Factory Updates ✅
+
 **Goal:** Update shape factories to handle new properties
 
 **Tasks:**
+
 - [x] Update `rectangleFactory.createDefault()`:
   - [x] Add `opacity: 1` default
   - [x] Add `zIndex: 0` default
@@ -51,14 +56,17 @@ This document outlines the implementation plan for adding a properties panel to 
   - [x] Read `zIndex` field (default to 0 if missing)
 
 **Files Modified:**
+
 - `app/canvas/_lib/shapes.ts`
 
 ---
 
 ## PR #3: Z-Index Rendering & Canvas Updates ✅
+
 **Goal:** Implement z-index based rendering order and related utilities
 
 **Tasks:**
+
 - [x] Add z-index sorting to Canvas.tsx:
   - [x] Sort `objects` array by `zIndex` before `.map()` rendering
   - [x] Handle objects without zIndex (default to 0)
@@ -73,14 +81,17 @@ This document outlines the implementation plan for adding a properties panel to 
   - [x] `updateZIndex(objectId, newZIndex)` - updates object zIndex
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx`
 
 ---
 
 ## PR #4: Update Shape Rendering Components ✅
+
 **Goal:** Update shape components to render new properties
 
 **Tasks:**
+
 - [x] Update `RectangleShape.tsx`:
   - [x] Add `opacity` prop to Rect component
   - [x] Add `cornerRadius` prop to Rect component
@@ -90,19 +101,23 @@ This document outlines the implementation plan for adding a properties panel to 
   - [x] Ensure shape data includes opacity
 
 **Files Modified:**
+
 - `app/canvas/_components/shapes/RectangleShape.tsx`
 - `app/canvas/_components/shapes/CircleShape.tsx`
 
 **Notes:**
+
 - Konva's `opacity` prop accepts 0-1 range
 - Konva's Rect `cornerRadius` prop accepts pixel value
 
 ---
 
 ## PR #5: Universal Properties Component ✅
+
 **Goal:** Create the universal properties section (position, size, rotation, layers)
 
 **Tasks:**
+
 - [x] Create `UniversalProperties.tsx` component with sections:
   - [x] **Position section:** X and Y number inputs with labels
   - [x] **Size section:** Width and Height number inputs
@@ -121,14 +136,17 @@ This document outlines the implementation plan for adding a properties panel to 
 - [x] Disable inputs if shape is locked by another user
 
 **Files Created:**
+
 - `app/canvas/_components/properties/UniversalProperties.tsx`
 
 ---
 
 ## PR #6: Style Properties Component ✅
+
 **Goal:** Create the style properties section (fill, stroke, opacity)
 
 **Tasks:**
+
 - [x] Create `StyleProperties.tsx` component with sections:
   - [x] **Fill section:**
     - [x] Color picker using `react-colorful` (HexColorPicker)
@@ -147,14 +165,17 @@ This document outlines the implementation plan for adding a properties panel to 
 - [x] Convert opacity between 0-1 (stored) and 0-100% (displayed)
 
 **Files Created:**
+
 - `app/canvas/_components/properties/StyleProperties.tsx`
 
 ---
 
 ## PR #7: Shape-Specific Properties ✅
+
 **Goal:** Create shape-specific property components with registry pattern
 
 **Tasks:**
+
 - [x] Create `RectangleProperties.tsx`:
   - [x] Corner radius number input (min 0, max reasonable limit like width/2)
   - [x] Label and unit display
@@ -170,6 +191,7 @@ This document outlines the implementation plan for adding a properties panel to 
   - [x] Handle unknown shape types gracefully (return null)
 
 **Files Created:**
+
 - `app/canvas/_components/properties/shape-properties/RectangleProperties.tsx`
 - `app/canvas/_components/properties/shape-properties/CircleProperties.tsx`
 - `app/canvas/_components/properties/shape-properties/index.ts`
@@ -177,9 +199,11 @@ This document outlines the implementation plan for adding a properties panel to 
 ---
 
 ## PR #8: Properties Panel Container ✅
+
 **Goal:** Create main PropertiesPanel component that orchestrates all sections
 
 **Tasks:**
+
 - [x] Create `PropertiesPanel.tsx` component:
   - [x] Accept props:
     - [x] `selectedIds: string[]`
@@ -201,14 +225,17 @@ This document outlines the implementation plan for adding a properties panel to 
 - [x] Handle locked shapes: Show "Locked by [User]" banner and disable inputs
 
 **Files Created:**
+
 - `app/canvas/_components/PropertiesPanel.tsx`
 
 ---
 
 ## PR #9: Canvas Integration & Debouncing ✅
+
 **Goal:** Integrate PropertiesPanel into Canvas and add debounced updates
 
 **Tasks:**
+
 - [x] Add PropertiesPanel to Canvas.tsx:
   - [x] Import and render PropertiesPanel component
   - [x] Pass `selectedIds`, `objects`, and `onUpdate` props
@@ -225,6 +252,7 @@ This document outlines the implementation plan for adding a properties panel to 
 - [x] Test with multiple rapid property changes to verify debouncing
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx`
 - `app/canvas/_hooks/useObjects.ts`
 
@@ -233,9 +261,11 @@ This document outlines the implementation plan for adding a properties panel to 
 ---
 
 ## PR #10: Testing & Bug Fixes
+
 **Goal:** Comprehensive testing and polish
 
 **Tasks:**
+
 - [ ] Test single shape selection:
   - [ ] Verify all universal properties update correctly
   - [ ] Verify style properties update correctly
@@ -263,6 +293,7 @@ This document outlines the implementation plan for adding a properties panel to 
 - [ ] Document known issues or limitations
 
 **Files Modified:**
+
 - Any files needing bug fixes
 
 ---
@@ -271,6 +302,7 @@ This document outlines the implementation plan for adding a properties panel to 
 
 **Total PRs:** 10  
 **New Features:**
+
 - Properties panel with universal, style, and shape-specific sections
 - Z-index based layer management with keyboard shortcuts
 - Single opacity control for entire shapes
@@ -280,6 +312,7 @@ This document outlines the implementation plan for adding a properties panel to 
 - Extensible registry pattern for future shapes
 
 **Key Decisions:**
+
 - Single `opacity` property (not separate fill/stroke opacity)
 - Z-index explicit rendering order (not creation order)
 - Transparent fill via checkbox (not just color value)
@@ -289,6 +322,7 @@ This document outlines the implementation plan for adding a properties panel to 
 ## UI/UX Details
 
 ### PropertiesPanel Layout
+
 ```
 ┌─────────────────────┐
 │  Properties         │
@@ -322,6 +356,7 @@ This document outlines the implementation plan for adding a properties panel to 
 ```
 
 ### Behavior
+
 - Panel fixed to right side, ~280px width
 - Margin from edge: 16px
 - Input changes update in real-time
@@ -330,8 +365,8 @@ This document outlines the implementation plan for adding a properties panel to 
 - Multi-select: Show "Multiple selected" with only universal properties
 
 ## Edge Cases
+
 - Multi-select: Only show universal properties, disable shape-specific
 - Locked shapes: Disable all inputs, show "Locked by [User]"
 - No selection: Show "Select a shape to edit properties"
 - Mixed shape types selected: Only universal properties
-

@@ -22,7 +22,7 @@ export function isLockedByOtherUser(
 ): boolean {
   if (!lockedBy || !lockedAt || !currentUserId) return false;
   if (lockedBy === currentUserId) return false;
-  
+
   const isExpired = Date.now() - lockedAt > lockTimeout;
   return !isExpired;
 }
@@ -39,7 +39,11 @@ export class LockManager {
   private canvasId: string | null = null;
   private onLockExpired?: (objectIds: string[]) => void;
 
-  constructor(userId: string | null = null, canvasId: string | null = null, onLockExpired?: (objectIds: string[]) => void) {
+  constructor(
+    userId: string | null = null,
+    canvasId: string | null = null,
+    onLockExpired?: (objectIds: string[]) => void
+  ) {
     this.userId = userId;
     this.canvasId = canvasId;
     this.onLockExpired = onLockExpired;
@@ -67,7 +71,11 @@ export class LockManager {
     if (!this.userId || !this.canvasId) return false;
 
     try {
-      const lockResult = await acquireLock(this.canvasId, objectId, this.userId);
+      const lockResult = await acquireLock(
+        this.canvasId,
+        objectId,
+        this.userId
+      );
 
       if (lockResult.success) {
         this.lockedObjects.add(objectId);
@@ -114,11 +122,12 @@ export class LockManager {
    * Renew lock for an object (called on user interaction)
    */
   async renewLockForObject(objectId: string): Promise<void> {
-    if (!this.userId || !this.canvasId || !this.lockedObjects.has(objectId)) return;
+    if (!this.userId || !this.canvasId || !this.lockedObjects.has(objectId))
+      return;
 
     try {
       const renewed = await renewLock(this.canvasId, objectId, this.userId);
-      
+
       if (renewed) {
         // Update last activity time
         this.lastActivityTime.set(objectId, Date.now());

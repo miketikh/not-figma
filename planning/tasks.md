@@ -104,6 +104,7 @@ collabcanvas/
 ```
 
 **Key Changes:**
+
 1. **Auth feature co-location**: `/app/(auth)/` route group with shared `_lib/` for auth helpers
 2. **Canvas feature co-location**: All canvas-related code in `/app/canvas/_components/`, `_lib/`, `_hooks/`, `_store/`, `_types/`
 3. **AI feature co-location**: AI logic lives in `/app/api/ai-command/_lib/`
@@ -111,6 +112,7 @@ collabcanvas/
 5. **Next.js convention**: Use `_folder` prefix for private/internal folders that shouldn't be routes
 
 **Naming Convention:**
+
 - `_components/` - Private components for this route
 - `_lib/` - Private utility functions for this route
 - `_hooks/` - Private hooks for this route
@@ -124,10 +126,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ## PR-Based Task List
 
 ### PR #1: Project Setup & Configuration ✅
+
 **Branch:** `setup/initial-config`  
 **Goal:** Initialize Next.js project with TypeScript and Tailwind
 
 **Tasks:**
+
 - [x] Create Next.js project with TypeScript template
 - [x] Install Tailwind CSS and configure
 - [x] Set up ESLint and Prettier
@@ -139,6 +143,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Create initial `README.md` with project description
 
 **Files Created:**
+
 - `package.json`
 - `tsconfig.json`
 - `tailwind.config.ts`
@@ -151,10 +156,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #2: Firebase Configuration ✅
+
 **Branch:** `setup/firebase-config`  
 **Goal:** Set up Firebase project and initialize in codebase
 
 **Tasks:**
+
 - [x] Create Firebase project in Firebase Console
 - [x] Enable Email/Password authentication
 - [x] Create Firestore database (production mode)
@@ -166,6 +173,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Test Firebase connection with simple read/write
 
 **Files Created/Modified:**
+
 - `package.json` (add dependencies)
 - `lib/firebase/config.ts` (NEW)
 - `.env.local` (create locally, not committed)
@@ -174,10 +182,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #3: Type Definitions ✅
+
 **Branch:** `setup/type-definitions`  
 **Goal:** Define all TypeScript interfaces and types
 
 **Tasks:**
+
 - [x] Define User and UserSession types
 - [x] Define AuthContextType
 - [x] Define UserPresence type
@@ -192,6 +202,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Export all types from index files
 
 **Files Created:**
+
 - `types/objects.ts` (NEW)
 - `types/canvas.ts` (NEW)
 - `types/user.ts` (NEW)
@@ -200,10 +211,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #4: Authentication System ✅
+
 **Branch:** `feature/authentication`  
 **Goal:** Implement complete authentication flow
 
 **Tasks:**
+
 - [x] Create auth helper functions (signUp, signIn, signOut)
 - [x] Create AuthProvider context
 - [x] Create useAuth hook
@@ -223,6 +236,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Test signup, login, logout flow
 
 **Files Created:**
+
 - `lib/firebase/auth.ts` (NEW)
 - `components/auth/AuthProvider.tsx` (NEW)
 - `components/auth/LoginForm.tsx` (NEW)
@@ -235,15 +249,18 @@ The underscore prefix tells Next.js these are NOT routes.
 - `components/ui/Input.tsx` (NEW)
 
 **Files Modified:**
+
 - `app/layout.tsx` (wrap with AuthProvider)
 
 ---
 
 ### PR #5: Firestore & Realtime Database Setup ✅
+
 **Branch:** `setup/database-helpers`  
 **Goal:** Create database helper functions and security rules
 
 **Tasks:**
+
 - [x] Create Firestore helper functions (CRUD for objects)
   - [x] createObject, getObject, getAllObjects
   - [x] updateObject, deleteObject
@@ -261,6 +278,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Update security rules in Firebase Console (completed earlier in PR #2)
 
 **Files Created:**
+
 - `lib/firebase/firestore.ts` (NEW)
 - `lib/firebase/realtime.ts` (NEW)
 - `firestore.rules` (NEW, for documentation)
@@ -269,10 +287,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #6: Canvas Component & Viewport ✅
+
 **Branch:** `feature/canvas-viewport`  
 **Goal:** Create canvas with pan and zoom functionality
 
 **Tasks:**
+
 - [x] Install Fabric.js
 - [x] Create Canvas component
 - [x] Initialize canvas library
@@ -286,6 +306,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Zoom/pan work smoothly (60 FPS capable)
 
 **Files Created:**
+
 - `components/canvas/Canvas.tsx` (NEW)
 - `lib/canvas/viewport.ts` (NEW)
 - `hooks/useCanvas.ts` (NEW)
@@ -293,15 +314,18 @@ The underscore prefix tells Next.js these are NOT routes.
 - `app/canvas/page.tsx` (NEW)
 
 **Files Modified:**
+
 - `package.json` (add canvas library)
 
 ---
 
 ### PR #7: Rectangle Shape Creation ✅
+
 **Branch:** `feature/rectangle-shape`  
 **Goal:** Implement rectangle creation, selection, and manipulation
 
 **Tasks:**
+
 - [x] Create shape creation logic for rectangles
 - [x] Implement rectangle rendering on canvas
 - [x] Add drag-to-create rectangle (click and drag)
@@ -318,15 +342,18 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Fix: Hit-testing cache update (setCoords) for newly selectable objects
 
 **Files Created:**
+
 - `app/canvas/_lib/objects.ts` (NEW)
 - `app/canvas/_components/Toolbar.tsx` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx` (add rectangle creation, tool management, selection)
 - `app/canvas/_store/canvas-store.ts` (add tool state and viewport management)
 - `types/canvas.ts` (canvas object types already defined)
 
 **Notes:**
+
 - Uses Fabric.js for rendering and built-in selection/resize handles
 - Implements tool-based interaction (select tool vs rectangle tool)
 - Rectangles are non-selectable while in rectangle tool mode
@@ -336,10 +363,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #8: Firestore Object Persistence ✅
+
 **Branch:** `feature/object-persistence`  
 **Goal:** Save and load objects from Firestore
 
 **Tasks:**
+
 - [x] Create Firestore collection for canvas objects
 - [x] Implement save object to Firestore
 - [x] Implement load objects from Firestore on mount
@@ -350,14 +379,17 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Verify no data loss
 
 **Files Created:**
+
 - `app/canvas/_hooks/useObjects.ts` (NEW) - Hook for managing object persistence
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx` (integrate persistence with useObjects hook)
 - `app/canvas/_lib/objects.ts` (conversion functions already existed)
 - `lib/firebase/firestore.ts` (CRUD functions already existed from PR #5)
 
 **Notes:**
+
 - Objects automatically save to Firestore on creation
 - Objects update in Firestore when moved, resized, or modified (via object:modified event)
 - Objects delete from Firestore when deleted from canvas
@@ -368,10 +400,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #9: Real-Time Object Sync ✅
+
 **Branch:** `feature/object-sync`  
 **Goal:** Sync objects between multiple users in real-time
 
 **Tasks:**
+
 - [x] Set up Firestore real-time listener for objects
 - [x] Implement optimistic updates for object creation
 - [x] Broadcast object creation to other users
@@ -386,11 +420,13 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Verify sync latency <100ms
 
 **Files Modified:**
+
 - `app/canvas/_hooks/useObjects.ts` (real-time sync + lock visual feedback)
 - `app/canvas/_components/Canvas.tsx` (lock acquisition/release on selection)
 - `lib/firebase/firestore.ts` (lock functions already existed)
 
 **Lock System Implemented:**
+
 - Acquire lock on object selection (blocks other users)
 - Release lock on deselection or unmount
 - Auto-renewal every 10 seconds during editing
@@ -402,10 +438,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #10: Cursor Sync ✅
+
 **Branch:** `feature/cursor-sync`  
 **Goal:** Display remote user cursors in real-time
 
 **Tasks:**
+
 - [x] Create cursor tracking logic
 - [x] Set up Realtime Database for cursor positions
 - [x] Broadcast local cursor position (every 50ms)
@@ -418,14 +456,17 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Verify cursor latency <50ms
 
 **Files Created:**
+
 - `app/canvas/_components/RemoteCursor.tsx` (NEW - cursor display component)
 - `app/canvas/_hooks/useCursors.ts` (NEW - cursor tracking hook)
 
 **Files Modified:**
+
 - `lib/firebase/realtime.ts` (added generateDisplayName function using unique-names-generator)
 - `app/canvas/_components/Canvas.tsx` (integrated cursor rendering)
 
 **Implementation Details:**
+
 - Cursor positions broadcast every 50ms (throttled)
 - Display names from Firebase Auth or auto-generated (e.g., "Happy Elephant")
 - Each user gets a unique color from a preset palette
@@ -437,10 +478,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #11: Presence System ✅
+
 **Branch:** `feature/presence-tracking`  
 **Goal:** Track and display online users
 
 **Tasks:**
+
 - [x] Create presence data model
 - [x] Set up Realtime Database presence tracking
 - [x] Broadcast user join event
@@ -452,20 +495,24 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Test presence with multiple users
 
 **Files Created:**
+
 - `app/canvas/_components/OnlineUsers.tsx` (NEW)
 - `app/canvas/_hooks/usePresence.ts` (NEW)
 
 **Files Modified:**
+
 - `lib/firebase/realtime.ts` (presence functions already existed)
 - `app/canvas/page.tsx` (add OnlineUsers component)
 
 ---
 
 ### PR #12: Connection Status & Reconnection
+
 **Branch:** `feature/connection-handling`  
 **Goal:** Handle disconnects and reconnections gracefully
 
 **Tasks:**
+
 - [ ] Detect network disconnection
 - [ ] Create ConnectionStatus component
 - [ ] Queue local changes during offline period
@@ -477,9 +524,11 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify no data loss after reconnect
 
 **Files Created:**
+
 - `components/ui/ConnectionStatus.tsx` (NEW)
 
 **Files Modified:**
+
 - `lib/sync/objectSync.ts` (add offline queue)
 - `hooks/useObjects.ts` (handle offline mode)
 - `app/canvas/page.tsx` (add ConnectionStatus)
@@ -487,10 +536,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #13: Deployment Setup ✅
+
 **Branch:** `setup/deployment`  
 **Goal:** Deploy to Vercel and verify production works
 
 **Tasks:**
+
 - [x] Create Vercel account (if needed)
 - [x] Connect GitHub repository to Vercel
 - [x] Configure environment variables in Vercel dashboard
@@ -501,20 +552,24 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Update README with deployed link (in progress)
 
 **Files Modified:**
+
 - `README.md` (add deployed link)
 - Vercel dashboard (configuration only)
 
 **Notes:**
+
 - App successfully deployed and accessible
 - All core features working in production
 
 ---
 
 ### PR #14: MVP Testing & Validation
+
 **Branch:** `test/mvp-validation`  
 **Goal:** Comprehensive MVP testing and bug fixes
 
 **Tasks:**
+
 - [ ] Test all MVP checklist items:
   - [ ] Basic canvas with pan/zoom ✓
   - [ ] At least one shape type (rectangles) ✓
@@ -533,6 +588,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Document known issues
 
 **Files Modified:**
+
 - Any bug fixes needed
 - `README.md` (update status)
 
@@ -543,10 +599,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #15: Additional Shape Types - Circles ✅
+
 **Branch:** `feature/circles`  
 **Goal:** Add circle shape type
 
 **Tasks:**
+
 - [x] Extend object types for circles
 - [x] Add circle to Toolbar
 - [x] Implement circle creation logic
@@ -556,10 +614,12 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Sync circles across users
 
 **Files Created:**
+
 - `app/canvas/_components/shapes/CircleShape.tsx` (NEW)
 - `app/canvas/_components/properties/shape-properties/CircleProperties.tsx` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_types/shapes.ts` (add PersistedCircle type)
 - `app/canvas/_lib/shapes.ts` (add circle factory functions)
 - `app/canvas/_components/Toolbar.tsx` (add circle button)
@@ -568,10 +628,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #16: Additional Shape Types - Lines ✅
+
 **Branch:** `feature/lines`  
 **Goal:** Add line shape type
 
 **Tasks:**
+
 - [x] Extend object types for lines
 - [x] Add line to Toolbar
 - [x] Implement line creation logic
@@ -581,10 +643,12 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Sync lines across users
 
 **Files Created:**
+
 - `app/canvas/_components/shapes/LineShape.tsx` (NEW)
 - `app/canvas/_components/properties/shape-properties/LineProperties.tsx` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_types/shapes.ts` (add PersistedLine type)
 - `app/canvas/_lib/shapes.ts` (add line factory functions)
 - `app/canvas/_components/Toolbar.tsx` (add line button)
@@ -593,10 +657,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #17: Additional Shape Types - Text
+
 **Branch:** `feature/text-layers`  
 **Goal:** Add text shape type with editing
 
 **Tasks:**
+
 - [ ] Extend object types for text
 - [ ] Add text to Toolbar
 - [ ] Implement text creation logic
@@ -608,6 +674,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Sync text across users
 
 **Files Modified:**
+
 - `types/objects.ts` (add Text type)
 - `lib/canvas/objects.ts` (add text functions)
 - `components/canvas/Toolbar.tsx` (add text button)
@@ -616,10 +683,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #18: Multi-Select
+
 **Branch:** `feature/multi-select`  
 **Goal:** Implement multi-object selection
 
 **Tasks:**
+
 - [ ] Implement shift-click to add/remove from selection
 - [ ] Create selection rectangle on drag
 - [ ] Implement drag-to-select functionality
@@ -629,6 +698,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test multi-select combinations
 
 **Files Modified:**
+
 - `hooks/useSelection.ts` (add multi-select logic)
 - `components/canvas/Canvas.tsx` (handle multi-select interactions)
 - `store/canvasStore.ts` (track multiple selections)
@@ -636,10 +706,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #19: Group Operations
+
 **Branch:** `feature/group-operations`  
 **Goal:** Enable operations on multiple selected objects
 
 **Tasks:**
+
 - [ ] Implement move multiple objects together
 - [ ] Implement resize multiple objects (uniform scaling)
 - [ ] Implement delete multiple objects
@@ -648,6 +720,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Sync group operations across users
 
 **Files Modified:**
+
 - `lib/canvas/objects.ts` (add group operation functions)
 - `hooks/useSelection.ts` (handle group transformations)
 - `components/canvas/Canvas.tsx` (apply group operations)
@@ -655,10 +728,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #20: Layer Management ✅
+
 **Branch:** `feature/layer-management`  
 **Goal:** Implement z-index and layer controls
 
 **Tasks:**
+
 - [x] Add z-index to object data model
 - [x] Implement bring to front (Cmd/Ctrl+Shift+])
 - [x] Implement send to back (Cmd/Ctrl+Shift+[)
@@ -669,9 +744,11 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Sync layer changes across users
 
 **Files Created:**
+
 - `app/canvas/_lib/layer-management.ts` (NEW - layer utility functions)
 
 **Files Modified:**
+
 - `app/canvas/_types/shapes.ts` (zIndex field already in types)
 - `app/canvas/_components/properties/UniversalProperties.tsx` (layer control buttons)
 - `app/canvas/_components/Canvas.tsx` (keyboard shortcuts for layer operations, render by z-index)
@@ -680,10 +757,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #21: Keyboard Shortcuts (Partial) ⚠️
+
 **Branch:** `feature/keyboard-shortcuts`  
 **Goal:** Implement comprehensive keyboard shortcuts
 
 **Tasks:**
+
 - [x] Implement Delete/Backspace for delete
 - [ ] Implement Cmd/Ctrl+D for duplicate
 - [ ] Implement Cmd/Ctrl+A for select all
@@ -699,6 +778,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test all shortcuts
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx` (integrated keyboard handlers inline)
 
 **Note:** Some keyboard shortcuts are implemented (delete, tool shortcuts, space pan, layer management), but copy/paste, nudge, and select all are not yet implemented.
@@ -706,10 +786,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #22: Copy/Paste
+
 **Branch:** `feature/copy-paste`  
 **Goal:** Implement clipboard functionality
 
 **Tasks:**
+
 - [ ] Create internal clipboard state
 - [ ] Implement copy selected objects (Cmd/Ctrl+C)
 - [ ] Implement paste objects with offset (Cmd/Ctrl+V)
@@ -718,6 +800,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Sync pasted objects to other users
 
 **Files Modified:**
+
 - `store/canvasStore.ts` (add clipboard state)
 - `hooks/useKeyboardShortcuts.ts` (add copy/paste handlers)
 - `lib/canvas/objects.ts` (add duplicate with offset)
@@ -725,10 +808,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #23: Rotation ✅
+
 **Branch:** `feature/rotation`  
 **Goal:** Add rotation capability
 
 **Tasks:**
+
 - [x] Add rotation handle to selected objects
 - [x] Implement rotation interaction
 - [ ] Display rotation angle during rotation (not implemented)
@@ -738,6 +823,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Test rotation with all shape types
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx` (uses Konva Transformer with rotation enabled)
 - `app/canvas/_components/shapes/RectangleShape.tsx` (handles rotation in transform)
 - `app/canvas/_components/properties/UniversalProperties.tsx` (rotation input field)
@@ -748,10 +834,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #24: Properties Panel ✅
+
 **Branch:** `feature/properties-panel`  
 **Goal:** Create sidebar for object properties
 
 **Tasks:**
+
 - [x] Create PropertiesPanel component
 - [x] Add position inputs (X, Y)
 - [x] Add dimension inputs (Width, Height)
@@ -766,6 +854,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Add default property editing for shape tools
 
 **Files Created:**
+
 - `app/canvas/_components/PropertiesPanel.tsx` (NEW)
 - `app/canvas/_components/properties/UniversalProperties.tsx` (NEW)
 - `app/canvas/_components/properties/StyleProperties.tsx` (NEW)
@@ -774,16 +863,19 @@ The underscore prefix tells Next.js these are NOT routes.
 - `app/canvas/_components/properties/shape-properties/index.ts` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/_components/Canvas.tsx` (integrated PropertiesPanel)
 - `app/canvas/page.tsx` (already rendering Canvas with panel)
 
 ---
 
 ### PR #25: Advanced Styling (Partial) ⚠️
+
 **Branch:** `feature/advanced-styling`  
 **Goal:** Add stroke and styling options
 
 **Tasks:**
+
 - [x] Add fill color with opacity controls
 - [x] Add stroke/border color controls
 - [x] Add stroke width controls
@@ -795,6 +887,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [x] Add corner radius control for rectangles
 
 **Files Modified:**
+
 - `app/canvas/_types/shapes.ts` (styling properties already in types)
 - `app/canvas/_components/properties/StyleProperties.tsx` (color pickers, opacity slider)
 - `app/canvas/_components/properties/shape-properties/RectangleProperties.tsx` (corner radius)
@@ -805,10 +898,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #26: Undo/Redo (Optional)
+
 **Branch:** `feature/undo-redo`  
 **Goal:** Implement history management
 
 **Tasks:**
+
 - [ ] Create history state management
 - [ ] Track canvas state changes
 - [ ] Implement undo (Cmd/Ctrl+Z)
@@ -818,19 +913,23 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Handle undo/redo with real-time sync
 
 **Files Created:**
+
 - `hooks/useHistory.ts` (NEW)
 
 **Files Modified:**
+
 - `store/canvasStore.ts` (add history state)
 - `hooks/useKeyboardShortcuts.ts` (add undo/redo)
 
 ---
 
 ### PR #27: Performance Optimization
+
 **Branch:** `perf/optimization`  
 **Goal:** Optimize for scale
 
 **Tasks:**
+
 - [ ] Implement viewport culling
 - [ ] Add canvas layering (static/dynamic/cursor)
 - [ ] Implement object pooling for cursors
@@ -844,6 +943,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify 60 FPS at scale
 
 **Files Modified:**
+
 - `components/canvas/Canvas.tsx` (add culling)
 - `lib/sync/objectSync.ts` (add batching and deltas)
 - `lib/sync/cursorSync.ts` (add throttling)
@@ -852,10 +952,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #28: AI Infrastructure
+
 **Branch:** `feature/ai-setup`  
 **Goal:** Set up AI service and API route
 
 **Tasks:**
+
 - [ ] Choose AI provider (OpenAI or Claude)
 - [ ] Create AI service account
 - [ ] Add AI API key to environment variables
@@ -867,20 +969,24 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test API route connectivity
 
 **Files Created:**
+
 - `app/api/ai-command/route.ts` (NEW)
 - `lib/ai/prompts.ts` (NEW)
 
 **Files Modified:**
+
 - `package.json` (add AI SDK)
 - `.env.example` (add AI API key variable)
 
 ---
 
 ### PR #29: AI Function Schemas
+
 **Branch:** `feature/ai-functions`  
 **Goal:** Define and implement AI callable functions
 
 **Tasks:**
+
 - [ ] Define function schemas for all operations
 - [ ] Implement createShape function
 - [ ] Implement moveShape function
@@ -893,19 +999,23 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test function calling with AI
 
 **Files Created:**
+
 - `lib/ai/functions.ts` (NEW)
 - `lib/ai/handlers.ts` (NEW)
 
 **Files Modified:**
+
 - `app/api/ai-command/route.ts` (integrate functions)
 
 ---
 
 ### PR #30: AI Command Interface
+
 **Branch:** `feature/ai-ui`  
 **Goal:** Create AI command input UI
 
 **Tasks:**
+
 - [ ] Create AICommandInput component
 - [ ] Add submit button and Enter key handler
 - [ ] Create loading indicator
@@ -916,20 +1026,24 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test AI input UI
 
 **Files Created:**
+
 - `components/ui/AICommandInput.tsx` (NEW)
 - `hooks/useAI.ts` (NEW)
 - `store/aiStore.ts` (NEW)
 
 **Files Modified:**
+
 - `app/canvas/page.tsx` (add AICommandInput)
 
 ---
 
 ### PR #31: Basic AI Commands
+
 **Branch:** `feature/ai-basic-commands`  
 **Goal:** Implement creation, manipulation, and style commands
 
 **Tasks:**
+
 - [ ] Write comprehensive system prompt
 - [ ] Implement creation commands ("Create a blue rectangle")
 - [ ] Implement manipulation commands ("Move the circle")
@@ -940,6 +1054,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify objects appear correctly
 
 **Files Modified:**
+
 - `lib/ai/prompts.ts` (add system prompt)
 - `app/api/ai-command/route.ts` (integrate commands)
 - `lib/ai/handlers.ts` (implement command handlers)
@@ -947,10 +1062,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #32: Layout Commands
+
 **Branch:** `feature/ai-layouts`  
 **Goal:** Implement spatial arrangement commands
 
 **Tasks:**
+
 - [ ] Create layout algorithm functions
 - [ ] Implement "arrange in row" command
 - [ ] Implement "arrange in column" command
@@ -962,19 +1079,23 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify precise positioning
 
 **Files Created:**
+
 - `lib/utils/positioning.ts` (NEW)
 
 **Files Modified:**
+
 - `lib/ai/functions.ts` (add layout functions)
 - `lib/ai/handlers.ts` (add layout handlers)
 
 ---
 
 ### PR #33: Complex AI Commands
+
 **Branch:** `feature/ai-complex`  
 **Goal:** Implement multi-step commands
 
 **Tasks:**
+
 - [ ] Design login form template logic
 - [ ] Implement "create login form" command
 - [ ] Design navigation bar template logic
@@ -987,16 +1108,19 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify professional layouts
 
 **Files Modified:**
+
 - `lib/ai/handlers.ts` (add complex command logic)
 - `app/api/ai-command/route.ts` (handle multi-step)
 
 ---
 
 ### PR #34: AI UX Polish
+
 **Branch:** `feature/ai-polish`  
 **Goal:** Add visual feedback and animations
 
 **Tasks:**
+
 - [ ] Add AI "thinking" animation
 - [ ] Add progress indicators
 - [ ] Add toast notifications
@@ -1008,6 +1132,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test AI user experience
 
 **Files Modified:**
+
 - `components/ui/AICommandInput.tsx` (add animations)
 - `components/canvas/Canvas.tsx` (add highlighting)
 - `hooks/useAI.ts` (add UX states)
@@ -1015,10 +1140,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #35: Shared AI State
+
 **Branch:** `feature/ai-shared-state`  
 **Goal:** Enable multi-user AI access
 
 **Tasks:**
+
 - [ ] Implement AI command queue
 - [ ] Add user attribution for AI commands
 - [ ] Display "AI creating for [User]..." indicator
@@ -1027,6 +1154,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Verify no conflicts
 
 **Files Modified:**
+
 - `app/api/ai-command/route.ts` (add queue logic)
 - `components/ui/AICommandInput.tsx` (show attribution)
 - `lib/sync/objectSync.ts` (prioritize AI updates)
@@ -1034,10 +1162,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #36: AI Performance & Logging
+
 **Branch:** `feature/ai-optimization`  
 **Goal:** Optimize AI and add logging
 
 **Tasks:**
+
 - [ ] Implement response caching
 - [ ] Optimize function execution order
 - [ ] Add parallel execution
@@ -1048,6 +1178,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Test AI response time <2 seconds
 
 **Files Modified:**
+
 - `app/api/ai-command/route.ts` (add caching and logging)
 - `types/ai.ts` (add log types)
 - `lib/firebase/firestore.ts` (add log storage)
@@ -1055,10 +1186,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #37: Comprehensive Testing
+
 **Branch:** `test/final-testing`  
 **Goal:** Complete end-to-end testing
 
 **Tasks:**
+
 - [ ] Test all MVP requirements
 - [ ] Test all Phase 2 features
 - [ ] Test all Phase 3 AI features
@@ -1071,15 +1204,18 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Document known issues
 
 **Files Modified:**
+
 - Any bug fixes needed
 
 ---
 
 ### PR #38: Documentation
+
 **Branch:** `docs/final-documentation`  
 **Goal:** Complete all documentation
 
 **Tasks:**
+
 - [ ] Write comprehensive README.md
 - [ ] Add setup instructions
 - [ ] Document all features
@@ -1094,6 +1230,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Document AI learnings
 
 **Files Created/Modified:**
+
 - `README.md` (complete overhaul)
 - `ARCHITECTURE.md` (NEW)
 - `AI_DEVELOPMENT_LOG.md` (NEW)
@@ -1101,10 +1238,12 @@ The underscore prefix tells Next.js these are NOT routes.
 ---
 
 ### PR #39: Demo Video
+
 **Branch:** `docs/demo-video`  
 **Goal:** Record and add demo video
 
 **Tasks:**
+
 - [ ] Record introduction
 - [ ] Record collaboration demo
 - [ ] Record AI commands demo
@@ -1116,15 +1255,18 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Add link to README
 
 **Files Modified:**
+
 - `README.md` (add video link)
 
 ---
 
 ### PR #40: Final Deployment
+
 **Branch:** `deploy/final`  
 **Goal:** Final production deployment
 
 **Tasks:**
+
 - [ ] Run production build
 - [ ] Deploy to Vercel
 - [ ] Verify environment variables
@@ -1135,6 +1277,7 @@ The underscore prefix tells Next.js these are NOT routes.
 - [ ] Tag release v1.0.0
 
 **Files Modified:**
+
 - `README.md` (final updates)
 - Git tag created
 
@@ -1155,6 +1298,7 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 ## Current Progress (As of October 2025)
 
 ### ✅ Completed PRs (1-11, 13, 15, 16, 20, 23, 24, 25 partial)
+
 - **PR #1-10:** ✅ All MVP features complete (setup, auth, canvas, shapes, sync, cursors)
 - **PR #11:** ✅ Presence System (OnlineUsers component showing active users)
 - **PR #13:** ✅ Deployment Setup (deployed to production)
@@ -1167,6 +1311,7 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 - **PR #25:** ⚠️ Advanced Styling (partial - colors, opacity, stroke width, corner radius working; dashed/dotted strokes not implemented)
 
 ### 🚧 Not Yet Implemented
+
 - **PR #12:** Connection Status & Reconnection (offline handling)
 - **PR #14:** MVP Testing & Validation
 - **PR #17:** Text shape type
@@ -1180,6 +1325,7 @@ Each PR is self-contained, testable, and deployable. Follow the order to build f
 - **PR #37-40:** Testing, documentation, deployment
 
 ### Key Features Working
+
 ✅ Canvas with pan & zoom  
 ✅ Rectangle, Circle, and Line shapes  
 ✅ Real-time collaboration with object sync  

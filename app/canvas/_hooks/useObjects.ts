@@ -24,7 +24,11 @@ interface UseObjectsProps {
   onObjectsUpdate: (objects: PersistedShape[]) => void;
 }
 
-export function useObjects({ canvasId, isReady, onObjectsUpdate }: UseObjectsProps) {
+export function useObjects({
+  canvasId,
+  isReady,
+  onObjectsUpdate,
+}: UseObjectsProps) {
   const { user } = useAuth();
   const loadedRef = useRef(false);
   const savingRef = useRef(false);
@@ -39,7 +43,7 @@ export function useObjects({ canvasId, isReady, onObjectsUpdate }: UseObjectsPro
         console.warn(`No factory found for shape type: ${obj.type}`);
         return null;
       }
-      
+
       return factory.fromFirestore(obj);
     },
     []
@@ -121,7 +125,7 @@ export function useObjects({ canvasId, isReady, onObjectsUpdate }: UseObjectsPro
         // Get the shape type and factory
         const shapeType = shape.type;
         const factory = getShapeFactory(shapeType);
-        
+
         if (!factory) {
           console.error(`No factory found for shape type: ${shapeType}`);
           return;
@@ -148,13 +152,16 @@ export function useObjects({ canvasId, isReady, onObjectsUpdate }: UseObjectsPro
   /**
    * Delete an object from Firestore
    */
-  const deleteObjectFromFirestore = useCallback(async (objectId: string) => {
-    try {
-      await deleteObject(canvasId, objectId);
-    } catch (error) {
-      console.error("Error deleting object:", error);
-    }
-  }, [canvasId]);
+  const deleteObjectFromFirestore = useCallback(
+    async (objectId: string) => {
+      try {
+        await deleteObject(canvasId, objectId);
+      } catch (error) {
+        console.error("Error deleting object:", error);
+      }
+    },
+    [canvasId]
+  );
 
   // Set up real-time subscription to Firestore
   useEffect(() => {

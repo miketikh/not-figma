@@ -3,13 +3,7 @@
  * High-frequency updates for real-time transform visibility (~50ms / 20 updates per second)
  */
 
-import {
-  ref,
-  set,
-  remove,
-  onValue,
-  Unsubscribe,
-} from "firebase/database";
+import { ref, set, remove, onValue, Unsubscribe } from "firebase/database";
 import { realtimeDb } from "./config";
 import type {
   ActiveTransform,
@@ -21,7 +15,10 @@ import type {
 /**
  * Get the session path for active transforms
  */
-function getTransformsSessionPath(canvasId: string, type: 'activeTransforms' | 'groupTransforms'): string {
+function getTransformsSessionPath(
+  canvasId: string,
+  type: "activeTransforms" | "groupTransforms"
+): string {
   return `sessions/${canvasId}/${type}`;
 }
 
@@ -44,7 +41,10 @@ export async function broadcastTransform(
   userId: string,
   transformData: Omit<ActiveTransform, "userId" | "objectId" | "timestamp">
 ): Promise<void> {
-  const transformRef = ref(realtimeDb, `${getTransformsSessionPath(canvasId, 'activeTransforms')}/${objectId}`);
+  const transformRef = ref(
+    realtimeDb,
+    `${getTransformsSessionPath(canvasId, "activeTransforms")}/${objectId}`
+  );
 
   const activeTransform: ActiveTransform = {
     ...transformData,
@@ -63,8 +63,14 @@ export async function broadcastTransform(
  * @param canvasId - The ID of the canvas
  * @param objectId - The ID of the object to clear transform for
  */
-export async function clearTransform(canvasId: string, objectId: string): Promise<void> {
-  const transformRef = ref(realtimeDb, `${getTransformsSessionPath(canvasId, 'activeTransforms')}/${objectId}`);
+export async function clearTransform(
+  canvasId: string,
+  objectId: string
+): Promise<void> {
+  const transformRef = ref(
+    realtimeDb,
+    `${getTransformsSessionPath(canvasId, "activeTransforms")}/${objectId}`
+  );
   await remove(transformRef);
 }
 
@@ -85,7 +91,9 @@ export async function clearUserTransforms(
     (objectId) => activeTransforms[objectId].userId === userId
   );
 
-  await Promise.all(objectIds.map((objectId) => clearTransform(canvasId, objectId)));
+  await Promise.all(
+    objectIds.map((objectId) => clearTransform(canvasId, objectId))
+  );
 }
 
 /**
@@ -100,7 +108,10 @@ export function subscribeToActiveTransforms(
   canvasId: string,
   callback: (transforms: ActiveTransformMap) => void
 ): Unsubscribe {
-  const transformsRef = ref(realtimeDb, getTransformsSessionPath(canvasId, 'activeTransforms'));
+  const transformsRef = ref(
+    realtimeDb,
+    getTransformsSessionPath(canvasId, "activeTransforms")
+  );
 
   return onValue(transformsRef, (snapshot) => {
     const transforms: ActiveTransformMap = snapshot.val() || {};
@@ -116,7 +127,6 @@ export async function setupTransformDisconnectCleanup(): Promise<void> {
   // Note: Firebase onDisconnect works per-reference
   // We'll handle cleanup by removing transforms when the user's presence goes offline
   // The actual cleanup will be triggered by the presence disconnect handler
-
   // This function is a placeholder for potential future per-transform disconnect logic
   // Currently, transforms are ephemeral and will be cleaned up via the presence system
 }
@@ -139,7 +149,9 @@ export async function cleanupStaleTransforms(
     (objectId) => now - activeTransforms[objectId].timestamp > maxAge
   );
 
-  await Promise.all(staleObjectIds.map((objectId) => clearTransform(canvasId, objectId)));
+  await Promise.all(
+    staleObjectIds.map((objectId) => clearTransform(canvasId, objectId))
+  );
 }
 
 // ============================================================================
@@ -162,7 +174,10 @@ export async function broadcastGroupTransform(
   userId: string,
   transforms: Record<string, ObjectTransformData>
 ): Promise<void> {
-  const groupTransformRef = ref(realtimeDb, `${getTransformsSessionPath(canvasId, 'groupTransforms')}/${userId}`);
+  const groupTransformRef = ref(
+    realtimeDb,
+    `${getTransformsSessionPath(canvasId, "groupTransforms")}/${userId}`
+  );
 
   const groupTransform: GroupActiveTransform = {
     userId,
@@ -181,8 +196,14 @@ export async function broadcastGroupTransform(
  * @param canvasId - The ID of the canvas
  * @param userId - The ID of the user to clear group transform for
  */
-export async function clearGroupTransform(canvasId: string, userId: string): Promise<void> {
-  const groupTransformRef = ref(realtimeDb, `${getTransformsSessionPath(canvasId, 'groupTransforms')}/${userId}`);
+export async function clearGroupTransform(
+  canvasId: string,
+  userId: string
+): Promise<void> {
+  const groupTransformRef = ref(
+    realtimeDb,
+    `${getTransformsSessionPath(canvasId, "groupTransforms")}/${userId}`
+  );
   await remove(groupTransformRef);
 }
 
@@ -198,10 +219,14 @@ export function subscribeToGroupTransforms(
   canvasId: string,
   callback: (groupTransforms: Record<string, GroupActiveTransform>) => void
 ): Unsubscribe {
-  const groupTransformsRef = ref(realtimeDb, getTransformsSessionPath(canvasId, 'groupTransforms'));
+  const groupTransformsRef = ref(
+    realtimeDb,
+    getTransformsSessionPath(canvasId, "groupTransforms")
+  );
 
   return onValue(groupTransformsRef, (snapshot) => {
-    const groupTransforms: Record<string, GroupActiveTransform> = snapshot.val() || {};
+    const groupTransforms: Record<string, GroupActiveTransform> =
+      snapshot.val() || {};
     callback(groupTransforms);
   });
 }

@@ -34,9 +34,7 @@ export default function PropertiesPanel({
   onUpdateDefaults,
 }: PropertiesPanelProps) {
   // Get selected objects
-  const selectedObjects = objects.filter((obj) =>
-    selectedIds.includes(obj.id)
-  );
+  const selectedObjects = objects.filter((obj) => selectedIds.includes(obj.id));
 
   // Check if we're in drawing mode (shape tool active)
   const hasSelection = selectedIds.length > 0;
@@ -47,7 +45,7 @@ export default function PropertiesPanel({
     const ShapePropertiesComponent = getPropertyComponent(shapeType);
 
     // Create a mock shape object with default properties for UI display
-    const mockShape: any = 
+    const mockShape: any =
       shapeType === "rectangle"
         ? {
             type: "rectangle",
@@ -60,45 +58,46 @@ export default function PropertiesPanel({
             height: 100, // Default height for max calculation
           }
         : shapeType === "circle"
-        ? {
-            type: "circle",
-            fill: defaultShapeProperties.circle.fill,
-            stroke: defaultShapeProperties.circle.stroke,
-            strokeWidth: defaultShapeProperties.circle.strokeWidth,
-            opacity: defaultShapeProperties.circle.opacity,
-            radiusX: 50, // Default radius for display
-            radiusY: 50, // Default radius for display
-          }
-        : shapeType === "line"
-        ? {
-            type: "line",
-            stroke: defaultShapeProperties.line?.stroke ?? "#a855f7",
-            strokeWidth: defaultShapeProperties.line?.strokeWidth ?? 2,
-            opacity: defaultShapeProperties.line?.opacity ?? 1,
-            x: 0,
-            y: 0,
-            x2: 100,
-            y2: 100,
-          }
-        : {
-            type: "text",
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 30,
-            content: defaultShapeProperties.text?.content ?? "Text",
-            fontSize: defaultShapeProperties.text?.fontSize ?? 16,
-            fontFamily: defaultShapeProperties.text?.fontFamily ?? "Arial",
-            fontWeight: defaultShapeProperties.text?.fontWeight ?? "normal",
-            fontStyle: defaultShapeProperties.text?.fontStyle ?? "normal",
-            textAlign: defaultShapeProperties.text?.textAlign ?? "left",
-            textDecoration: defaultShapeProperties.text?.textDecoration ?? "none",
-            lineHeight: defaultShapeProperties.text?.lineHeight ?? 1.2,
-            fill: defaultShapeProperties.text?.fill ?? "#000000",
-            stroke: defaultShapeProperties.text?.stroke ?? "#000000",
-            strokeWidth: defaultShapeProperties.text?.strokeWidth ?? 0,
-            opacity: defaultShapeProperties.text?.opacity ?? 1,
-          };
+          ? {
+              type: "circle",
+              fill: defaultShapeProperties.circle.fill,
+              stroke: defaultShapeProperties.circle.stroke,
+              strokeWidth: defaultShapeProperties.circle.strokeWidth,
+              opacity: defaultShapeProperties.circle.opacity,
+              radiusX: 50, // Default radius for display
+              radiusY: 50, // Default radius for display
+            }
+          : shapeType === "line"
+            ? {
+                type: "line",
+                stroke: defaultShapeProperties.line?.stroke ?? "#a855f7",
+                strokeWidth: defaultShapeProperties.line?.strokeWidth ?? 2,
+                opacity: defaultShapeProperties.line?.opacity ?? 1,
+                x: 0,
+                y: 0,
+                x2: 100,
+                y2: 100,
+              }
+            : {
+                type: "text",
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 30,
+                content: defaultShapeProperties.text?.content ?? "Text",
+                fontSize: defaultShapeProperties.text?.fontSize ?? 16,
+                fontFamily: defaultShapeProperties.text?.fontFamily ?? "Arial",
+                fontWeight: defaultShapeProperties.text?.fontWeight ?? "normal",
+                fontStyle: defaultShapeProperties.text?.fontStyle ?? "normal",
+                textAlign: defaultShapeProperties.text?.textAlign ?? "left",
+                textDecoration:
+                  defaultShapeProperties.text?.textDecoration ?? "none",
+                lineHeight: defaultShapeProperties.text?.lineHeight ?? 1.2,
+                fill: defaultShapeProperties.text?.fill ?? "#000000",
+                stroke: defaultShapeProperties.text?.stroke ?? "#000000",
+                strokeWidth: defaultShapeProperties.text?.strokeWidth ?? 0,
+                opacity: defaultShapeProperties.text?.opacity ?? 1,
+              };
 
     return (
       <div className="absolute top-4 right-4 w-[280px] bg-white rounded-lg border shadow-lg overflow-hidden">
@@ -129,7 +128,9 @@ export default function PropertiesPanel({
                 </h4>
                 <ShapePropertiesComponent
                   shape={mockShape}
-                  onUpdate={(updates: any) => onUpdateDefaults(shapeType, updates)}
+                  onUpdate={(updates: any) =>
+                    onUpdateDefaults(shapeType, updates)
+                  }
                   disabled={false}
                 />
               </div>
@@ -168,23 +169,45 @@ export default function PropertiesPanel({
             <ul className="space-y-2 text-xs text-gray-600">
               <li className="flex items-start">
                 <span className="mr-2">•</span>
-                <span>Drag anywhere in the bounding box to move all objects</span>
+                <span>
+                  Drag anywhere in the bounding box to move all objects
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2">•</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Shift</kbd> + click to add/remove objects</span>
+                <span>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">
+                    Shift
+                  </kbd>{" "}
+                  + click to add/remove objects
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2">•</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Shift</kbd> + drag to add more objects</span>
+                <span>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">
+                    Shift
+                  </kbd>{" "}
+                  + drag to add more objects
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2">•</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Esc</kbd> to deselect all</span>
+                <span>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">
+                    Esc
+                  </kbd>{" "}
+                  to deselect all
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="mr-2">•</span>
-                <span><kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">Delete</kbd> to remove all selected objects</span>
+                <span>
+                  <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs border">
+                    Delete
+                  </kbd>{" "}
+                  to remove all selected objects
+                </span>
               </li>
             </ul>
           </div>
@@ -267,4 +290,3 @@ export default function PropertiesPanel({
     </div>
   );
 }
-

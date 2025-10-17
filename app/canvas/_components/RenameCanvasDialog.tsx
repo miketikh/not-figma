@@ -40,7 +40,8 @@ export function RenameCanvasDialog({
     }
   }, [open, currentName]);
 
-  const isConfirmDisabled = !newName.trim() || newName.trim() === currentName || loading;
+  const isConfirmDisabled =
+    !newName.trim() || newName.trim() === currentName || loading;
 
   const handleConfirm = async () => {
     if (isConfirmDisabled) {
@@ -111,9 +112,7 @@ export function RenameCanvasDialog({
               autoFocus
               maxLength={100}
             />
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <p className="text-xs text-muted-foreground">
               {newName.length}/100 characters
             </p>

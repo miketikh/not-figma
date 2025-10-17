@@ -37,7 +37,10 @@ interface UseMouseHandlersParams {
   selection: {
     isSelecting: boolean;
     selectionRect: any;
-    startSelection: (point: { x: number; y: number }, shiftPressed: boolean) => void;
+    startSelection: (
+      point: { x: number; y: number },
+      shiftPressed: boolean
+    ) => void;
     updateSelection: (point: { x: number; y: number }) => void;
     finishSelection: (shiftPressed: boolean) => void;
   };
@@ -133,9 +136,7 @@ export function useMouseHandlers({
         if (!factory) return;
 
         // Get default properties for text (including user-edited content)
-        const defaults = isShapeTool("text")
-          ? defaultShapeProperties.text
-          : {};
+        const defaults = isShapeTool("text") ? defaultShapeProperties.text : {};
 
         // Create new text object at click position
         const newText = factory.createDefault(

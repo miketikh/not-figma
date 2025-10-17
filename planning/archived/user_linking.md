@@ -3,6 +3,7 @@
 ## The Problem
 
 Firebase treats each authentication provider (email/password, Google, Facebook, etc.) as **separate identities** even if they share the same email. So:
+
 - User signs up with `user@gmail.com` + password → Creates User A (UID: abc123)
 - Same user signs in with Google using `user@gmail.com` → Creates User B (UID: xyz789)
 
@@ -21,18 +22,18 @@ async function signInWithGoogle() {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
-    if (error.code === 'auth/account-exists-with-different-credential') {
+    if (error.code === "auth/account-exists-with-different-credential") {
       // This specific error fires when account linking is needed
       // Get the email from the error
       const email = error.email;
-      
+
       // Fetch sign-in methods for this email
       const methods = await fetchSignInMethodsForEmail(auth, email);
-      
+
       // methods might be: ['password', 'google.com', etc.]
-      // Show user: "An account exists with email@example.com. 
+      // Show user: "An account exists with email@example.com.
       // Please sign in with [password/Google/etc] first."
-      
+
       throw new Error(`Account exists. Please sign in with ${methods[0]}`);
     }
   }
@@ -46,7 +47,7 @@ async function signInWithGoogle() {
 const email = result.user.email;
 const signInMethods = await fetchSignInMethodsForEmail(auth, email);
 
-if (signInMethods.length > 0 && !signInMethods.includes('google.com')) {
+if (signInMethods.length > 0 && !signInMethods.includes("google.com")) {
   // Account exists with different provider
   // Option 1: Block and tell user to use correct method
   // Option 2: Offer to link accounts
@@ -58,6 +59,7 @@ if (signInMethods.length > 0 && !signInMethods.includes('google.com')) {
 ### **Pattern 1: Automatic Linking (Risky)**
 
 Automatically link accounts when same email is detected. **Not recommended** because:
+
 - Security risk: Anyone with access to a Google account could take over a password account
 - No user consent
 - Could link wrong accounts if emails are recycled
@@ -74,16 +76,16 @@ const googleCredential = GoogleAuthProvider.credentialFromResult(googleResult);
 // Step 2: Detect existing account
 const methods = await fetchSignInMethodsForEmail(auth, googleResult.user.email);
 
-if (methods.includes('password') && !methods.includes('google.com')) {
+if (methods.includes("password") && !methods.includes("google.com")) {
   // Step 3: Show modal: "Account exists. Enter your password to link accounts"
   const password = await promptUserForPassword(); // UI modal
-  
+
   // Step 4: Sign in with password first
   const emailResult = await signInWithEmailAndPassword(auth, email, password);
-  
+
   // Step 5: NOW link the Google credential to the existing account
   await linkWithCredential(emailResult.user, googleCredential);
-  
+
   // Step 6: User is now signed in and accounts are linked!
 }
 ```
@@ -94,7 +96,7 @@ if (methods.includes('password') && !methods.includes('google.com')) {
 // Detect the conflict
 if (existingMethods.length > 0) {
   // Show modal with options:
-  // 1. "Continue with existing [password] account" 
+  // 1. "Continue with existing [password] account"
   //    → Ask for password, then link
   // 2. "Create new account with Google"
   //    → Sign out Google, let them create separate account
@@ -118,7 +120,7 @@ if (existingMethods.length > 0) {
 5. Show modal:
    "An account with user@gmail.com already exists.
     To link your Google account, please verify your password."
-   
+
    [Password input field]
    [Link Accounts] [Cancel]
 
@@ -134,18 +136,18 @@ if (existingMethods.length > 0) {
 ### **1. Update Auth Helpers (`lib/firebase/auth.ts`)**
 
 ```typescript
-import { 
+import {
   fetchSignInMethodsForEmail,
   linkWithCredential,
   GoogleAuthProvider,
   signInWithPopup,
   signOut as firebaseSignOut,
-  signInWithEmailAndPassword
-} from 'firebase/auth';
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 
 // Custom error type for account linking
 export interface AccountExistsError extends Error {
-  code: 'auth/account-exists';
+  code: "auth/account-exists";
   email: string;
   existingMethods: string[];
   pendingCredential: any;
@@ -154,36 +156,38 @@ export interface AccountExistsError extends Error {
 // Modified signInWithGoogle to detect existing accounts
 export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
-  
+
   try {
     const result = await signInWithPopup(auth, provider);
     const email = result.user.email;
-    
+
     if (!email) {
-      throw new Error('No email provided by Google');
+      throw new Error("No email provided by Google");
     }
-    
+
     // Check for existing accounts with this email
     const signInMethods = await fetchSignInMethodsForEmail(auth, email);
-    
+
     // If account exists with different provider, handle linking
-    if (signInMethods.length > 0 && !signInMethods.includes('google.com')) {
+    if (signInMethods.length > 0 && !signInMethods.includes("google.com")) {
       // Sign out the Google user we just created
       await firebaseSignOut(auth);
-      
+
       // Store the credential for later linking
       const credential = GoogleAuthProvider.credentialFromResult(result);
-      
+
       // Throw custom error with linking information
-      const error = new Error('Account exists with different provider') as AccountExistsError;
-      error.code = 'auth/account-exists';
+      const error = new Error(
+        "Account exists with different provider"
+      ) as AccountExistsError;
+      error.code = "auth/account-exists";
       error.email = email;
       error.existingMethods = signInMethods;
       error.pendingCredential = credential;
-      
+
       throw error;
     }
-    
+
     return mapFirebaseUser(result.user);
   } catch (error) {
     throw error;
@@ -193,22 +197,24 @@ export async function signInWithGoogle(): Promise<User> {
 // New helper for linking Google account
 export async function linkGoogleAccount(
   email: string,
-  password: string, 
+  password: string,
   googleCredential: any
 ): Promise<User> {
   // Step 1: Sign in with email/password first
   const result = await signInWithEmailAndPassword(auth, email, password);
-  
+
   // Step 2: Link the Google credential to the existing account
   await linkWithCredential(result.user, googleCredential);
-  
+
   // Step 3: Return updated user
   await result.user.reload();
   return mapFirebaseUser(result.user);
 }
 
 // Helper to check what providers an email is using
-export async function getSignInMethodsForEmail(email: string): Promise<string[]> {
+export async function getSignInMethodsForEmail(
+  email: string
+): Promise<string[]> {
   return await fetchSignInMethodsForEmail(auth, email);
 }
 ```
@@ -219,7 +225,11 @@ export async function getSignInMethodsForEmail(email: string): Promise<string[]>
 // Add to AuthContextType
 export interface AuthContextType {
   // ... existing methods
-  linkGoogleAccount: (email: string, password: string, credential: any) => Promise<void>;
+  linkGoogleAccount: (
+    email: string,
+    password: string,
+    credential: any
+  ) => Promise<void>;
   getSignInMethodsForEmail: (email: string) => Promise<string[]>;
 }
 
@@ -268,7 +278,7 @@ export function AccountLinkingModal({
   const handleLink = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       await onLink(password);
     } catch (err) {
@@ -286,7 +296,7 @@ export function AccountLinkingModal({
         <h3 className="text-lg font-semibold mb-4">
           Link Your Accounts
         </h3>
-        
+
         <p className="text-sm text-gray-600 mb-4">
           An account with <strong>{email}</strong> already exists using {existingMethod}.
           Enter your password to link your Google account.
@@ -387,7 +397,7 @@ export default function LoginForm() {
   return (
     <>
       {/* Existing form JSX */}
-      
+
       <AccountLinkingModal
         isOpen={showLinkModal}
         email={linkingEmail}
@@ -442,13 +452,13 @@ if (user) {
 // In profile settings
 export async function unlinkProvider(providerId: string): Promise<void> {
   const user = auth.currentUser;
-  if (!user) throw new Error('Not authenticated');
-  
+  if (!user) throw new Error("Not authenticated");
+
   // Don't allow unlinking last provider
   if (user.providerData.length <= 1) {
-    throw new Error('Cannot unlink your only sign-in method');
+    throw new Error("Cannot unlink your only sign-in method");
   }
-  
+
   await unlink(user, providerId);
 }
 ```
@@ -459,7 +469,7 @@ If user forgot password during linking, allow them to reset:
 
 ```typescript
 // Add to modal: "Forgot password? Reset it here"
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { sendPasswordResetEmail } from "firebase/auth";
 
 await sendPasswordResetEmail(auth, email);
 // Show: "Password reset email sent. Check your inbox."
@@ -490,4 +500,3 @@ await sendPasswordResetEmail(auth, email);
 ## Notes
 
 The key is: **Firebase won't do this automatically—you must build the detection and linking logic yourself.** The good news is Firebase provides all the APIs (`fetchSignInMethodsForEmail`, `linkWithCredential`, etc.) to implement it securely.
-

@@ -19,7 +19,8 @@ export function EmptyCanvasState({ onCreateClick }: EmptyCanvasStateProps) {
       </div>
       <h2 className="text-2xl font-semibold mb-2">No canvases yet</h2>
       <p className="text-muted-foreground mb-6 max-w-md">
-        Get started by creating your first canvas. Design, collaborate, and bring your ideas to life.
+        Get started by creating your first canvas. Design, collaborate, and
+        bring your ideas to life.
       </p>
       <Button onClick={onCreateClick} size="lg">
         <Plus className="w-4 h-4 mr-2" />

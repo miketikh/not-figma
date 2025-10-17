@@ -25,6 +25,7 @@ Migrates existing canvas objects from the old flat `canvasObjects` collection to
 ### Usage
 
 #### Dry Run (Preview Only)
+
 Always run this first to preview changes without writing to Firestore:
 
 ```bash
@@ -32,12 +33,14 @@ npm run migrate:dry-run
 ```
 
 This will show you:
+
 - How many objects will be migrated
 - How many users found
 - How many canvases will be created
 - Which objects belong to which user
 
 #### Run Migration
+
 After reviewing the dry run output:
 
 ```bash

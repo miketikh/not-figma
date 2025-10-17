@@ -5,6 +5,7 @@
 Transform the single-canvas collaborative workspace into a multi-canvas application where users can create, manage, and switch between multiple independent canvases. Each canvas will have its own isolated set of objects, collaborators, cursors, and presence tracking.
 
 **Why this feature:**
+
 - **Organization:** Users can separate projects, experiments, and workspaces
 - **Scalability:** Better data organization and performance (smaller datasets per canvas)
 - **Collaboration:** Teams can work on multiple projects without interference
@@ -17,17 +18,20 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 ### Current Architecture Problems
 
 **Single Global Canvas:**
+
 - All users land on the same hardcoded canvas (`canvas-session-default`)
 - All objects stored in flat `canvasObjects` collection (no grouping)
 - No concept of canvas ownership or isolation
 - Direct navigation to `/canvas` with no selection step
 
 **Hardcoded Session ID:**
+
 - Realtime DB paths use `sessions/canvas-session-default/`
 - No dynamic canvas context throughout the app
 - Presence and cursors mixed across all users regardless of intent
 
 **No Canvas Management:**
+
 - No UI to create, list, or delete canvases
 - No canvas metadata (name, owner, created date, etc.)
 - No way to share or control access to canvases
@@ -37,6 +41,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Core Data Layer (Critical Changes)
 
 **`lib/firebase/firestore.ts`** (Major refactor)
+
 - Add canvas CRUD operations (create, get, list, delete canvas)
 - Update all object operations to scope by `canvasId`
 - Change `CANVAS_OBJECTS_COLLECTION` from flat to nested or filtered by canvasId
@@ -45,6 +50,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - All lock functions need canvas context
 
 **`lib/firebase/realtime.ts`** (Major refactor)
+
 - Replace hardcoded `SESSION_ID = "canvas-session-default"` with dynamic ID
 - Add `sessionId` parameter to all cursor functions
 - Add `sessionId` parameter to all presence functions
@@ -52,6 +58,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Consider helper: `getSessionPath(canvasId, type: 'cursors' | 'presence')`
 
 **`types/canvas.ts`** (Additions)
+
 - Add `Canvas` interface with metadata:
   - `id: string`
   - `name: string`
@@ -64,11 +71,13 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Update `BaseCanvasObject` to include `canvasId: string` field (if using flat collection)
 
 **`types/user.ts`** (Minor additions)
+
 - Potentially add canvas-related user preferences
 
 #### Routing & Pages (Critical Changes)
 
 **`app/canvas/page.tsx`** (Major redesign)
+
 - Transform from canvas page to canvas dashboard/list page
 - Display grid/list of user's canvases
 - Add "New Canvas" button
@@ -76,6 +85,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Navigation to `/canvas/[canvasId]` on card click
 
 **`app/canvas/[canvasId]/page.tsx`** (New file - move current canvas here)
+
 - Move existing `app/canvas/page.tsx` canvas logic here
 - Accept `canvasId` from URL params
 - Pass `canvasId` to all hooks and components
@@ -83,67 +93,80 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Add canvas name in header
 
 **`app/(auth)/login/page.tsx` & `signup/page.tsx`** (Minor)
+
 - Update redirect after auth from `/canvas` to `/canvas` (dashboard)
 
 #### Canvas Components (Moderate Changes)
 
 **`app/canvas/_components/Canvas.tsx`** (Moderate refactor)
+
 - Accept `canvasId` prop
 - Pass `canvasId` to `useObjects`, `useCursors`, `usePresence`
 - All operations scoped to current canvas
 - Update toolbar/header to show canvas name
 
 **`app/canvas/_components/OnlineUsers.tsx`** (Minor)
+
 - Already receives presence from props, no change needed
 - But verify it's showing users only for current canvas
 
 **`app/canvas/_components/Toolbar.tsx`** (Minor if any)
+
 - May need canvas context for future features
 - Could add canvas switcher/breadcrumb
 
 **`app/canvas/_components/PropertiesPanel.tsx`** (Minimal)
+
 - Already operates on selected objects, no canvas-specific logic
 
 #### Custom Hooks (Moderate Changes)
 
 **`app/canvas/_hooks/useObjects.ts`** (Moderate refactor)
+
 - Accept `canvasId` parameter
 - Pass to all Firestore operations
 - Update subscription to filter by canvas
 - Ensure all CRUD operations include canvasId
 
 **`app/canvas/_hooks/useCursors.ts`** (Moderate refactor)
+
 - Accept `canvasId` parameter
 - Pass as sessionId to all realtime.ts functions
 - Update subscription path
 
 **`app/canvas/_hooks/usePresence.ts`** (Moderate refactor)
+
 - Accept `canvasId` parameter
 - Pass as sessionId to all realtime.ts functions
 - Update subscription path
 
 **`app/canvas/_hooks/useActiveTransforms.ts`** (Check if exists - moderate)
+
 - If this exists and uses realtime DB, needs canvasId
 
 #### Shape System (Moderate Changes)
 
 **`app/canvas/_lib/shapes.ts`** (Moderate refactor)
+
 - Update `createDefault()` functions to accept/include `canvasId`
 - Update `toFirestore()` to ensure `canvasId` is included
 - Update `fromFirestore()` to extract `canvasId`
 
 **`app/canvas/_components/shapes/*.tsx`** (Minimal if any)
+
 - Shape components likely don't need changes (operate on object data)
 
 #### New Components Needed
 
 **`app/canvas/_components/CanvasDashboard.tsx`** (New)
+
 - Grid/list view of canvases
 - Canvas cards with name, preview, metadata
 - Create button
 - Delete confirmation modal
 
 **`app/canvas/_components/CanvasCard.tsx`** (New)
+
 - Individual canvas card component
 - Thumbnail/preview (optional for v1)
 - Name, dimensions (e.g., "1920×1080"), creation date, last modified
@@ -151,6 +174,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Edit name inline or modal
 
 **`app/canvas/_components/CreateCanvasModal.tsx`** (New)
+
 - Modal dialog for canvas creation
 - Input for canvas name
 - Inputs for canvas dimensions (width and height in pixels)
@@ -159,6 +183,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Cancel/Create buttons
 
 **`app/canvas/_components/CanvasHeader.tsx`** (New or refactor existing)
+
 - Show current canvas name
 - Breadcrumb navigation (Dashboard / Canvas Name)
 - Canvas settings/rename option
@@ -166,6 +191,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Hooks Needed
 
 **`app/canvas/_hooks/useCanvases.ts`** (New)
+
 - List user's canvases
 - Subscribe to canvas list changes
 - Create canvas
@@ -173,6 +199,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Update canvas metadata
 
 **`app/canvas/_hooks/useCanvas.ts`** (New)
+
 - Get single canvas by ID
 - Subscribe to canvas metadata changes
 - Handle canvas not found
@@ -180,6 +207,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Library Functions
 
 **`lib/firebase/canvas.ts`** (New file)
+
 - Canvas CRUD operations
 - `createCanvas(userId, name, width, height)` - creates canvas with dimensions
 - `getCanvas(canvasId)`
@@ -192,6 +220,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Security Rules
 
 **`firestore.rules`** (Major update)
+
 - Currently allows all read/write (open for development)
 - Need to add rules for:
   - `canvases` collection: users can read/write their own canvases
@@ -199,6 +228,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
   - Nested structure: if using `canvases/{canvasId}/objects/{objectId}`
 
 **`database.rules.json`** (Major update)
+
 - Currently allows all read/write
 - Need to add rules for:
   - `sessions/{canvasId}/cursors`: authenticated users can write their own
@@ -208,6 +238,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Utilities
 
 **`lib/constants/canvas.ts`** (New or update existing)
+
 - Default canvas name: "Untitled Canvas"
 - Default canvas dimensions: 1920x1080
 - Canvas dimension presets: [1920x1080, 1024x768, 800x600, custom]
@@ -218,26 +249,31 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 #### Store (Minimal Changes)
 
 **`app/canvas/_store/canvas-store.ts`** (Minor additions)
+
 - Potentially add `currentCanvasId` to store
 - Or keep it in URL params only (recommended)
 
 ### Existing Patterns We Can Leverage
 
 **Authentication & User Context:**
+
 - `useAuth()` hook already provides current user
 - Can use `user.uid` for canvas ownership
 - Auth guards already in place via `ProtectedRoute`
 
 **Real-time Subscriptions Pattern:**
+
 - Existing `subscribeToObjects` pattern can be replicated for canvases
 - Already handle subscription cleanup in hooks
 - Error handling patterns established
 
 **CRUD Utilities:**
+
 - Firestore helper patterns established in `lib/firebase/firestore.ts`
 - Can follow same pattern for canvas operations
 
 **Component Organization:**
+
 - Co-location pattern: new canvas components in `app/canvas/_components/`
 - Hook pattern: new canvas hooks in `app/canvas/_hooks/`
 - Route grouping: dynamic route `[canvasId]` follows Next.js conventions
@@ -245,19 +281,23 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 ### Potential Conflicts & Dependencies
 
 **Backwards Compatibility:**
+
 - Existing canvasObjects in database have no canvasId
 - Need migration strategy (covered in Phase 4)
 
 **URL Structure Change:**
+
 - Current bookmarks to `/canvas` will break
 - Could redirect `/canvas` → `/canvas` (dashboard) ✓
 - Canvas URLs become `/canvas/[id]` (shareable)
 
 **Lock System:**
+
 - Locks are stored on objects (no change needed)
 - But should verify locks don't leak across canvases (they won't with proper scoping)
 
 **Presence Tracking:**
+
 - Users could be on multiple canvases in different tabs
 - Current presence system handles this (keyed by userId within session)
 - Each canvas session is independent
@@ -271,6 +311,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 **Goal:** Establish canvas data structure and CRUD operations without touching UI
 
 **Tasks:**
+
 1. Create `lib/firebase/canvas.ts` with canvas CRUD operations
 2. Add `Canvas` type to `types/canvas.ts` with dimensions (width, height)
 3. Create `lib/constants/canvas.ts` with default dimensions and presets
@@ -286,6 +327,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
    - `subscribeToUserCanvases(userId, callback)` → real-time list
 
 **Testing:**
+
 - Create canvas via Firebase console or test script
 - Verify queries return correct data
 - Test subscriptions fire correctly
@@ -299,6 +341,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 **Goal:** Build canvas selection/management interface
 
 **Tasks:**
+
 1. Create `app/canvas/_hooks/useCanvases.ts` hook
    - Wraps canvas CRUD operations
    - Manages loading states and errors
@@ -321,6 +364,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 5. Add navigation: clicking card → `/canvas/[canvasId]`
 
 **UX Flow:**
+
 - User logs in → redirected to `/canvas` (dashboard)
 - Dashboard shows list of their canvases
 - Click "New Canvas" → modal → enter name and dimensions (or select preset) → creates → navigates to new canvas
@@ -328,6 +372,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Hover on canvas card → delete button appears → confirm → deletes canvas
 
 **Testing:**
+
 - Create multiple canvases
 - Delete canvas
 - Navigate to canvas (will 404 until Phase 3)
@@ -341,6 +386,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 **Goal:** Make the canvas page work with dynamic canvas IDs
 
 **Tasks:**
+
 1. Create `app/canvas/[canvasId]/page.tsx`
    - Move current canvas logic from `app/canvas/page.tsx`
    - Extract `canvasId` from params: `const { canvasId } = await params`
@@ -372,6 +418,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
    - Include `canvasId` in created objects
 
 **Canvas Loading Flow:**
+
 - URL: `/canvas/abc123`
 - Page loads → fetch canvas metadata → 404 if not found
 - Subscribe to objects for `canvasId: abc123`
@@ -380,6 +427,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 - Render canvas with isolated data
 
 **Testing:**
+
 - Navigate to canvas from dashboard
 - Verify objects, cursors, presence are scoped to canvas
 - Open two canvases in different tabs → verify isolation
@@ -396,6 +444,7 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 **Migration Strategy:**
 
 **Create Default Canvas:**
+
 1. Create a "Default Canvas" with a known ID (e.g., `"default-canvas"`)
 2. Set `createdBy` to first user or admin
 3. Set `createdAt` to earliest object timestamp (or now)
@@ -403,21 +452,25 @@ Transform the single-canvas collaborative workspace into a multi-canvas applicat
 **Migrate Existing Objects:**
 
 If using **Nested Collections** (Option A):
+
 - Read all documents from `canvasObjects` collection
 - Write to `canvases/default-canvas/objects/{objectId}`
 - Delete from old `canvasObjects` collection (after verification)
 
 If using **Flat with Field** (Option B):
+
 - Read all documents from `canvasObjects` collection
 - Update each with `canvasId: "default-canvas"`
 - Queries automatically filter by canvasId going forward
 
 **Migrate Realtime Sessions:**
+
 - Data in `sessions/canvas-session-default/` can stay
 - Update code to use `sessions/default-canvas/` going forward
 - Old data will age out naturally (30-min cleanup)
 
 **Implementation:**
+
 1. Create migration script or admin function
 2. Run in development first, verify data integrity
 3. Create backup of Firestore before production migration
@@ -425,10 +478,12 @@ If using **Flat with Field** (Option B):
 5. Monitor for errors
 
 **Rollback Plan:**
+
 - Keep old data for 7 days before deletion
 - Can revert code changes and restore old collection if needed
 
 **Testing:**
+
 - Create objects before migration
 - Run migration
 - Verify all objects appear in default canvas
@@ -446,7 +501,9 @@ If using **Flat with Field** (Option B):
 **Tasks:**
 
 **Security Rules:**
+
 1. Update `firestore.rules`:
+
    ```
    match /canvases/{canvasId} {
      allow read: if request.auth != null && resource.data.createdBy == request.auth.uid;
@@ -458,6 +515,7 @@ If using **Flat with Field** (Option B):
      }
    }
    ```
+
 2. Update `database.rules.json`:
    ```json
    {
@@ -483,6 +541,7 @@ If using **Flat with Field** (Option B):
    ```
 
 **Polish:**
+
 1. Add canvas rename functionality
    - Edit icon on canvas card
    - Inline edit or modal
@@ -506,11 +565,13 @@ If using **Flat with Field** (Option B):
    - Network errors → retry mechanism
 
 **Performance:**
+
 - Add pagination to canvas list (if user has 50+ canvases)
 - Lazy load canvas thumbnails
 - Optimize queries with indexes
 
 **Testing:**
+
 - Canvas permissions (can't access other user's canvases)
 - Rename canvas
 - Delete canvas with many objects
@@ -526,78 +587,95 @@ If using **Flat with Field** (Option B):
 ### Edge Cases to Handle
 
 **Canvas Not Found:**
+
 - User navigates to `/canvas/invalid-id`
 - Solution: Show 404 page, link to dashboard, suggest canvases
 
 **Canvas Deleted While Editing:**
+
 - User A deletes canvas while User B is editing it
 - Solution: Canvas subscription detects deletion → show modal → redirect to dashboard
 
 **No Canvases:**
+
 - New user signs up, lands on empty dashboard
 - Solution: Empty state with "Create your first canvas" prompt, auto-create default canvas, or show tutorial
 
 **Rapid Canvas Creation:**
+
 - User spams "Create Canvas" button
 - Solution: Disable button while creating, add debounce, show loading state
 
 **Large Canvas List:**
+
 - User has 100+ canvases
 - Solution: Pagination (show 20 per page), search/filter, sort by recent
 
 **Default Canvas Migration:**
+
 - Multiple users have objects in old structure
 - Solution: Migrate to shared default canvas OR create per-user default canvas
 
 **Browser History:**
+
 - User navigates back from canvas to dashboard
 - Solution: Works automatically with Next.js routing, no special handling
 
 **Direct Canvas Links:**
+
 - User shares `/canvas/abc123` URL
 - Solution: Check canvas permissions, show permission error if not owner (later: add sharing)
 
 **Multiple Tabs:**
+
 - User opens same canvas in multiple tabs
 - Solution: Works fine, realtime sync keeps them in sync, multiple cursor instances (same color)
 
 **Concurrent Deletion:**
+
 - Two users try to delete same canvas simultaneously
 - Solution: Firestore handles this, first one succeeds, second gets "not found"
 
 ### Potential Risks & Technical Challenges
 
 **Data Migration Risk:**
+
 - **Risk:** Lose existing objects during migration
 - **Mitigation:** Create backup, test in dev extensively, run migration script with verification, keep old data for rollback period
 - **Rollback:** Restore from backup, revert code changes
 
 **Realtime DB Path Changes:**
+
 - **Risk:** Breaking change to presence/cursor tracking
 - **Mitigation:** Update all functions in single phase, test thoroughly before deploy
 - **Impact:** Temporary cursor/presence loss during deployment (recoverable)
 
 **URL Structure Breaking Change:**
+
 - **Risk:** Bookmarks to `/canvas` break
 - **Mitigation:** `/canvas` becomes dashboard (still valid), old direct-to-canvas bookmarks redirect to dashboard
 - **Impact:** Minor user inconvenience, but dashboard is proper entry point
 
 **Query Performance:**
+
 - **Risk:** Filtering objects by canvasId in flat collection could be slow
 - **Mitigation:** Add Firestore index on `canvasId`, use nested collections, limit objects per canvas
 - **Monitoring:** Add query time logging, optimize if >100ms
 
 **Lock System with Canvas Context:**
+
 - **Risk:** Locks might leak across canvases
 - **Mitigation:** Locks are stored on objects, objects are scoped by canvas, no cross-canvas contamination possible
 - **Testing:** Verify with multi-canvas multi-user scenario
 
 **Firestore Costs:**
+
 - **Risk:** Extra collection for canvases increases reads
 - **Mitigation:** Canvas metadata is small, cache in memory, use subscriptions (1 read then updates), minimal impact
 - **Estimate:** ~1 read per page load, negligible cost increase
 
 **State Management Complexity:**
+
 - **Risk:** Passing canvasId everywhere is error-prone
 - **Mitigation:** Use React Context for canvasId at canvas page level, reduce prop drilling
 - **Alternative:** Keep canvasId in URL only, hooks extract from router params (cleaner but more coupling)
@@ -605,18 +683,21 @@ If using **Flat with Field** (Option B):
 ### Testing Strategy
 
 **Unit Tests:**
+
 - Canvas CRUD operations (create, get, delete)
 - Canvas ownership queries
 - Object filtering by canvasId
 - Realtime path generation
 
 **Integration Tests:**
+
 - Create canvas → navigate → create object → verify in Firestore
 - Delete canvas → verify objects deleted
 - Subscribe to canvas list → create new → verify appears
 - Multi-canvas isolation (objects don't leak)
 
 **Manual Testing:**
+
 - **User Flow:** Login → Dashboard → Create Canvas → Edit → Return → Create Second Canvas → Switch → Verify Isolation
 - **Multi-User:** User A creates canvas → User B cannot see it
 - **Realtime:** User A and B on same canvas → cursors and objects sync
@@ -624,12 +705,14 @@ If using **Flat with Field** (Option B):
 - **Performance:** Load 10 canvases, 100 objects per canvas, 60 FPS
 
 **Load Testing:**
+
 - 50 canvases per user
 - 500 objects per canvas
 - 5 concurrent users on one canvas
 - Measure: query time, render time, sync latency
 
 **Security Testing:**
+
 - Try to access another user's canvas by ID (should fail)
 - Try to write to another user's canvas (should fail)
 - Verify rules in Firebase console
@@ -637,16 +720,19 @@ If using **Flat with Field** (Option B):
 ### Performance Implications
 
 **Positive Impacts:**
+
 - Smaller object queries (scoped by canvas, not global)
 - Faster render (fewer objects per canvas vs. all objects globally)
 - Better Firestore efficiency (targeted queries vs. scan all)
 
 **Potential Concerns:**
+
 - Additional canvas list query on dashboard (1 query, small dataset)
 - Canvas metadata fetch per canvas page load (cached after first load)
 - Migration one-time cost (batch writes)
 
 **Optimization Opportunities:**
+
 - Add Firestore indexes: `canvasId`, `createdBy`, composite `(createdBy, createdAt)`
 - Use snapshot listeners to cache canvas list
 - Lazy load canvas thumbnails (future feature)
@@ -655,25 +741,30 @@ If using **Flat with Field** (Option B):
 ### Security Considerations
 
 **Canvas Ownership:**
+
 - Only owner can read/write their canvases
 - Later: add sharing with permissions (viewer, editor)
 
 **Object Access:**
+
 - Objects inherit canvas permissions
 - If user can access canvas, they can access all objects in it
 - Later: add object-level permissions if needed
 
 **Realtime Database:**
+
 - Users can write their own cursor/presence
 - Users can read all cursors/presence in a session
 - Later: restrict read to canvas members only
 
 **Rules Testing:**
+
 - Use Firebase emulator for rule testing
 - Test all CRUD operations as different users
 - Verify permission denied errors
 
 **API Keys:**
+
 - Firebase config is public (expected for client SDK)
 - Security comes from rules, not hiding config
 - Ensure rules are tight before deploying
@@ -685,6 +776,7 @@ If using **Flat with Field** (Option B):
 ### Option A: Nested Collections (Recommended)
 
 **Firestore Structure:**
+
 ```
 canvases/ (collection)
   {canvasId}/ (document)
@@ -704,6 +796,7 @@ canvases/ (collection)
 ```
 
 **Realtime Database Structure:**
+
 ```
 sessions/
   {canvasId}/
@@ -714,18 +807,21 @@ sessions/
 ```
 
 **Pros:**
+
 - Clean data hierarchy
 - Automatic cascade delete (delete canvas → deletes all objects)
 - Clear ownership model
 - Firestore optimizes nested collections
 
 **Cons:**
+
 - Harder to query across canvases (not needed in this app)
 - Migration requires moving documents (doable)
 
 ### Option B: Flat with Field
 
 **Firestore Structure:**
+
 ```
 canvases/ (collection)
   {canvasId}/ (document)
@@ -738,11 +834,13 @@ canvasObjects/ (collection)
 ```
 
 **Pros:**
+
 - Simpler migration (just add canvasId field)
 - Can query across canvases if needed
 - Matches current structure
 
 **Cons:**
+
 - Need manual cascade delete (delete canvas → query + delete all objects)
 - Requires composite index on `(canvasId, zIndex, createdAt)`
 - Less clear data ownership
@@ -754,6 +852,7 @@ canvasObjects/ (collection)
 ## User Experience Flow
 
 ### New User Journey
+
 1. Sign up → Redirected to `/canvas` (dashboard)
 2. See empty state: "You don't have any canvases yet"
 3. Click "Create Canvas" → Modal appears
@@ -762,6 +861,7 @@ canvasObjects/ (collection)
 6. Blank canvas loads with specified dimensions → Start creating shapes
 
 ### Existing User Journey
+
 1. Log in → Redirected to `/canvas` (dashboard)
 2. See list of canvases (including migrated "Default Canvas")
 3. Click on "Default Canvas" → Opens with all previous work intact
@@ -769,6 +869,7 @@ canvasObjects/ (collection)
 5. Switch between canvases via dashboard (back button or breadcrumb)
 
 ### Collaborative Session
+
 1. User A creates "Team Brainstorm" canvas
 2. User A shares URL `/canvas/team-brainstorm-id` with User B (future: sharing UI)
 3. User B opens link → Sees canvas (if shared/public)
@@ -781,28 +882,33 @@ canvasObjects/ (collection)
 ## Future Enhancements (Out of Scope)
 
 **Canvas Sharing:**
+
 - Share canvas with other users (viewer, editor, admin roles)
 - Public vs. private canvases
 - Invite by email
 - Shareable links with permissions
 
 **Canvas Templates:**
+
 - "Blank Canvas", "Wireframe", "Flowchart" templates
 - User-created templates
 - Template gallery
 
 **Canvas Thumbnails:**
+
 - Generate preview image of canvas
 - Show in canvas card
 - Update on change (debounced)
 
 **Canvas Organization:**
+
 - Folders/tags for canvases
 - Search and filter
 - Sort by name, date, last modified
 - Archive canvases
 
 **Canvas Settings:**
+
 - Edit canvas dimensions after creation (resize canvas)
 - Grid settings per canvas
 - Snap settings per canvas
@@ -810,12 +916,14 @@ canvasObjects/ (collection)
 - Canvas bounds enforcement
 
 **Collaboration Features:**
+
 - Real-time comments on canvas
 - @mentions in comments
 - Canvas activity log
 - Notifications
 
 **Export/Import:**
+
 - Export canvas as JSON
 - Import canvas from file
 - Duplicate canvas
@@ -825,6 +933,7 @@ canvasObjects/ (collection)
 ## Success Criteria
 
 **Minimum Viable (Phase 1-3):**
+
 - Users can create multiple canvases
 - Users can switch between canvases
 - Objects, cursors, presence are isolated per canvas
@@ -832,11 +941,13 @@ canvasObjects/ (collection)
 - Can delete canvases
 
 **Complete (Phase 4):**
+
 - Existing data migrated to default canvas
 - No data loss
 - Backwards compatible
 
 **Production Ready (Phase 5):**
+
 - Security rules enforced
 - Proper error handling
 - Canvas rename works
@@ -886,12 +997,14 @@ canvasObjects/ (collection)
 **Risk Level:** Medium (migration and backwards compatibility are main risks)
 
 **Critical Path:**
+
 1. Data model & canvas CRUD (Phase 1)
 2. Dynamic routing & session scoping (Phase 3)
 3. Migration (Phase 4)
 4. Security rules (Phase 5)
 
 Non-critical (can iterate):
+
 - Dashboard UI polish
 - Canvas rename
 - Advanced permissions
@@ -901,6 +1014,7 @@ Non-critical (can iterate):
 ## Next Steps
 
 Once this plan is approved:
+
 1. Create detailed PR breakdown for each phase
 2. Set up feature branch: `feature/multiple-canvases`
 3. Start with Phase 1: Data model & backend infrastructure

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Sparkles, Users, Zap, MousePointer2, Wand2 } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Sparkles, Users, Zap, MousePointer2, Wand2 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -10,14 +10,16 @@ export default function Home() {
       <div className="max-w-6xl w-full space-y-12">
         <div className="text-center space-y-8">
           <div className="flex items-center justify-center gap-3">
-            <Image 
-              src="/favicon/apple-touch-icon.png" 
-              alt="Not-Figma Logo" 
-              width={48} 
+            <Image
+              src="/favicon/apple-touch-icon.png"
+              alt="Not-Figma Logo"
+              width={48}
               height={48}
               className="rounded-xl"
             />
-            <span className="text-3xl font-bold text-foreground">Not-Figma</span>
+            <span className="text-3xl font-bold text-foreground">
+              Not-Figma
+            </span>
           </div>
 
           <div className="space-y-4">
@@ -28,8 +30,8 @@ export default function Home() {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-balance leading-relaxed">
-              Real-time collaboration meets AI-powered design. Because it&apos;s 2025 and your design tool should
-              have AI in it. 🤯
+              Real-time collaboration meets AI-powered design. Because it&apos;s
+              2025 and your design tool should have AI in it. 🤯
             </p>
           </div>
 
@@ -49,9 +51,12 @@ export default function Home() {
             <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center mx-auto">
               <MousePointer2 className="w-6 h-6 text-orange-600" />
             </div>
-            <h3 className="text-lg font-semibold text-card-foreground">Multiplayer Cursors</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">
+              Multiplayer Cursors
+            </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              See everyone&apos;s cursor in real-time. It&apos;s like magic, but it&apos;s actually just WebSockets.
+              See everyone&apos;s cursor in real-time. It&apos;s like magic, but
+              it&apos;s actually just WebSockets.
             </p>
           </Card>
 
@@ -59,9 +64,12 @@ export default function Home() {
             <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center mx-auto">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-card-foreground">Real-Time Sync</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">
+              Real-Time Sync
+            </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Changes sync in under 100ms. Create, move, resize—everyone sees it instantly. Or fast enough, anyway. 
+              Changes sync in under 100ms. Create, move, resize—everyone sees it
+              instantly. Or fast enough, anyway.
             </p>
           </Card>
 
@@ -69,9 +77,12 @@ export default function Home() {
             <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mx-auto">
               <Wand2 className="w-6 h-6 text-purple-600" />
             </div>
-            <h3 className="text-lg font-semibold text-card-foreground">AI Canvas Agent</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">
+              AI Canvas Agent
+            </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              &quot;Create a login form.&quot; Boom. Done. The AI builds it while you watch. Though it may just be 3 rectangles.
+              &quot;Create a login form.&quot; Boom. Done. The AI builds it
+              while you watch. Though it may just be 3 rectangles.
             </p>
           </Card>
 
@@ -79,13 +90,16 @@ export default function Home() {
             <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mx-auto">
               <Zap className="w-6 h-6 text-green-600" />
             </div>
-            <h3 className="text-lg font-semibold text-card-foreground">Blazing Fast</h3>
+            <h3 className="text-lg font-semibold text-card-foreground">
+              Blazing Fast
+            </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              60 FPS with 500+ objects. Pan, zoom, transform—everything stays buttery smooth. *Note: Butter is not always smooth.
+              60 FPS with 500+ objects. Pan, zoom, transform—everything stays
+              buttery smooth. *Note: Butter is not always smooth.
             </p>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

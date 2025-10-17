@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { getAuthErrorMessage } from "@/app/(auth)/_lib/auth-helpers";
-import { validateDisplayName, validatePassword } from "@/app/(auth)/_lib/auth-helpers";
+import {
+  validateDisplayName,
+  validatePassword,
+} from "@/app/(auth)/_lib/auth-helpers";
 
 export default function ProfileForm() {
   const { user, updateDisplayName, updatePassword } = useAuth();
@@ -200,11 +203,7 @@ export default function ProfileForm() {
             />
           </div>
 
-          <Button
-            type="submit"
-            disabled={passwordLoading}
-            className="w-full"
-          >
+          <Button type="submit" disabled={passwordLoading} className="w-full">
             {passwordLoading ? "Updating..." : "Update Password"}
           </Button>
         </form>
@@ -212,4 +211,3 @@ export default function ProfileForm() {
     </div>
   );
 }
-

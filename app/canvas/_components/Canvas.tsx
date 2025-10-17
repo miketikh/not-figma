@@ -10,6 +10,7 @@ import PropertiesPanel from "./PropertiesPanel";
 import ViewControls from "./ViewControls";
 import DraftShapeRenderer from "./DraftShapeRenderer";
 import SelectionRectRenderer from "./SelectionRectRenderer";
+import AIChatPanel from "./AIChatPanel";
 import { useObjects } from "../_hooks/useObjects";
 import { batchUpdateObjects } from "@/lib/firebase/firestore";
 import { useCursors } from "../_hooks/useCursors";
@@ -45,7 +46,12 @@ interface CanvasProps {
   height?: number;
 }
 
-export default function Canvas({ canvasId, canvas, width, height }: CanvasProps) {
+export default function Canvas({
+  canvasId,
+  canvas,
+  width,
+  height,
+}: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const [isReady, setIsReady] = useState(false);
@@ -58,12 +64,12 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
 
   // Persisted shapes
   const [objects, setObjects] = useState<PersistedShape[]>([]);
-  
+
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const transformerRef = useRef<Konva.Transformer>(null);
   const shapeRefs = useRef<Map<string, Konva.Shape>>(new Map());
-  
+
   // Zustand store
   const {
     viewport,
@@ -74,24 +80,25 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     updateDefaultShapeProperty,
     showGrid,
     toggleGrid,
+    toggleAIChat,
   } = useCanvasStore();
   const { user } = useAuth();
-  
+
   // Stable callback for Firestore updates
-  const handleObjectsUpdate = useCallback((firestoreShapes: PersistedShape[]) => {
-    setObjects(firestoreShapes);
-  }, []);
+  const handleObjectsUpdate = useCallback(
+    (firestoreShapes: PersistedShape[]) => {
+      setObjects(firestoreShapes);
+    },
+    []
+  );
 
   // Object persistence with Firestore
-  const {
-    saveObject,
-    updateObjectInFirestore,
-    deleteObjectFromFirestore,
-  } = useObjects({
-    canvasId,
-    isReady,
-    onObjectsUpdate: handleObjectsUpdate,
-  });
+  const { saveObject, updateObjectInFirestore, deleteObjectFromFirestore } =
+    useObjects({
+      canvasId,
+      isReady,
+      onObjectsUpdate: handleObjectsUpdate,
+    });
 
   // Lock manager hook - manages distributed locks for canvas objects
   const lockManager = useLockManager({
@@ -260,6 +267,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
         updateDefaultShapeProperty(tool, properties);
       }
     },
+    toggleAIChat,
   });
 
   // Stop panning when space released
@@ -307,13 +315,12 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     }
   }, [containerSize.width, containerSize.height, canvas.width, canvas.height]);
 
-
   return (
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden"
       style={{
-        backgroundColor: '#f3f4f6',
+        backgroundColor: "#f3f4f6",
         cursor: getCursorStyle(activeTool, isPanning, spacePressed),
       }}
     >
@@ -342,114 +349,121 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
             .slice()
             .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
             .map((obj) => {
-            const lockedByOther = isLockedByOtherUser(
-              obj.lockedBy,
-              obj.lockedAt,
-              obj.lockTimeout || LOCK_TIMEOUT_MS,
-              user?.uid || null
-            );
-            const isSelectable = activeTool === "select" && !lockedByOther && !spacePressed;
-            const isSelected = selectedIds.includes(obj.id);
+              const lockedByOther = isLockedByOtherUser(
+                obj.lockedBy,
+                obj.lockedAt,
+                obj.lockTimeout || LOCK_TIMEOUT_MS,
+                user?.uid || null
+              );
+              const isSelectable =
+                activeTool === "select" && !lockedByOther && !spacePressed;
+              const isSelected = selectedIds.includes(obj.id);
 
-            // Get locking user info from presence
-            const lockingUser = lockedByOther && obj.lockedBy
-              ? onlineUsers.find(u => u.userId === obj.lockedBy)
-              : undefined;
+              // Get locking user info from presence
+              const lockingUser =
+                lockedByOther && obj.lockedBy
+                  ? onlineUsers.find((u) => u.userId === obj.lockedBy)
+                  : undefined;
 
-            return (
-              <ShapeComponent
-                key={obj.id}
-                object={obj as any}
-                isSelected={isSelected}
-                isLocked={lockedByOther}
-                isSelectable={isSelectable}
-                zoom={viewport.zoom}
-                lockingUserColor={lockingUser?.color}
-                lockingUserName={lockingUser?.displayName || lockingUser?.email}
-                onSelect={(e) => {
-                  const shiftPressed = e.evt.shiftKey;
-
-                  if (shiftPressed) {
-                    // Shift-click: toggle object in/out of selection
-                    setSelectedIds((prev) => {
-                      if (prev.includes(obj.id)) {
-                        // Remove from selection
-                        return prev.filter((id) => id !== obj.id);
-                      } else {
-                        // Add to selection
-                        return [...prev, obj.id];
-                      }
-                    });
-                  } else {
-                    // Normal click: replace selection
-                    setSelectedIds([obj.id]);
+              return (
+                <ShapeComponent
+                  key={obj.id}
+                  object={obj as any}
+                  isSelected={isSelected}
+                  isLocked={lockedByOther}
+                  isSelectable={isSelectable}
+                  zoom={viewport.zoom}
+                  lockingUserColor={lockingUser?.color}
+                  lockingUserName={
+                    lockingUser?.displayName || lockingUser?.email
                   }
-                }}
-                onTransform={(updates) => {
-                  const updatedObj = { ...obj, ...updates };
+                  onSelect={(e) => {
+                    const shiftPressed = e.evt.shiftKey;
 
-                  // Optimistic update to local state
-                  setObjects((prev) =>
-                    prev.map((o) => (o.id === obj.id ? updatedObj : o))
-                  );
+                    if (shiftPressed) {
+                      // Shift-click: toggle object in/out of selection
+                      setSelectedIds((prev) => {
+                        if (prev.includes(obj.id)) {
+                          // Remove from selection
+                          return prev.filter((id) => id !== obj.id);
+                        } else {
+                          // Add to selection
+                          return [...prev, obj.id];
+                        }
+                      });
+                    } else {
+                      // Normal click: replace selection
+                      setSelectedIds([obj.id]);
+                    }
+                  }}
+                  onTransform={(updates) => {
+                    const updatedObj = { ...obj, ...updates };
 
-                  // Multi-select: Batch Firestore writes
-                  if (selectedIds.length > 1) {
-                    // Accumulate this update
-                    pendingTransformEndUpdates.current.set(obj.id, updatedObj);
+                    // Optimistic update to local state
+                    setObjects((prev) =>
+                      prev.map((o) => (o.id === obj.id ? updatedObj : o))
+                    );
 
-                    // Clear any existing timer
-                    if (transformEndBatchTimer.current) {
-                      clearTimeout(transformEndBatchTimer.current);
+                    // Multi-select: Batch Firestore writes
+                    if (selectedIds.length > 1) {
+                      // Accumulate this update
+                      pendingTransformEndUpdates.current.set(
+                        obj.id,
+                        updatedObj
+                      );
+
+                      // Clear any existing timer
+                      if (transformEndBatchTimer.current) {
+                        clearTimeout(transformEndBatchTimer.current);
+                      }
+
+                      // Set a short timer to batch all updates together
+                      transformEndBatchTimer.current = setTimeout(() => {
+                        if (!user) return;
+
+                        // Collect all pending updates
+                        const updates = Array.from(
+                          pendingTransformEndUpdates.current.values()
+                        ).map((obj) => ({
+                          id: obj.id,
+                          changes: obj as Partial<any>,
+                          updatedBy: user.uid,
+                          updatedAt: Date.now(),
+                        }));
+
+                        // Batch write to Firestore
+                        batchUpdateObjects(canvasId, updates);
+
+                        // Clear pending updates
+                        pendingTransformEndUpdates.current.clear();
+                        transformEndBatchTimer.current = null;
+                      }, 10); // 10ms to collect all transform end events
+                    } else {
+                      // Single selection: Write immediately (existing behavior)
+                      updateObjectInFirestore(updatedObj);
                     }
 
-                    // Set a short timer to batch all updates together
-                    transformEndBatchTimer.current = setTimeout(() => {
-                      if (!user) return;
-
-                      // Collect all pending updates
-                      const updates = Array.from(
-                        pendingTransformEndUpdates.current.values()
-                      ).map((obj) => ({
-                        id: obj.id,
-                        changes: obj as Partial<any>,
-                        updatedBy: user.uid,
-                        updatedAt: Date.now(),
-                      }));
-
-                      // Batch write to Firestore
-                      batchUpdateObjects(canvasId, updates);
-
-                      // Clear pending updates
-                      pendingTransformEndUpdates.current.clear();
-                      transformEndBatchTimer.current = null;
-                    }, 10); // 10ms to collect all transform end events
-                  } else {
-                    // Single selection: Write immediately (existing behavior)
-                    updateObjectInFirestore(updatedObj);
-                  }
-
-                  // Clear active transform broadcast
-                  transformBroadcast.clearTransformBroadcast(obj.id);
-                }}
-                onTransformMove={(updates) => {
-                  // Broadcast transform in real-time
-                  transformBroadcast.broadcastTransformMove(obj.id, updates);
-                }}
-                shapeRef={(node) => {
-                  if (node) {
-                    shapeRefs.current.set(obj.id, node);
-                  } else {
-                    shapeRefs.current.delete(obj.id);
-                  }
-                }}
-                onRenewLock={() => {
-                  lockManager.renewLockForObject(obj.id);
-                }}
-                onEditRequest={undefined}
-              />
-            );
-          })}
+                    // Clear active transform broadcast
+                    transformBroadcast.clearTransformBroadcast(obj.id);
+                  }}
+                  onTransformMove={(updates) => {
+                    // Broadcast transform in real-time
+                    transformBroadcast.broadcastTransformMove(obj.id, updates);
+                  }}
+                  shapeRef={(node) => {
+                    if (node) {
+                      shapeRefs.current.set(obj.id, node);
+                    } else {
+                      shapeRefs.current.delete(obj.id);
+                    }
+                  }}
+                  onRenewLock={() => {
+                    lockManager.renewLockForObject(obj.id);
+                  }}
+                  onEditRequest={undefined}
+                />
+              );
+            })}
 
           {/* Draft shape while drawing - rendered after persisted shapes so it appears on top */}
           {drawing.draftRect && activeTool && (
@@ -470,13 +484,15 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
           )}
 
           {/* Active Transform Overlays - rendered after shapes but before Transformer */}
-          {Object.entries(activeTransformsWithUser).map(([objectId, activeTransform]) => (
-            <ActiveTransformOverlay
-              key={`active-transform-${objectId}`}
-              activeTransform={activeTransform}
-              zoom={viewport.zoom}
-            />
-          ))}
+          {Object.entries(activeTransformsWithUser).map(
+            ([objectId, activeTransform]) => (
+              <ActiveTransformOverlay
+                key={`active-transform-${objectId}`}
+                activeTransform={activeTransform}
+                zoom={viewport.zoom}
+              />
+            )
+          )}
 
           {/* Transformer for selection handles */}
           {activeTool === "select" && !spacePressed && (
@@ -485,7 +501,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
               shouldOverdrawWholeArea={!shiftPressed && selectedIds.length > 1}
             />
           )}
-          
+
           {/* Remote Cursors - rendered inside canvas */}
           {Object.entries(remoteCursors).map(([userId, cursor]) => (
             <RemoteCursorKonva
@@ -499,7 +515,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
           ))}
         </StageContainer>
       )}
-      
+
       {/* Toolbar (centered bottom) */}
       {isReady && <Toolbar />}
 
@@ -527,12 +543,13 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
           onToggleGrid={toggleGrid}
         />
       )}
-      
+
+      {/* AI Chat Panel (slides in from right) */}
+      {isReady && <AIChatPanel canvasId={canvasId} selectedIds={selectedIds} />}
+
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <p style={{ color: 'var(--color-gray-500)' }}>
-            Loading canvas...
-          </p>
+          <p style={{ color: "var(--color-gray-500)" }}>Loading canvas...</p>
         </div>
       )}
     </div>

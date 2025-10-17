@@ -3,14 +3,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
-import { 
-  signUp as authSignUp, 
-  signIn as authSignIn, 
-  signOut as authSignOut, 
+import {
+  signUp as authSignUp,
+  signIn as authSignIn,
+  signOut as authSignOut,
   updateUserDisplayName as authUpdateDisplayName,
   updateUserPassword as authUpdatePassword,
   signInWithGoogle as authSignInWithGoogle,
-  mapFirebaseUser 
+  mapFirebaseUser,
 } from "@/lib/firebase/auth";
 import { generateUserColor } from "@/lib/firebase/realtime";
 import { AuthContextType, User } from "@/types/user";
@@ -26,13 +26,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const mappedUser = mapFirebaseUser(firebaseUser);
-        
+
         // Migration: Ensure existing users have a color assigned
         // This handles users who logged in before the color field was added
         if (!mappedUser.color) {
           mappedUser.color = generateUserColor(firebaseUser.uid);
         }
-        
+
         setUser(mappedUser);
       } else {
         setUser(null);
@@ -44,7 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName?: string
+  ) => {
     const newUser = await authSignUp(email, password, displayName);
     setUser(newUser);
   };
@@ -64,7 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(updatedUser);
   };
 
-  const updatePassword = async (currentPassword: string, newPassword: string) => {
+  const updatePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
     await authUpdatePassword(currentPassword, newPassword);
   };
 
@@ -94,4 +101,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -23,9 +23,15 @@ const STALE_TRANSFORM_THRESHOLD = 5000; // 5 seconds
 
 export function useActiveTransforms(canvasId: string) {
   const { user } = useAuth();
-  const [activeTransforms, setActiveTransforms] = useState<ActiveTransformMap>({});
-  const [groupTransforms, setGroupTransforms] = useState<Record<string, GroupActiveTransform>>({});
-  const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
+  const [activeTransforms, setActiveTransforms] = useState<ActiveTransformMap>(
+    {}
+  );
+  const [groupTransforms, setGroupTransforms] = useState<
+    Record<string, GroupActiveTransform>
+  >({});
+  const [presenceData, setPresenceData] = useState<
+    Record<string, UserPresence>
+  >({});
 
   // Subscribe to presence data (for display names and colors)
   useEffect(() => {
@@ -71,7 +77,11 @@ export function useActiveTransforms(canvasId: string) {
     if (!user || Object.keys(activeTransforms).length === 0) return;
 
     const cleanupInterval = setInterval(() => {
-      cleanupStaleTransforms(canvasId, activeTransforms, STALE_TRANSFORM_THRESHOLD);
+      cleanupStaleTransforms(
+        canvasId,
+        activeTransforms,
+        STALE_TRANSFORM_THRESHOLD
+      );
     }, 2000); // Check every 2 seconds
 
     return () => {
@@ -80,67 +90,70 @@ export function useActiveTransforms(canvasId: string) {
   }, [user, canvasId, activeTransforms]);
 
   // Merge transforms with presence data and filter out current user
-  const activeTransformsWithUser: ActiveTransformWithUserMap = useCallback(() => {
-    if (!user) return {};
+  const activeTransformsWithUser: ActiveTransformWithUserMap =
+    useCallback(() => {
+      if (!user) return {};
 
-    const result: ActiveTransformWithUserMap = {};
+      const result: ActiveTransformWithUserMap = {};
 
-    // Process individual transforms (single-select)
-    Object.entries(activeTransforms).forEach(([objectId, transform]) => {
-      // Filter out own user's transforms
-      if (transform.userId === user.uid) return;
+      // Process individual transforms (single-select)
+      Object.entries(activeTransforms).forEach(([objectId, transform]) => {
+        // Filter out own user's transforms
+        if (transform.userId === user.uid) return;
 
-      // Filter out stale transforms
-      const age = Date.now() - transform.timestamp;
-      if (age > STALE_TRANSFORM_THRESHOLD) return;
+        // Filter out stale transforms
+        const age = Date.now() - transform.timestamp;
+        if (age > STALE_TRANSFORM_THRESHOLD) return;
 
-      // Get user presence data
-      const presence = presenceData[transform.userId];
+        // Get user presence data
+        const presence = presenceData[transform.userId];
 
-      // Merge transform with user info
-      result[objectId] = {
-        ...transform,
-        displayName: presence?.displayName || "Anonymous",
-        color: presence?.color || "#888888",
-      };
-    });
-
-    // Process group transforms (multi-select)
-    // Expand each group transform into individual object overlays
-    Object.entries(groupTransforms).forEach(([userId, groupTransform]) => {
-      // Filter out own user's group transforms
-      if (userId === user.uid) return;
-
-      // Filter out stale transforms
-      const age = Date.now() - groupTransform.timestamp;
-      if (age > STALE_TRANSFORM_THRESHOLD) return;
-
-      // Get user presence data
-      const presence = presenceData[userId];
-      const displayName = presence?.displayName || "Anonymous";
-      const color = presence?.color || "#888888";
-
-      // Expand group transform to individual objects
-      Object.entries(groupTransform.transforms).forEach(([objectId, transformData]) => {
-        // Create an ActiveTransform for each object in the group
-        const expandedTransform: ActiveTransform = {
-          userId,
-          objectId,
-          timestamp: groupTransform.timestamp,
-          ...transformData,
-        } as ActiveTransform;
-
-        // Add to result with user info
+        // Merge transform with user info
         result[objectId] = {
-          ...expandedTransform,
-          displayName,
-          color,
+          ...transform,
+          displayName: presence?.displayName || "Anonymous",
+          color: presence?.color || "#888888",
         };
       });
-    });
 
-    return result;
-  }, [user, activeTransforms, groupTransforms, presenceData])();
+      // Process group transforms (multi-select)
+      // Expand each group transform into individual object overlays
+      Object.entries(groupTransforms).forEach(([userId, groupTransform]) => {
+        // Filter out own user's group transforms
+        if (userId === user.uid) return;
+
+        // Filter out stale transforms
+        const age = Date.now() - groupTransform.timestamp;
+        if (age > STALE_TRANSFORM_THRESHOLD) return;
+
+        // Get user presence data
+        const presence = presenceData[userId];
+        const displayName = presence?.displayName || "Anonymous";
+        const color = presence?.color || "#888888";
+
+        // Expand group transform to individual objects
+        Object.entries(groupTransform.transforms).forEach(
+          ([objectId, transformData]) => {
+            // Create an ActiveTransform for each object in the group
+            const expandedTransform: ActiveTransform = {
+              userId,
+              objectId,
+              timestamp: groupTransform.timestamp,
+              ...transformData,
+            } as ActiveTransform;
+
+            // Add to result with user info
+            result[objectId] = {
+              ...expandedTransform,
+              displayName,
+              color,
+            };
+          }
+        );
+      });
+
+      return result;
+    }, [user, activeTransforms, groupTransforms, presenceData])();
 
   return {
     activeTransformsWithUser,

@@ -62,4 +62,3 @@ export default function OnlineUsers({ canvasId }: OnlineUsersProps) {
     </div>
   );
 }
-

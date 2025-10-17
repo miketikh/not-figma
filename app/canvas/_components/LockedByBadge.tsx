@@ -6,7 +6,14 @@
  */
 
 import { useState } from "react";
-import { Group, Circle, Text, Label, Tag, Text as LabelText } from "react-konva";
+import {
+  Group,
+  Circle,
+  Text,
+  Label,
+  Tag,
+  Text as LabelText,
+} from "react-konva";
 
 interface LockedByBadgeProps {
   /** X position of the badge (top-right corner of bounding box) */

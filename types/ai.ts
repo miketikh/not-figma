@@ -43,5 +43,67 @@ export interface AIContext {
   selectedIds: string[];
   viewport: Viewport;
   userId: string;
+  canvasId: string;
 }
 
+/**
+ * Summary of selected object with full details
+ */
+export interface SelectedObjectSummary {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  colors: {
+    fill?: string;
+    stroke?: string;
+  };
+  rotation?: number;
+  content?: string; // For text objects
+}
+
+/**
+ * Object type counts for unselected objects
+ */
+export interface ObjectTypeCounts {
+  rectangles: number;
+  circles: number;
+  lines: number;
+  texts: number;
+  total: number;
+}
+
+/**
+ * Canvas context optimized for AI consumption (token-efficient)
+ * Returned by buildCanvasContext() helper
+ */
+export interface CanvasContextResult {
+  canvasId: string;
+  userId: string;
+  objectCount: number;
+  selectedObjects: SelectedObjectSummary[];
+  unselectedCounts: ObjectTypeCounts;
+  summary: string;
+}
+
+/**
+ * AI tool execution result
+ */
+export interface AIToolResult {
+  toolName: string;
+  success: boolean;
+  objectIds?: string[];
+  message: string;
+  error?: string;
+}
+
+/**
+ * AI chat message
+ */
+export interface AIChatMessage {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  timestamp: number;
+  toolResults?: AIToolResult[];
+}

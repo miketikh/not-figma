@@ -28,8 +28,7 @@ export function mapFirebaseUser(firebaseUser: FirebaseUser): User {
     displayName: firebaseUser.displayName,
     photoURL: firebaseUser.photoURL,
     emailVerified: firebaseUser.emailVerified,
-    createdAt:
-      firebaseUser.metadata.creationTime || new Date().toISOString(),
+    createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
     lastLoginAt:
       firebaseUser.metadata.lastSignInTime || new Date().toISOString(),
     color: generateUserColor(firebaseUser.uid), // Deterministic color based on user ID
@@ -64,7 +63,11 @@ export async function signUp(
  * Sign in an existing user with email and password
  */
 export async function signIn(email: string, password: string): Promise<User> {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    email,
+    password
+  );
   return mapFirebaseUser(userCredential.user);
 }
 
@@ -78,7 +81,9 @@ export async function signOut(): Promise<void> {
 /**
  * Update the current user's display name
  */
-export async function updateUserDisplayName(displayName: string): Promise<User> {
+export async function updateUserDisplayName(
+  displayName: string
+): Promise<User> {
   const currentUser = auth.currentUser;
   if (!currentUser) {
     throw new Error("No user is currently signed in");
@@ -86,7 +91,7 @@ export async function updateUserDisplayName(displayName: string): Promise<User> 
 
   await updateProfile(currentUser, { displayName });
   await currentUser.reload();
-  
+
   return mapFirebaseUser(currentUser);
 }
 
@@ -121,8 +126,7 @@ export async function signInWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   // Optional: Add scopes if you need additional permissions
   // provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-  
+
   const userCredential = await signInWithPopup(auth, provider);
   return mapFirebaseUser(userCredential.user);
 }
-

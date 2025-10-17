@@ -24,7 +24,7 @@ export function calculateZoomToPoint(
   containerHeight: number
 ): { zoom: number; x: number; y: number } {
   // Calculate new zoom
-  let newZoom = currentZoom * (0.999 ** delta);
+  let newZoom = currentZoom * 0.999 ** delta;
   newZoom = clampZoom(newZoom);
 
   // Calculate new position to zoom toward pointer

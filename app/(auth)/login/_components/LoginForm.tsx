@@ -63,9 +63,7 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900">
-          Welcome back
-        </h2>
+        <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
         <p className="mt-2 text-sm text-gray-600">
           Sign in to continue to Not-Figma
         </p>
@@ -95,45 +93,42 @@ export default function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+            <span className="px-2 bg-white text-gray-500">
+              Or continue with email
+            </span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              autoComplete="email"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-            />
-          </div>
-        </div>
-
-          <Button
-            type="submit"
-            size="lg"
-            disabled={loading}
-            className="w-full"
-          >
+          <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
@@ -151,4 +146,3 @@ export default function LoginForm() {
     </div>
   );
 }
-
