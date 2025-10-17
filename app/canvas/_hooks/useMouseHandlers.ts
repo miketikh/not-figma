@@ -4,7 +4,7 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import type { CanvasTool } from "@/types/canvas";
 import { isDrawingTool } from "../_constants/tools";
 import { screenToCanvasCoordinates } from "../_lib/coordinates";
-import { isPointInBounds } from "../_lib/bounds";
+import { isPointInBounds, clampPointToBounds } from "../_lib/bounds";
 import { getShapeFactory } from "../_lib/shapes";
 import { isShapeTool } from "../_constants/tools";
 import type { PersistedShape } from "../_types/shapes";
@@ -110,7 +110,15 @@ export function useMouseHandlers({
         const canvasPoint = screenToCanvasCoordinates(stage, pointer);
         if (!canvasPoint) return;
 
-        drawing.startDrawing(canvasPoint);
+        // Clamp the start point to canvas bounds for creation tools
+        const clampedPoint = clampPointToBounds(
+          canvasPoint.x,
+          canvasPoint.y,
+          canvas.width,
+          canvas.height
+        );
+
+        drawing.startDrawing(clampedPoint);
       }
 
       // Place text object (left click, text tool)
@@ -121,17 +129,13 @@ export function useMouseHandlers({
         const canvasPoint = screenToCanvasCoordinates(stage, pointer);
         if (!canvasPoint) return;
 
-        // Check if click is within canvas bounds
-        if (
-          !isPointInBounds(
-            canvasPoint.x,
-            canvasPoint.y,
-            canvas.width,
-            canvas.height
-          )
-        ) {
-          return; // Don't place text outside bounds
-        }
+        // Clamp the click position to canvas bounds for text placement
+        const clampedPoint = clampPointToBounds(
+          canvasPoint.x,
+          canvasPoint.y,
+          canvas.width,
+          canvas.height
+        );
 
         // Get the text factory
         const factory = getShapeFactory("text");
@@ -140,9 +144,9 @@ export function useMouseHandlers({
         // Get default properties for text (including user-edited content)
         const defaults = isShapeTool("text") ? defaultShapeProperties.text : {};
 
-        // Create new text object at click position
+        // Create new text object at clamped position
         const newText = factory.createDefault(
-          { x: canvasPoint.x, y: canvasPoint.y, width: 100, height: 30 },
+          { x: clampedPoint.x, y: clampedPoint.y, width: 100, height: 30 },
           defaults,
           canvasId
         );
@@ -184,12 +188,20 @@ export function useMouseHandlers({
     const canvasPoint = screenToCanvasCoordinates(stage, pointer);
     if (!canvasPoint) return;
 
-    // Update cursor coordinates display
+    // Check if cursor is within canvas bounds
+    const isWithinBounds = isPointInBounds(
+      canvasPoint.x,
+      canvasPoint.y,
+      canvas.width,
+      canvas.height
+    );
+
+    // Update cursor coordinates display (hide when outside bounds)
     if (onCursorMove) {
       onCursorMove({
         x: canvasPoint.x,
         y: canvasPoint.y,
-        visible: true,
+        visible: isWithinBounds,
       });
     }
 
@@ -202,7 +214,14 @@ export function useMouseHandlers({
     if (drawing.isDrawing && drawing.draftRect) {
       drawing.updateDrawing(canvasPoint);
     }
-  }, [stageRef, drawing, selection, onCursorMove]);
+  }, [
+    stageRef,
+    drawing,
+    selection,
+    onCursorMove,
+    canvas.width,
+    canvas.height,
+  ]);
 
   const handleMouseUp = useCallback(
     (e: KonvaEventObject<MouseEvent>) => {
@@ -287,13 +306,21 @@ export function useMouseHandlers({
       const canvasPoint = screenToCanvasCoordinates(stage, pointer);
       if (!canvasPoint) return;
 
+      // Check if cursor is within canvas bounds
+      const isWithinBounds = isPointInBounds(
+        canvasPoint.x,
+        canvasPoint.y,
+        canvas.width,
+        canvas.height
+      );
+
       onCursorMove({
         x: canvasPoint.x,
         y: canvasPoint.y,
-        visible: true,
+        visible: isWithinBounds,
       });
     }
-  }, [stageRef, onCursorMove]);
+  }, [stageRef, onCursorMove, canvas.width, canvas.height]);
 
   const handleMouseLeave = useCallback(() => {
     // Cursor left canvas area
