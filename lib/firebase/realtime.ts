@@ -1,11 +1,13 @@
 /**
  * Realtime Database helper functions
  * High-frequency updates for cursors and presence tracking
+ *
+ * IMPORTANT: All Realtime Database write operations use safe wrappers that
+ * automatically filter out undefined values to prevent Firebase errors.
  */
 
 import {
   ref,
-  set,
   get,
   remove,
   onValue,
@@ -19,6 +21,7 @@ import {
   animals,
 } from "unique-names-generator";
 import { realtimeDb } from "./config";
+import { safeSet } from "./realtime-utils";
 import { CursorMap } from "@/types/canvas";
 import { UserPresence } from "@/types/user";
 
@@ -53,7 +56,7 @@ export async function updateCursorPosition(
     realtimeDb,
     `${getSessionPath(canvasId, "cursors")}/${userId}`
   );
-  await set(cursorRef, {
+  await safeSet(cursorRef, {
     userId,
     x,
     y,
@@ -132,7 +135,7 @@ export async function setUserPresence(
     isOnline: true,
   };
 
-  await set(presenceRef, presence);
+  await safeSet(presenceRef, presence);
 
   // Set up disconnect handler to mark user as offline
   const disconnectRef = onDisconnect(presenceRef);
@@ -161,7 +164,7 @@ export async function updatePresenceHeartbeat(
 
   if (snapshot.exists()) {
     const presence = snapshot.val() as UserPresence;
-    await set(presenceRef, {
+    await safeSet(presenceRef, {
       ...presence,
       lastSeen: Date.now(),
       isOnline: true,
@@ -189,7 +192,7 @@ export async function removeUserPresence(
   const snapshot = await get(presenceRef);
   if (snapshot.exists()) {
     const presence = snapshot.val() as UserPresence;
-    await set(presenceRef, {
+    await safeSet(presenceRef, {
       ...presence,
       isOnline: false,
       lastSeen: Date.now(),

@@ -94,6 +94,81 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 - Presence heartbeats every 30s
 - Optimistic updates for smooth UX
 
+### Firebase Write Operations Pattern
+
+**IMPORTANT: Always use safe wrappers for Firebase write operations**
+
+Firebase doesn't accept `undefined` values in writes. To prevent errors, all Firebase write operations use safe wrapper functions that automatically filter out undefined values.
+
+#### Firestore Operations
+
+**Safe wrappers in `lib/firebase/firestore.ts`:**
+- `safeSetDoc()` - Use instead of `setDoc()`
+- `safeUpdateDoc()` - Use instead of `updateDoc()`
+
+**Example:**
+```typescript
+import { safeSetDoc, safeUpdateDoc } from '@/lib/firebase/firestore';
+
+// Create document - undefined values automatically filtered
+await safeSetDoc(docRef, {
+  name: 'John',
+  age: undefined,  // This will be filtered out
+  email: 'john@example.com'
+});
+
+// Update document - undefined values automatically filtered
+await safeUpdateDoc(docRef, {
+  lastSeen: Date.now(),
+  status: undefined  // This will be filtered out
+});
+```
+
+**Batch operations:**
+For `writeBatch()` operations, use the existing `removeUndefinedValues()` helper before adding updates to the batch.
+
+#### Realtime Database Operations
+
+**Safe wrappers in `lib/firebase/realtime-utils.ts`:**
+- `safeSet()` - Use instead of `set()`
+- `safeUpdate()` - Use instead of `update()`
+- `safePush()` - Use instead of `push()`
+
+**Example:**
+```typescript
+import { safeSet, safeUpdate } from '@/lib/firebase/realtime-utils';
+import { ref } from 'firebase/database';
+
+// Set data - undefined values automatically filtered recursively
+await safeSet(userRef, {
+  name: 'John',
+  status: undefined,  // This will be filtered out
+  metadata: {
+    lastSeen: Date.now(),
+    device: undefined  // Nested undefined values also filtered
+  }
+});
+
+// Update data - undefined values automatically filtered
+await safeUpdate(userRef, {
+  lastSeen: Date.now(),
+  status: undefined  // This will be filtered out
+});
+```
+
+**Why this pattern?**
+- Centralized solution prevents undefined value errors across the entire codebase
+- Easy to maintain - all undefined filtering happens in one place
+- Drop-in replacements for Firebase SDK functions
+- Type-safe with full TypeScript support
+- Already used in all Firebase write operations throughout the codebase
+
+**Files that use safe wrappers:**
+- `lib/firebase/firestore.ts` - All Firestore CRUD and lock operations
+- `lib/firebase/canvas.ts` - Canvas metadata operations
+- `lib/firebase/realtime.ts` - Cursor and presence updates
+- `lib/firebase/realtime-transforms.ts` - Active transform broadcasts
+
 ## Current State
 
 ### Working Features ✅

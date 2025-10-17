@@ -1,10 +1,14 @@
 /**
  * Realtime Database helper functions for active transform broadcasting
  * High-frequency updates for real-time transform visibility (~50ms / 20 updates per second)
+ *
+ * IMPORTANT: All Realtime Database write operations use safe wrappers that
+ * automatically filter out undefined values to prevent Firebase errors.
  */
 
-import { ref, set, remove, onValue, Unsubscribe } from "firebase/database";
+import { ref, remove, onValue, Unsubscribe } from "firebase/database";
 import { realtimeDb } from "./config";
+import { safeSet } from "./realtime-utils";
 import type {
   ActiveTransform,
   ActiveTransformMap,
@@ -53,7 +57,8 @@ export async function broadcastTransform(
     timestamp: Date.now(),
   } as ActiveTransform;
 
-  await set(transformRef, activeTransform);
+  // Use safe wrapper to automatically filter undefined values
+  await safeSet(transformRef, activeTransform);
 }
 
 /**
@@ -186,7 +191,8 @@ export async function broadcastGroupTransform(
     timestamp: Date.now(),
   };
 
-  await set(groupTransformRef, groupTransform);
+  // Use safe wrapper to automatically filter undefined values
+  await safeSet(groupTransformRef, groupTransform);
 }
 
 /**

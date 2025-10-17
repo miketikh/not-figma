@@ -1,6 +1,9 @@
 /**
  * Canvas CRUD operations
  * Firestore operations for canvas management using nested collection structure
+ *
+ * IMPORTANT: All Firestore write operations use safe wrappers that automatically
+ * filter out undefined values to prevent Firebase errors.
  */
 
 import {
@@ -8,8 +11,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  setDoc,
-  updateDoc,
   deleteDoc,
   query,
   where,
@@ -18,8 +19,10 @@ import {
   Unsubscribe,
   DocumentData,
   Timestamp,
+  type UpdateData,
 } from "firebase/firestore";
 import { db } from "./config";
+import { safeSetDoc, safeUpdateDoc } from "./firestore";
 import { Canvas } from "@/types/canvas";
 import {
   DEFAULT_CANVAS_NAME,
@@ -125,8 +128,8 @@ export async function createCanvas(
       isPublic,
     };
 
-    // Save to Firestore
-    await setDoc(canvasRef, canvas);
+    // Save to Firestore using safe wrapper
+    await safeSetDoc(canvasRef, canvas as DocumentData);
 
     return canvasId;
   } catch (error) {
@@ -284,7 +287,7 @@ export async function updateCanvas(
       updateData.name = updateData.name.trim();
     }
 
-    await updateDoc(canvasRef, updateData as DocumentData);
+    await safeUpdateDoc(canvasRef, updateData as UpdateData<DocumentData>);
   } catch (error) {
     console.error(`Error updating canvas ${canvasId}:`, error);
     throw error;

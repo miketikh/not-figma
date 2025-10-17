@@ -1,6 +1,9 @@
 /**
  * Firestore helper functions
  * CRUD operations for canvas objects
+ *
+ * IMPORTANT: All Firestore write operations use safe wrappers that automatically
+ * filter out undefined values to prevent Firebase errors.
  */
 
 import {
@@ -17,6 +20,10 @@ import {
   writeBatch,
   Unsubscribe,
   DocumentData,
+  type DocumentReference,
+  type WithFieldValue,
+  type UpdateData,
+  type SetOptions,
 } from "firebase/firestore";
 import { db } from "./config";
 import { CanvasObject, ObjectUpdate } from "@/types/canvas";
@@ -41,9 +48,19 @@ function getObjectRef(canvasId: string, objectId: string) {
 // CRUD Operations
 // ============================================================================
 
+// ============================================================================
+// Safe Wrapper Utilities
+// ============================================================================
+
 /**
- * Remove undefined values from an object
- * Firebase doesn't accept undefined values in documents
+ * Recursively remove undefined values from an object.
+ * Firebase Firestore doesn't accept undefined values in documents.
+ *
+ * This helper is kept for backward compatibility, but new code should use
+ * the safe wrapper functions below (safeSetDoc, safeUpdateDoc, etc.)
+ *
+ * @param obj - Object to clean
+ * @returns Cleaned object with undefined values removed
  */
 function removeUndefinedValues<T extends Record<string, any>>(obj: T): T {
   const cleaned: Record<string, any> = {};
@@ -56,6 +73,65 @@ function removeUndefinedValues<T extends Record<string, any>>(obj: T): T {
 }
 
 /**
+ * Safe wrapper for Firestore setDoc that filters undefined values.
+ * Use this instead of calling setDoc directly.
+ *
+ * @param reference - Document reference to write to
+ * @param data - Data to write (undefined values will be filtered out)
+ * @param options - Optional set options (merge, mergeFields)
+ * @returns Promise that resolves when write is complete
+ *
+ * @example
+ * ```typescript
+ * import { safeSetDoc } from '@/lib/firebase/firestore';
+ *
+ * await safeSetDoc(docRef, {
+ *   name: 'John',
+ *   age: undefined, // This will be filtered out
+ *   email: 'john@example.com'
+ * });
+ * ```
+ */
+export async function safeSetDoc<T extends DocumentData>(
+  reference: DocumentReference<T>,
+  data: WithFieldValue<T>,
+  options?: SetOptions
+): Promise<void> {
+  const cleanedData = removeUndefinedValues(data as Record<string, any>);
+  return setDoc(reference, cleanedData as WithFieldValue<T>, options || {});
+}
+
+/**
+ * Safe wrapper for Firestore updateDoc that filters undefined values.
+ * Use this instead of calling updateDoc directly.
+ *
+ * @param reference - Document reference to update
+ * @param data - Update data (undefined values will be filtered out)
+ * @returns Promise that resolves when update is complete
+ *
+ * @example
+ * ```typescript
+ * import { safeUpdateDoc } from '@/lib/firebase/firestore';
+ *
+ * await safeUpdateDoc(docRef, {
+ *   lastSeen: Date.now(),
+ *   status: undefined // This will be filtered out
+ * });
+ * ```
+ */
+export async function safeUpdateDoc<T extends DocumentData>(
+  reference: DocumentReference<T>,
+  data: UpdateData<T>
+): Promise<void> {
+  const cleanedData = removeUndefinedValues(data as Record<string, any>);
+  return updateDoc(reference, cleanedData as UpdateData<T>);
+}
+
+// ============================================================================
+// CRUD Operations
+// ============================================================================
+
+/**
  * Create a new canvas object
  */
 export async function createObject(
@@ -63,8 +139,7 @@ export async function createObject(
   object: CanvasObject
 ): Promise<void> {
   const objectRef = getObjectRef(canvasId, object.id);
-  const cleanedObject = removeUndefinedValues(object);
-  await setDoc(objectRef, cleanedObject);
+  await safeSetDoc(objectRef, object as DocumentData);
 }
 
 /**
@@ -108,9 +183,7 @@ export async function updateObject(
   updates: Partial<CanvasObject>
 ): Promise<void> {
   const objectRef = getObjectRef(canvasId, objectId);
-  // Filter out undefined values - Firestore doesn't accept them
-  const cleanedUpdates = removeUndefinedValues(updates);
-  await updateDoc(objectRef, cleanedUpdates as DocumentData);
+  await safeUpdateDoc(objectRef, updates as UpdateData<DocumentData>);
 }
 
 /**
@@ -137,7 +210,7 @@ export async function batchUpdateObjects(
 
   updates.forEach((update) => {
     const objectRef = getObjectRef(canvasId, update.id);
-    // Filter out undefined values - Firestore doesn't accept them
+    // Use removeUndefinedValues to clean the data before adding to batch
     const cleanedChanges = removeUndefinedValues(update.changes);
     batch.update(objectRef, cleanedChanges as DocumentData);
   });
@@ -265,13 +338,13 @@ export async function acquireLock(
   }
 
   // Acquire or renew lock
-  await updateDoc(objectRef, {
+  await safeUpdateDoc(objectRef, {
     lockedBy: userId,
     lockedAt: now,
     lockTimeout: LOCK_TIMEOUT_MS,
     updatedBy: userId,
     updatedAt: now,
-  });
+  } as UpdateData<DocumentData>);
 
   return { success: true, lockedBy: userId, expiresAt: now + LOCK_TIMEOUT_MS };
 }
@@ -293,12 +366,12 @@ export async function releaseLock(
 
   // Only release if we own the lock
   if (obj.lockedBy === userId) {
-    await updateDoc(objectRef, {
+    await safeUpdateDoc(objectRef, {
       lockedBy: null,
       lockedAt: null,
       updatedBy: userId,
       updatedAt: Date.now(),
-    });
+    } as UpdateData<DocumentData>);
     return true;
   }
 
@@ -322,11 +395,11 @@ export async function renewLock(
 
   // Only renew if we own the lock
   if (obj.lockedBy === userId) {
-    await updateDoc(objectRef, {
+    await safeUpdateDoc(objectRef, {
       lockedAt: Date.now(),
       updatedBy: userId,
       updatedAt: Date.now(),
-    });
+    } as UpdateData<DocumentData>);
     return true;
   }
 
