@@ -17,6 +17,7 @@ interface StageContainerProps {
   onMouseMove?: (e: KonvaEventObject<MouseEvent>) => void;
   onMouseUp?: (e: KonvaEventObject<MouseEvent>) => void;
   onDragEnd?: (e: KonvaEventObject<DragEvent>) => void;
+  dragBoundFunc?: (pos: { x: number; y: number }) => { x: number; y: number };
   stageRef?: React.RefObject<Konva.Stage | null>;
   children?: React.ReactNode;
   canvasWidth?: number;
@@ -40,6 +41,7 @@ export default function StageContainer({
   onMouseMove,
   onMouseUp,
   onDragEnd,
+  dragBoundFunc,
   stageRef,
   children,
   canvasWidth,
@@ -102,6 +104,7 @@ export default function StageContainer({
         scaleX={scale}
         scaleY={scale}
         draggable={draggable}
+        dragBoundFunc={dragBoundFunc}
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}

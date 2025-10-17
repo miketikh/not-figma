@@ -42,6 +42,7 @@ import type { ObjectTransformData } from "@/app/canvas/_types/active-transform";
 import { screenToCanvasCoordinates } from "../_lib/coordinates";
 import { getIntersectingObjects } from "../_lib/intersection";
 import { isPointInBounds, clampPointToBounds } from "../_lib/bounds";
+import { constrainViewport } from "../_lib/viewport-constraints";
 
 interface CanvasProps {
   canvasId: string;
@@ -491,11 +492,32 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     };
   }, [canvasId, width, height, user?.uid, viewport.x, viewport.y, viewport.zoom]);
 
+  // Apply viewport constraints when container size or canvas size changes
+  useEffect(() => {
+    if (containerSize.width === 0 || containerSize.height === 0) return;
+
+    // Apply constraints to current viewport
+    const constrained = constrainViewport({
+      x: viewport.x,
+      y: viewport.y,
+      zoom: viewport.zoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    // Only update if position changed
+    if (constrained.x !== viewport.x || constrained.y !== viewport.y) {
+      updateViewport(constrained);
+    }
+  }, [containerSize.width, containerSize.height, canvas.width, canvas.height]);
+
   // Wheel zoom handler (zoom to pointer)
   const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     e.evt.stopPropagation();
-    
+
     const stage = stageRef.current;
     if (!stage) return;
 
@@ -506,7 +528,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     // Calculate new zoom
     const delta = e.evt.deltaY;
     let newZoom = oldScale * (0.999 ** delta);
-    
+
     // Clamp zoom
     if (newZoom > 5) newZoom = 5;
     if (newZoom < 0.1) newZoom = 0.1;
@@ -522,8 +544,19 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       y: pointer.y - mousePointTo.y * newZoom,
     };
 
+    // Apply viewport constraints
+    const constrained = constrainViewport({
+      x: newPos.x,
+      y: newPos.y,
+      zoom: newZoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
     // Update viewport store
-    updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
+    updateViewport({ x: constrained.x, y: constrained.y, zoom: newZoom });
   };
 
   // Mouse down handler for pan and drawing
@@ -756,13 +789,41 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     setIsPanning(false);
   };
 
+  // Drag bound function to constrain panning in real-time
+  const handleDragBound = useCallback((pos: { x: number; y: number }) => {
+    // Apply viewport constraints during drag
+    const constrained = constrainViewport({
+      x: pos.x,
+      y: pos.y,
+      zoom: viewport.zoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    return constrained;
+  }, [viewport.zoom, canvas.width, canvas.height, containerSize.width, containerSize.height]);
+
   // Drag end handler to sync viewport after pan
   const handleDragEnd = () => {
     const stage = stageRef.current;
     if (!stage) return;
-    
+
     const newPos = { x: stage.x(), y: stage.y() };
-    updateViewport(newPos);
+
+    // Apply viewport constraints (should already be constrained by dragBoundFunc, but safety net)
+    const constrained = constrainViewport({
+      x: newPos.x,
+      y: newPos.y,
+      zoom: viewport.zoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    updateViewport(constrained);
     setIsPanning(false);
   };
 
@@ -778,7 +839,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       x: containerSize.width / 2,
       y: containerSize.height / 2,
     };
-    
+
     const mousePointTo = {
       x: (center.x - viewport.x) / viewport.zoom,
       y: (center.y - viewport.y) / viewport.zoom,
@@ -789,7 +850,18 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       y: center.y - mousePointTo.y * newZoom,
     };
 
-    updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
+    // Apply viewport constraints
+    const constrained = constrainViewport({
+      x: newPos.x,
+      y: newPos.y,
+      zoom: newZoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    updateViewport({ x: constrained.x, y: constrained.y, zoom: newZoom });
   };
 
   const handleZoomOut = () => {
@@ -804,7 +876,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       x: containerSize.width / 2,
       y: containerSize.height / 2,
     };
-    
+
     const mousePointTo = {
       x: (center.x - viewport.x) / viewport.zoom,
       y: (center.y - viewport.y) / viewport.zoom,
@@ -815,7 +887,18 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       y: center.y - mousePointTo.y * newZoom,
     };
 
-    updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
+    // Apply viewport constraints
+    const constrained = constrainViewport({
+      x: newPos.x,
+      y: newPos.y,
+      zoom: newZoom,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    updateViewport({ x: constrained.x, y: constrained.y, zoom: newZoom });
   };
 
   const handleResetZoom = () => {
@@ -825,7 +908,18 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       y: containerSize.height / 2,
     };
 
-    updateViewport({ x: center.x, y: center.y, zoom: 1 });
+    // Apply viewport constraints
+    const constrained = constrainViewport({
+      x: center.x,
+      y: center.y,
+      zoom: 1,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      containerWidth: containerSize.width,
+      containerHeight: containerSize.height,
+    });
+
+    updateViewport({ x: constrained.x, y: constrained.y, zoom: 1 });
   };
 
 
@@ -857,6 +951,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
           y={viewport.y}
           scale={viewport.zoom}
           draggable={activeTool === "pan" || spacePressed}
+          dragBoundFunc={handleDragBound}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
