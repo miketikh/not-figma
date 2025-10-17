@@ -161,7 +161,7 @@ export interface ShapeFactory<T> {
   /**
    * Convert local shape to Firestore CanvasObject
    */
-  toFirestore: (shape: T, userId: string) => any;
+  toFirestore: (shape: T, userId: string, canvasId?: string) => any;
 
   /**
    * Convert Firestore CanvasObject to local shape

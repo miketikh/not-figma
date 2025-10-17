@@ -12,7 +12,6 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  where,
   orderBy,
   onSnapshot,
   writeBatch,
@@ -23,22 +22,12 @@ import { db } from "./config";
 import { CanvasObject, ObjectUpdate } from "@/types/canvas";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
 
-// Old flat collection name (for backwards compatibility)
-const OLD_CANVAS_OBJECTS_COLLECTION = "canvasObjects";
-
 /**
  * Get the nested collection path for canvas objects
  * Path format: canvases/{canvasId}/objects
  */
 function getObjectsCollectionPath(canvasId: string): string {
   return `canvases/${canvasId}/objects`;
-}
-
-/**
- * Get reference to the old flat collection (for migration fallback)
- */
-function getOldObjectsCollectionPath(): string {
-  return OLD_CANVAS_OBJECTS_COLLECTION;
 }
 
 /**
@@ -130,64 +119,12 @@ export async function batchDeleteObjects(canvasId: string, objectIds: string[]):
 }
 
 // ============================================================================
-// Migration Helper Functions
-// ============================================================================
-
-/**
- * Check if old data exists in the flat canvasObjects collection
- * Returns true if migration is needed
- */
-export async function shouldMigrate(userId?: string): Promise<boolean> {
-  try {
-    const oldObjectsRef = collection(db, getOldObjectsCollectionPath());
-    let q;
-
-    if (userId) {
-      // Check if this specific user has old data
-      q = query(oldObjectsRef, where("createdBy", "==", userId));
-    } else {
-      // Check if any old data exists (limit to 1 for performance)
-      q = query(oldObjectsRef);
-    }
-
-    const snapshot = await getDocs(q);
-    return !snapshot.empty;
-  } catch (error) {
-    console.error("Error checking for old data:", error);
-    return false;
-  }
-}
-
-/**
- * Get objects from old flat collection (for migration fallback)
- */
-async function getOldObjects(userId: string): Promise<CanvasObject[]> {
-  try {
-    const oldObjectsRef = collection(db, getOldObjectsCollectionPath());
-    const q = query(
-      oldObjectsRef,
-      where("createdBy", "==", userId),
-      orderBy("zIndex", "asc"),
-      orderBy("createdAt", "asc")
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => doc.data() as CanvasObject);
-  } catch (error) {
-    console.error("Error fetching old objects:", error);
-    return [];
-  }
-}
-
-// ============================================================================
 // Real-time Subscriptions
 // ============================================================================
 
 /**
  * Subscribe to all canvas objects changes for a specific canvas
  * Returns an unsubscribe function
- *
- * MIGRATION FALLBACK: If the nested collection is empty and canvasId starts with "default-canvas-",
- * it will check the old flat collection for backwards compatibility.
  */
 export function subscribeToObjects(
   canvasId: string,
@@ -197,35 +134,10 @@ export function subscribeToObjects(
   const objectsRef = collection(db, getObjectsCollectionPath(canvasId));
   const q = query(objectsRef, orderBy("zIndex", "asc"), orderBy("createdAt", "asc"));
 
-  let hasCheckedFallback = false;
-
   return onSnapshot(
     q,
-    async (snapshot) => {
+    (snapshot) => {
       const objects = snapshot.docs.map((doc) => doc.data() as CanvasObject);
-
-      // Fallback to old collection if:
-      // 1. New collection is empty
-      // 2. Canvas ID looks like a default canvas (migration target)
-      // 3. We haven't already checked fallback
-      if (objects.length === 0 && canvasId.startsWith("default-canvas-") && !hasCheckedFallback) {
-        hasCheckedFallback = true;
-
-        // Extract userId from canvasId (format: "default-canvas-{userId}")
-        const userId = canvasId.replace("default-canvas-", "");
-
-        try {
-          const oldObjects = await getOldObjects(userId);
-          if (oldObjects.length > 0) {
-            console.log(`[Migration Fallback] Found ${oldObjects.length} objects in old collection for user ${userId}`);
-            callback(oldObjects);
-            return;
-          }
-        } catch (error) {
-          console.error("Error loading fallback objects:", error);
-        }
-      }
-
       callback(objects);
     },
     (error) => {

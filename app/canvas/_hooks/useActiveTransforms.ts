@@ -71,13 +71,13 @@ export function useActiveTransforms(canvasId: string) {
     if (!user || Object.keys(activeTransforms).length === 0) return;
 
     const cleanupInterval = setInterval(() => {
-      cleanupStaleTransforms(activeTransforms, STALE_TRANSFORM_THRESHOLD);
+      cleanupStaleTransforms(canvasId, activeTransforms, STALE_TRANSFORM_THRESHOLD);
     }, 2000); // Check every 2 seconds
 
     return () => {
       clearInterval(cleanupInterval);
     };
-  }, [user, activeTransforms]);
+  }, [user, canvasId, activeTransforms]);
 
   // Merge transforms with presence data and filter out current user
   const activeTransformsWithUser: ActiveTransformWithUserMap = useCallback(() => {

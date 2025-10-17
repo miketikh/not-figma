@@ -125,10 +125,12 @@ export async function setupTransformDisconnectCleanup(): Promise<void> {
  * Clean up stale transforms that haven't been updated recently
  * Should be called periodically to prevent abandoned transforms from lingering
  *
- * @param maxAge - Maximum age in milliseconds (default 5 seconds)
+ * @param canvasId - The ID of the canvas
  * @param activeTransforms - Current active transforms map
+ * @param maxAge - Maximum age in milliseconds (default 5 seconds)
  */
 export async function cleanupStaleTransforms(
+  canvasId: string,
   activeTransforms: ActiveTransformMap,
   maxAge: number = 5000
 ): Promise<void> {
@@ -137,7 +139,7 @@ export async function cleanupStaleTransforms(
     (objectId) => now - activeTransforms[objectId].timestamp > maxAge
   );
 
-  await Promise.all(staleObjectIds.map((objectId) => clearTransform(objectId)));
+  await Promise.all(staleObjectIds.map((objectId) => clearTransform(canvasId, objectId)));
 }
 
 // ============================================================================

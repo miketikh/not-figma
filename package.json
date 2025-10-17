@@ -8,9 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "migrate": "tsx scripts/migrate-to-canvases.ts",
-    "migrate:dry-run": "tsx scripts/migrate-to-canvases.ts --dry-run"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
