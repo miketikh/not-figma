@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run linter on commit (faster than build)
+echo "🔍 Running lint check..."
+npm run lint
