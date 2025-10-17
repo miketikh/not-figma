@@ -21,6 +21,10 @@ interface SendMessageOptions {
   selectedIds: string[];
 }
 
+interface UseAIChatProps {
+  onAutoSelect?: (objectId: string) => void;
+}
+
 interface UseAIChatReturn {
   sendMessage: (options: SendMessageOptions) => Promise<void>;
   isLoading: boolean;
@@ -55,7 +59,8 @@ async function getAuthToken(): Promise<string> {
   return token;
 }
 
-export function useAIChat(): UseAIChatReturn {
+export function useAIChat(props?: UseAIChatProps): UseAIChatReturn {
+  const { onAutoSelect } = props || {};
   const { user } = useAuth();
   const { addChatMessage, chatHistory, aiSessionId } = useCanvasStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -163,6 +168,9 @@ export function useAIChat(): UseAIChatReturn {
           const data = await response.json();
           const { message: aiMessage, toolResults } = data;
 
+          // Debug: Log what we received from the API
+          console.log("[AI Chat Frontend] Received tool results:", toolResults);
+
           // Create AI message and add to chat history
           const assistantMessage: AIChatMessage = {
             id: `assistant-${Date.now()}`,
@@ -172,6 +180,35 @@ export function useAIChat(): UseAIChatReturn {
             toolResults: toolResults as AIToolResult[] | undefined,
           };
           addChatMessage(assistantMessage);
+
+          // Auto-select the last created object (if any)
+          if (onAutoSelect && toolResults && Array.isArray(toolResults)) {
+            // Filter for successful creation tools
+            const creationTools = [
+              "createRectangle",
+              "createCircle",
+              "createLine",
+              "createText",
+            ];
+            const createdIds = toolResults
+              .filter(
+                (r: AIToolResult) =>
+                  r.success &&
+                  creationTools.includes(r.toolName) &&
+                  r.objectIds &&
+                  r.objectIds.length > 0
+              )
+              .flatMap((r: AIToolResult) => r.objectIds || []);
+
+            // Select the last created object
+            if (createdIds.length > 0) {
+              const lastCreatedId = createdIds[createdIds.length - 1];
+              console.log(
+                `[AI Chat] Auto-selecting created object: ${lastCreatedId}`
+              );
+              onAutoSelect(lastCreatedId);
+            }
+          }
 
           // Success - clear loading state and return
           setIsLoading(false);
@@ -225,7 +262,7 @@ export function useAIChat(): UseAIChatReturn {
       };
       addChatMessage(errorChatMessage);
     },
-    [user, chatHistory, aiSessionId, addChatMessage]
+    [user, chatHistory, aiSessionId, addChatMessage, onAutoSelect]
   );
 
   return {

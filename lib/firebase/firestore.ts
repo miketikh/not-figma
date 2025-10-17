@@ -108,7 +108,9 @@ export async function updateObject(
   updates: Partial<CanvasObject>
 ): Promise<void> {
   const objectRef = getObjectRef(canvasId, objectId);
-  await updateDoc(objectRef, updates as DocumentData);
+  // Filter out undefined values - Firestore doesn't accept them
+  const cleanedUpdates = removeUndefinedValues(updates);
+  await updateDoc(objectRef, cleanedUpdates as DocumentData);
 }
 
 /**
@@ -135,7 +137,9 @@ export async function batchUpdateObjects(
 
   updates.forEach((update) => {
     const objectRef = getObjectRef(canvasId, update.id);
-    batch.update(objectRef, update.changes as DocumentData);
+    // Filter out undefined values - Firestore doesn't accept them
+    const cleanedChanges = removeUndefinedValues(update.changes);
+    batch.update(objectRef, cleanedChanges as DocumentData);
   });
 
   await batch.commit();

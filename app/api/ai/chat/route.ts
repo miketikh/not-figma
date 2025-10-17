@@ -232,6 +232,15 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
 6. Be concise and helpful in your responses
 7. If a tool execution fails, explain why and suggest alternatives
 
+**Guidelines for Updating Objects:**
+1. When users say "make it [property]" without selecting an object:
+   - If you just created an object in this conversation, you can update it directly
+   - The updateObject tool will automatically infer the last created object
+   - You can omit the objectId parameter and it will use: explicit ID > selected object > last created object
+2. If no object is selected and you haven't created any objects, ask the user to select one
+3. Always check your "Objects You Created in This Conversation" section for object IDs
+4. Priority order: explicit objectId parameter > selected object > last AI-created object
+
 **User ID:** ${userId}
 **Canvas ID:** ${canvasId}`;
 
@@ -375,18 +384,11 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
         );
 
         if (result) {
-          // The AI SDK may return the result nested or directly
-          // Try nested first, then fall back to direct
-          let toolResult = (result as any).result;
-          if (!toolResult || typeof toolResult !== "object") {
-            toolResult = result;
-          }
+          // The AI SDK returns the result in the 'output' field (not 'result')
+          const toolResult = (result as any).output;
 
-          // Explicitly check for success field - if it exists, use it; otherwise default to false
-          const success =
-            typeof toolResult?.success === "boolean"
-              ? toolResult.success
-              : false;
+          // Extract success - the tools return { success: true/false, ... }
+          const success = Boolean(toolResult?.success);
 
           toolResults.push({
             toolName: toolCall.toolName,
@@ -399,7 +401,6 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
             error: toolResult?.error,
           });
 
-          // Debug log to help troubleshoot
           console.log(
             `[AI Tool Result] ${toolCall.toolName}: success=${success}, message=${toolResult?.message}`
           );

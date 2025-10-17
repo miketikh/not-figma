@@ -204,7 +204,7 @@ export const createRectangle = tool({
       return {
         success: true,
         id: rect.id,
-        message: `Created rectangle at (${x}, ${y}) with size ${width}x${height}`,
+        message: `Created rectangle at (${x}, ${y}) with size ${width}×${height}`,
       };
     } catch (error) {
       const errorMessage =
@@ -519,7 +519,12 @@ export const updateObject = tool({
   description:
     "Update properties of an existing canvas object. Use this when the user wants to modify an object's position, size, colors, or other properties. Always check if the object is locked before updating.",
   inputSchema: z.object({
-    objectId: z.string().describe("ID of the object to update"),
+    objectId: z
+      .string()
+      .optional()
+      .describe(
+        "ID of the object to update. If not provided, will use selected object or last created object."
+      ),
     properties: z
       .object({
         x: z
@@ -581,15 +586,52 @@ export const updateObject = tool({
   }),
   execute: async ({ objectId, properties }, context: ToolContext) => {
     try {
-      const { userId, canvasId } = context;
+      const { userId, canvasId, selectedIds, sessionId } = context;
+
+      // Inference logic: determine which object to update
+      let targetId = objectId;
+
+      if (!targetId) {
+        // First, check if user has something selected
+        if (selectedIds && selectedIds.length > 0) {
+          targetId = selectedIds[0];
+          console.log(
+            `[AI Tool] Inferred object from selection: ${targetId}`
+          );
+        } else {
+          // No selection, try to find last AI-created object from this session
+          const canvasContext = await buildCanvasContext(
+            canvasId,
+            userId,
+            [],
+            sessionId
+          );
+
+          if (canvasContext.lastCreatedObjectId) {
+            targetId = canvasContext.lastCreatedObjectId;
+            console.log(
+              `[AI Tool] Inferred object from last created: ${targetId}`
+            );
+          }
+        }
+      }
+
+      // Validation
+      if (!targetId) {
+        return {
+          success: false,
+          error:
+            "No object specified, no objects selected, and no objects created by AI in this session. Please select an object or specify which object to update.",
+        };
+      }
 
       // Get the object to check if it exists and if we can edit it
-      const existingObject = await getObject(canvasId, objectId);
+      const existingObject = await getObject(canvasId, targetId);
 
       if (!existingObject) {
         return {
           success: false,
-          error: `Object with ID ${objectId} not found. Make sure you have the correct object ID.`,
+          error: `Object with ID ${targetId} not found. It may have been deleted.`,
         };
       }
 
@@ -646,14 +688,14 @@ export const updateObject = tool({
         updates.fontSize = properties.fontSize;
 
       // Update the object in Firestore
-      await firestoreUpdateObject(canvasId, objectId, updates);
+      await firestoreUpdateObject(canvasId, targetId, updates);
 
-      console.log(`[AI Tool] Updated object ${objectId}`, updates);
+      console.log(`[AI Tool] Updated object ${targetId}`, updates);
 
       return {
         success: true,
-        id: objectId,
-        message: `Updated object ${objectId} successfully`,
+        id: targetId,
+        message: `Updated object successfully`,
       };
     } catch (error) {
       const errorMessage =

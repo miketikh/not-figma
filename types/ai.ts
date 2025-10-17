@@ -87,6 +87,7 @@ export interface CanvasContextResult {
   aiCreatedObjects: SelectedObjectSummary[];
   unselectedCounts: ObjectTypeCounts;
   summary: string;
+  lastCreatedObjectId?: string | null;
 }
 
 /**

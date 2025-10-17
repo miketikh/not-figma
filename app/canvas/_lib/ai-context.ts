@@ -136,6 +136,14 @@ export async function buildCanvasContext(
       canvas.height
     );
 
+    // Find the last created object ID (most recent by createdAt timestamp)
+    const lastCreatedObjectId =
+      aiCreatedObjects.length > 0
+        ? aiCreatedObjects.sort(
+            (a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+          )[0].id
+        : null;
+
     return {
       canvasId,
       userId,
@@ -146,6 +154,7 @@ export async function buildCanvasContext(
       aiCreatedObjects: aiCreatedSummaries,
       unselectedCounts: counts,
       summary,
+      lastCreatedObjectId,
     };
   } catch (error) {
     // Provide detailed error for debugging

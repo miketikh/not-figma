@@ -545,7 +545,15 @@ export default function Canvas({
       )}
 
       {/* AI Chat Panel (slides in from right) */}
-      {isReady && <AIChatPanel canvasId={canvasId} selectedIds={selectedIds} />}
+      {isReady && (
+        <AIChatPanel
+          canvasId={canvasId}
+          selectedIds={selectedIds}
+          onAutoSelect={(objectId) => {
+            setSelectedIds([objectId]);
+          }}
+        />
+      )}
 
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">

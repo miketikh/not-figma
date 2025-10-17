@@ -11,17 +11,20 @@ import { X, Sparkles, Send, Loader2, AlertCircle, Square, Circle, Minus, Type, C
 interface AIChatPanelProps {
   canvasId: string;
   selectedIds: string[];
+  onAutoSelect?: (objectId: string) => void;
 }
 
 export default function AIChatPanel({
   canvasId,
   selectedIds,
+  onAutoSelect,
 }: AIChatPanelProps) {
   const { aiChatOpen, chatHistory, toggleAIChat } = useCanvasStore();
-  const { sendMessage, isLoading, error } = useAIChat();
+  const { sendMessage, isLoading, error } = useAIChat({ onAutoSelect });
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const prevLoadingRef = useRef(isLoading);
 
   // Auto-scroll to bottom when new messages appear
   useEffect(() => {
@@ -36,6 +39,23 @@ export default function AIChatPanel({
       inputRef.current.focus();
     }
   }, [aiChatOpen]);
+
+  // Focus input after AI responds (when loading completes)
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+    const isNowNotLoading = !isLoading;
+
+    // Only focus when transitioning from loading → not loading (AI just finished responding)
+    if (wasLoading && isNowNotLoading && aiChatOpen && inputRef.current) {
+      // Longer delay to ensure all DOM updates complete (scroll, new messages, etc.)
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300);
+    }
+
+    // Update ref for next render
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, aiChatOpen]);
 
   // Handle Escape key to close panel
   useEffect(() => {
@@ -300,11 +320,6 @@ export default function AIChatPanel({
                               {result.error && (
                                 <p className="text-red-600 mt-1 font-medium">
                                   {result.error}
-                                </p>
-                              )}
-                              {result.objectIds && result.objectIds.length > 0 && (
-                                <p className="text-blue-600 mt-1 text-[10px] font-medium">
-                                  ID: {result.objectIds[0]}
                                 </p>
                               )}
                             </div>
