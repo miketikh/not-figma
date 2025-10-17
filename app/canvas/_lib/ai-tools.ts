@@ -672,6 +672,33 @@ export const updateObject = tool({
         updatedAt: Date.now(),
       };
 
+      // Special handling for line objects
+      // Lines have two endpoints (x, y) and (x2, y2)
+      // When moving a line, both endpoints must move together to maintain shape
+      if (existingObject.type === "line") {
+        if (properties.x !== undefined || properties.y !== undefined) {
+          // Calculate the delta for position changes
+          const deltaX =
+            properties.x !== undefined
+              ? properties.x - existingObject.x
+              : 0;
+          const deltaY =
+            properties.y !== undefined
+              ? properties.y - existingObject.y
+              : 0;
+
+          // Apply the same delta to the end point (x2, y2)
+          if (deltaX !== 0 || deltaY !== 0) {
+            const existingLine = existingObject as any; // LineObject type
+            updates.x2 = existingLine.x2 + deltaX;
+            updates.y2 = existingLine.y2 + deltaY;
+
+            // Validate end point bounds too
+            validateCanvasBounds(updates.x2, updates.y2);
+          }
+        }
+      }
+
       // Map properties to Firestore fields
       if (properties.x !== undefined) updates.x = properties.x;
       if (properties.y !== undefined) updates.y = properties.y;
