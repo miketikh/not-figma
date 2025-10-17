@@ -28,6 +28,7 @@ interface StageContainerProps {
 /**
  * Wrapper for Konva Stage with a main drawing layer
  * Includes visual canvas boundaries when canvasWidth/canvasHeight are provided
+ * The main drawing layer is clipped to canvas bounds - objects outside the canvas are hidden
  */
 export default function StageContainer({
   width,
@@ -179,8 +180,17 @@ export default function StageContainer({
           </Layer>
         )}
 
-        {/* Main drawing layer for shapes */}
-        <Layer>{children}</Layer>
+        {/* Main drawing layer for shapes - clipped to canvas bounds */}
+        <Layer
+          clipFunc={(ctx) => {
+            if (canvasWidth && canvasHeight) {
+              // Clip to canvas boundaries
+              ctx.rect(0, 0, canvasWidth, canvasHeight);
+            }
+          }}
+        >
+          {children}
+        </Layer>
       </Stage>
     </>
   );
