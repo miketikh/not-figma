@@ -75,6 +75,7 @@ interface CanvasStore {
 
   // AI state (not persisted - session only)
   aiChatOpen: boolean;
+  aiSessionId: string | null;
   chatHistory: AIChatMessage[];
   toggleAIChat: () => void;
   addChatMessage: (message: AIChatMessage) => void;
@@ -172,16 +173,36 @@ export const useCanvasStore = create<CanvasStore>()(
 
       // AI state (not persisted - session only)
       aiChatOpen: false,
+      aiSessionId: null,
       chatHistory: [],
 
-      toggleAIChat: () => set((state) => ({ aiChatOpen: !state.aiChatOpen })),
+      toggleAIChat: () =>
+        set((state) => {
+          // Generate session ID when chat opens for the first time
+          if (!state.aiChatOpen && !state.aiSessionId) {
+            return {
+              aiChatOpen: true,
+              aiSessionId: crypto.randomUUID(),
+            };
+          }
+          // Close chat and clear session
+          if (state.aiChatOpen) {
+            return {
+              aiChatOpen: false,
+              aiSessionId: null,
+            };
+          }
+          // Reopen with existing session (shouldn't happen)
+          return { aiChatOpen: true };
+        }),
 
       addChatMessage: (message) =>
         set((state) => ({
           chatHistory: [...state.chatHistory, message],
         })),
 
-      clearChatHistory: () => set({ chatHistory: [] }),
+      clearChatHistory: () =>
+        set({ chatHistory: [], aiSessionId: crypto.randomUUID() }),
     }),
     {
       name: "canvas-viewport-storage", // localStorage key

@@ -6,7 +6,7 @@ import { useAIChat } from "../_hooks/useAIChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { X, Sparkles, Send, Loader2, AlertCircle } from "lucide-react";
+import { X, Sparkles, Send, Loader2, AlertCircle, Square, Circle, Minus, Type, Check } from "lucide-react";
 
 interface AIChatPanelProps {
   canvasId: string;
@@ -76,6 +76,34 @@ export default function AIChatPanel({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Get icon for tool type
+  const getToolIcon = (toolName: string) => {
+    const lowerName = toolName.toLowerCase();
+    if (lowerName.includes("rectangle") || lowerName.includes("rect")) {
+      return <Square className="w-3.5 h-3.5" />;
+    }
+    if (lowerName.includes("circle")) {
+      return <Circle className="w-3.5 h-3.5" />;
+    }
+    if (lowerName.includes("line")) {
+      return <Minus className="w-3.5 h-3.5" />;
+    }
+    if (lowerName.includes("text")) {
+      return <Type className="w-3.5 h-3.5" />;
+    }
+    // Default icon for other operations (update, get, etc.)
+    return <Check className="w-3.5 h-3.5" />;
+  };
+
+  // Format tool name for display
+  const formatToolName = (toolName: string) => {
+    // Convert camelCase to Title Case with spaces
+    return toolName
+      .replace(/([A-Z])/g, " $1")
+      .trim()
+      .replace(/^./, (str) => str.toUpperCase());
   };
 
   if (!aiChatOpen) return null;
@@ -226,37 +254,61 @@ export default function AIChatPanel({
 
                   {/* Tool Results */}
                   {message.toolResults && message.toolResults.length > 0 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-1.5">
                       {message.toolResults.map((result, idx) => (
                         <Card
                           key={idx}
-                          className={`p-2 text-xs ${
+                          className={`p-2.5 text-xs border ${
                             result.success
-                              ? "bg-green-50 border-green-200 text-green-900"
-                              : "bg-red-50 border-red-200 text-red-900"
+                              ? "bg-white border-gray-200 shadow-sm"
+                              : "bg-red-50 border-red-300"
                           }`}
                         >
-                          <p className="font-medium capitalize">
-                            {result.success ? "✓" : "✗"}{" "}
-                            {result.toolName.replace(/([A-Z])/g, " $1").trim()}
-                          </p>
-                          <p
-                            className={
-                              result.success ? "text-green-700" : "text-red-700"
-                            }
-                          >
-                            {result.message}
-                          </p>
-                          {result.error && (
-                            <p className="text-red-600 mt-1 font-medium">
-                              {result.error}
-                            </p>
-                          )}
-                          {result.objectIds && result.objectIds.length > 0 && (
-                            <p className="text-gray-500 mt-1 text-[10px]">
-                              IDs: {result.objectIds.join(", ")}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 ${
+                                result.success
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-red-500 text-white"
+                              }`}
+                            >
+                              {result.success ? (
+                                getToolIcon(result.toolName)
+                              ) : (
+                                <X className="w-3.5 h-3.5" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={`font-medium leading-tight ${
+                                  result.success
+                                    ? "text-gray-900"
+                                    : "text-red-900"
+                                }`}
+                              >
+                                {formatToolName(result.toolName)}
+                              </p>
+                              <p
+                                className={`mt-0.5 leading-relaxed ${
+                                  result.success
+                                    ? "text-gray-600"
+                                    : "text-red-700"
+                                }`}
+                              >
+                                {result.message}
+                              </p>
+                              {result.error && (
+                                <p className="text-red-600 mt-1 font-medium">
+                                  {result.error}
+                                </p>
+                              )}
+                              {result.objectIds && result.objectIds.length > 0 && (
+                                <p className="text-blue-600 mt-1 text-[10px] font-medium">
+                                  ID: {result.objectIds[0]}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </Card>
                       ))}
                     </div>

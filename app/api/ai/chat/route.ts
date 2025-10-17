@@ -98,6 +98,7 @@ interface ChatRequestBody {
   message: string;
   canvasId: string;
   selectedIds?: string[];
+  sessionId?: string;
   conversationHistory?: Array<{
     role: "user" | "assistant";
     content: string;
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
       message,
       canvasId,
       selectedIds = [],
+      sessionId,
       conversationHistory = [],
     } = body;
 
@@ -149,7 +151,12 @@ export async function POST(req: NextRequest) {
     // 5. Build canvas context
     let canvasContext;
     try {
-      canvasContext = await buildCanvasContext(canvasId, userId, selectedIds);
+      canvasContext = await buildCanvasContext(
+        canvasId,
+        userId,
+        selectedIds,
+        sessionId
+      );
     } catch (error) {
       console.error("Error building canvas context:", error);
       return NextResponse.json(
@@ -171,21 +178,59 @@ ${
     : "No objects selected"
 }
 
+**Objects You Created in This Conversation:**
+${
+  canvasContext.aiCreatedObjects.length > 0
+    ? JSON.stringify(canvasContext.aiCreatedObjects, null, 2)
+    : "You haven't created any objects yet in this conversation"
+}
+${
+  canvasContext.aiCreatedObjects.length > 0
+    ? `\nYou can reference these objects by their properties (e.g., "the red circle", "the rectangle at (100, 100)") or use their IDs directly when updating them.`
+    : ""
+}
+
+**CRITICAL: Understanding the Coordinate System**
+
+The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERENT COORDINATE CONVENTIONS:
+
+1. **RECTANGLES and TEXT**: x,y parameters represent the TOP-LEFT corner of the shape
+   - To center a ${canvasContext.canvasWidth}×200 rectangle at the canvas center (${Math.round(canvasContext.canvasWidth / 2)}, ${Math.round(canvasContext.canvasHeight / 2)}):
+     Calculate: x = ${Math.round(canvasContext.canvasWidth / 2)} - ${canvasContext.canvasWidth / 2} = ${Math.round(canvasContext.canvasWidth / 2 - canvasContext.canvasWidth / 4)}
+     Calculate: y = ${Math.round(canvasContext.canvasHeight / 2)} - 100 = ${Math.round(canvasContext.canvasHeight / 2 - 100)}
+     Use: createRectangle with x=${Math.round(canvasContext.canvasWidth / 2 - canvasContext.canvasWidth / 4)}, y=${Math.round(canvasContext.canvasHeight / 2 - 100)}
+
+2. **CIRCLES**: x,y parameters represent the CENTER of the circle
+   - To center a circle at the canvas center, use x=${Math.round(canvasContext.canvasWidth / 2)}, y=${Math.round(canvasContext.canvasHeight / 2)} directly
+
+3. **LINES**: x1,y1 is the start point, x2,y2 is the end point
+
+**Positioning Examples:**
+- "Center of canvas" = (${Math.round(canvasContext.canvasWidth / 2)}, ${Math.round(canvasContext.canvasHeight / 2)})
+  * For rectangle 300×200: Use x=${Math.round(canvasContext.canvasWidth / 2 - 150)}, y=${Math.round(canvasContext.canvasHeight / 2 - 100)}
+  * For circle radius 100: Use x=${Math.round(canvasContext.canvasWidth / 2)}, y=${Math.round(canvasContext.canvasHeight / 2)}
+
+- "Middle of rectangle" at x=100, y=50, width=200, height=100:
+  * Rectangle center is at (100 + 200/2, 50 + 100/2) = (200, 100)
+  * For new rectangle 80×60: Use x=160, y=70 (center - half dimensions)
+  * For new circle radius 30: Use x=200, y=100 (center directly)
+
 **Available Tools:**
-- createRectangle: Create rectangular shapes
-- createCircle: Create circular shapes
-- createLine: Create straight lines
-- createText: Create text objects
+- createRectangle: Create rectangles (x,y = top-left corner)
+- createCircle: Create circles (x,y = center)
+- createLine: Create lines (x1,y1 = start, x2,y2 = end)
+- createText: Create text (x,y = top-left corner)
 - updateObject: Modify existing objects (requires object to be unlocked)
 - getCanvasObjects: Query canvas state
 
 **Guidelines:**
 1. When users say "make it [color]" or similar, they're referring to selected objects
 2. If no objects are selected and the command requires selection, ask the user to select an object first
-3. Use reasonable defaults for unspecified properties (e.g., fill: "#000000", stroke: "#000000")
-4. Coordinates are in pixels from top-left corner
-5. Be concise and helpful in your responses
-6. If a tool execution fails, explain why and suggest alternatives
+3. Use reasonable defaults for unspecified properties (e.g., fill: "#ff0000" for red, stroke: "#000000")
+4. ALWAYS calculate positions correctly based on whether the shape uses top-left or center coordinates
+5. For "center" commands, show your calculation in the response
+6. Be concise and helpful in your responses
+7. If a tool execution fails, explain why and suggest alternatives
 
 **User ID:** ${userId}
 **Canvas ID:** ${canvasId}`;
@@ -216,6 +261,7 @@ ${
               userId,
               canvasId,
               selectedIds,
+              sessionId,
             });
           },
         },
@@ -329,17 +375,34 @@ ${
         );
 
         if (result) {
-          const toolResult = (result as any).result;
+          // The AI SDK may return the result nested or directly
+          // Try nested first, then fall back to direct
+          let toolResult = (result as any).result;
+          if (!toolResult || typeof toolResult !== "object") {
+            toolResult = result;
+          }
+
+          // Explicitly check for success field - if it exists, use it; otherwise default to false
+          const success =
+            typeof toolResult?.success === "boolean"
+              ? toolResult.success
+              : false;
+
           toolResults.push({
             toolName: toolCall.toolName,
-            success: toolResult?.success ?? false,
+            success: success,
             objectIds: toolResult?.id
               ? [toolResult.id]
               : toolResult?.objectIds || [],
             message:
-              toolResult?.message || toolResult?.error || "Tool executed",
+              toolResult?.message || toolResult?.error || "Operation completed",
             error: toolResult?.error,
           });
+
+          // Debug log to help troubleshoot
+          console.log(
+            `[AI Tool Result] ${toolCall.toolName}: success=${success}, message=${toolResult?.message}`
+          );
         }
       }
     }

@@ -89,9 +89,10 @@ export interface BaseCanvasObject {
   locked: boolean;
   visible: boolean;
 
-  // AI Attribution (optional, for Phase 3)
-  createdByAI?: boolean;
-  aiCommandId?: string;
+  // AI Attribution (Phase 1: Session tracking)
+  createdBy?: "user" | "ai";
+  aiSessionId?: string;
+  aiMessageId?: string;
 }
 
 /**

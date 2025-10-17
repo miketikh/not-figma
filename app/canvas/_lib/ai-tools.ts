@@ -107,6 +107,7 @@ interface ToolContext {
   userId: string;
   canvasId: string;
   selectedIds?: string[];
+  sessionId?: string;
 }
 
 // ============================================================================
@@ -115,7 +116,7 @@ interface ToolContext {
 
 export const createRectangle = tool({
   description:
-    "Create a rectangle on the canvas. Use this when the user wants to create a rectangular shape. Coordinates are in pixels from the top-left corner of the canvas.",
+    "Create a rectangle on the canvas. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the rectangle, NOT the center. To center a rectangle at position (centerX, centerY), calculate: x = centerX - width/2, y = centerY - height/2. Example: To center a 300×200 rectangle at (960, 540), use x=810, y=440.",
   inputSchema: z.object({
     x: z
       .number()
@@ -161,7 +162,7 @@ export const createRectangle = tool({
     context: ToolContext
   ) => {
     try {
-      const { userId, canvasId } = context;
+      const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds
       validateCanvasBounds(x, y);
@@ -189,6 +190,13 @@ export const createRectangle = tool({
         userId,
         canvasId
       );
+
+      // Add AI metadata
+      if (sessionId) {
+        firestoreRect.createdBy = "ai";
+        firestoreRect.aiSessionId = sessionId;
+      }
+
       await createObject(canvasId, firestoreRect);
 
       console.log(`[AI Tool] Created rectangle ${rect.id} at (${x}, ${y})`);
@@ -216,7 +224,7 @@ export const createRectangle = tool({
 
 export const createCircle = tool({
   description:
-    "Create a circle or ellipse on the canvas. Use this when the user wants to create a circular or oval shape. The circle is defined by a center point and radius.",
+    "Create a circle on the canvas. IMPORTANT: The x,y parameters represent the CENTER of the circle (unlike rectangles which use top-left). To center a circle at position (centerX, centerY), use those coordinates directly as x,y. Example: To center a circle with radius 100 at (960, 540), use x=960, y=540.",
   inputSchema: z.object({
     x: z.number().min(0).max(10000).describe("X position (center) in pixels"),
     y: z.number().min(0).max(10000).describe("Y position (center) in pixels"),
@@ -245,7 +253,7 @@ export const createCircle = tool({
     context: ToolContext
   ) => {
     try {
-      const { userId, canvasId } = context;
+      const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds (check center point)
       validateCanvasBounds(x, y);
@@ -281,6 +289,13 @@ export const createCircle = tool({
         userId,
         canvasId
       );
+
+      // Add AI metadata
+      if (sessionId) {
+        firestoreCircle.createdBy = "ai";
+        firestoreCircle.aiSessionId = sessionId;
+      }
+
       await createObject(canvasId, firestoreCircle);
 
       console.log(`[AI Tool] Created circle ${circle.id} at (${x}, ${y})`);
@@ -330,7 +345,7 @@ export const createLine = tool({
     context: ToolContext
   ) => {
     try {
-      const { userId, canvasId } = context;
+      const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds for both endpoints
       validateCanvasBounds(x1, y1);
@@ -359,6 +374,13 @@ export const createLine = tool({
 
       // Convert to Firestore format and save
       const firestoreLine = lineFactory.toFirestore(line, userId, canvasId);
+
+      // Add AI metadata
+      if (sessionId) {
+        firestoreLine.createdBy = "ai";
+        firestoreLine.aiSessionId = sessionId;
+      }
+
       await createObject(canvasId, firestoreLine);
 
       console.log(
@@ -388,7 +410,7 @@ export const createLine = tool({
 
 export const createText = tool({
   description:
-    "Create a text object on the canvas. Use this when the user wants to add text, labels, or typography to the canvas.",
+    "Create a text object on the canvas. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the text box, NOT the center (same as rectangles). To center text at position (centerX, centerY), calculate: x = centerX - estimatedWidth/2, y = centerY - fontSize/2.",
   inputSchema: z.object({
     x: z
       .number()
@@ -436,7 +458,7 @@ export const createText = tool({
     context: ToolContext
   ) => {
     try {
-      const { userId, canvasId } = context;
+      const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds
       validateCanvasBounds(x, y);
@@ -461,6 +483,13 @@ export const createText = tool({
 
       // Convert to Firestore format and save
       const firestoreText = textFactory.toFirestore(text, userId, canvasId);
+
+      // Add AI metadata
+      if (sessionId) {
+        firestoreText.createdBy = "ai";
+        firestoreText.aiSessionId = sessionId;
+      }
+
       await createObject(canvasId, firestoreText);
 
       console.log(`[AI Tool] Created text ${text.id} at (${x}, ${y})`);

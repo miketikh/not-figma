@@ -57,7 +57,7 @@ async function getAuthToken(): Promise<string> {
 
 export function useAIChat(): UseAIChatReturn {
   const { user } = useAuth();
-  const { addChatMessage, chatHistory } = useCanvasStore();
+  const { addChatMessage, chatHistory, aiSessionId } = useCanvasStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,6 +115,7 @@ export function useAIChat(): UseAIChatReturn {
             message,
             canvasId,
             selectedIds,
+            sessionId: aiSessionId,
             conversationHistory,
           };
 
@@ -224,7 +225,7 @@ export function useAIChat(): UseAIChatReturn {
       };
       addChatMessage(errorChatMessage);
     },
-    [user, chatHistory, addChatMessage]
+    [user, chatHistory, aiSessionId, addChatMessage]
   );
 
   return {

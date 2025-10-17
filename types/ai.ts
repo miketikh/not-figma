@@ -80,8 +80,11 @@ export interface ObjectTypeCounts {
 export interface CanvasContextResult {
   canvasId: string;
   userId: string;
+  canvasWidth: number;
+  canvasHeight: number;
   objectCount: number;
   selectedObjects: SelectedObjectSummary[];
+  aiCreatedObjects: SelectedObjectSummary[];
   unselectedCounts: ObjectTypeCounts;
   summary: string;
 }
