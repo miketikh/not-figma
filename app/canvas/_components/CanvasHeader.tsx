@@ -22,7 +22,7 @@ export default function CanvasHeader({ canvasName }: CanvasHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b h-14 shadow-sm">
+    <header className="flex-shrink-0 bg-card border-b h-12 shadow-sm">
       <div className="h-full px-6 flex items-center justify-between">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2">

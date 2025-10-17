@@ -517,6 +517,44 @@ This is a major architectural change affecting the data layer, routing, componen
 
 ---
 
+### PR #15.5: Add Public/Private Canvas Toggle
+**Goal:** Allow users to make canvases public or private when creating and editing them
+
+**Tasks:**
+- [ ] Add `isPublic` toggle to CreateCanvasModal
+- [ ] Add checkbox/switch for "Make this canvas public" in the modal
+- [ ] Default to `false` (private) for new canvases
+- [ ] Show help text explaining: "Public canvases can be viewed and edited by all users"
+- [ ] Update canvas creation to use the selected isPublic value
+- [ ] Add public/private indicator badge to CanvasCard component
+- [ ] Show "Public" or "Private" badge in the corner of each canvas card
+- [ ] Style public canvases differently (e.g., blue border or badge)
+- [ ] Add ability to toggle public/private on existing canvases
+- [ ] Add "Make Public/Private" option to canvas card context menu or settings
+- [ ] Update security rules to properly handle public canvas permissions
+- [ ] Update Firestore rules so public canvases can be read/written by anyone authenticated
+- [ ] Update canvas query logic to show public canvases to all users (already done in PR #13 fix)
+- [ ] Test that private canvases are only visible to owner
+- [ ] Test that public canvases are visible to all authenticated users
+
+**What to Test:**
+- Create a private canvas, verify only you see it
+- Create a public canvas, verify other users can see and edit it
+- Toggle an existing canvas from private to public
+- Verify dashboard shows correct mix of owned and public canvases
+- Test security rules by attempting to access private canvas from another user
+- Run `npm run lint` after changes
+
+**Files Changed:**
+- `app/canvas/_components/CreateCanvasModal.tsx` - Add isPublic toggle
+- `app/canvas/_components/CanvasCard.tsx` - Add public/private badge
+- `app/canvas/_hooks/useCanvases.ts` - Add togglePublic function if needed
+- `firestore.rules` - Update to handle public canvas permissions properly
+
+**Notes:** Consider adding a warning when making a canvas public that all current collaborators will maintain access. Consider showing a list of users who can access each canvas.
+
+---
+
 ### PR #16: Add Canvas Header with Breadcrumb Navigation
 **Goal:** Create a header component for the canvas page with navigation back to dashboard
 

@@ -78,11 +78,8 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Canvas Header with Breadcrumb */}
-      <CanvasHeader canvasName={canvas.name} />
-
-      {/* Secondary Header - Logo, Online Users, User Info */}
-      <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm mt-14">
+      {/* Main Header - Logo, Online Users, User Info */}
+      <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
         <div className="h-full px-6 flex items-center justify-between">
           {/* Left Side - Logo */}
           <div className="flex items-center gap-2">
@@ -132,6 +129,9 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
           </div>
         </div>
       </header>
+
+      {/* Canvas Header with Breadcrumb */}
+      <CanvasHeader canvasName={canvas.name} />
 
       {/* Canvas Area */}
       <main className="flex-1 overflow-hidden">
