@@ -6,11 +6,9 @@ import Image from "next/image";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanvases } from "./_hooks/useCanvases";
-import { useMigrationStatus } from "./_hooks/useMigrationStatus";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import { CanvasCard } from "./_components/CanvasCard";
 import { CreateCanvasModal } from "./_components/CreateCanvasModal";
-import { MigrationBanner } from "./_components/MigrationBanner";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,9 +21,7 @@ function CanvasDashboardContent() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { canvases, loading, error, createCanvas, deleteCanvas, renameCanvas } = useCanvases();
-  const { needsMigration, checking: checkingMigration } = useMigrationStatus(user?.uid || null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isMigrating, setIsMigrating] = useState(false);
 
   // Handle canvas creation
   const handleCreateCanvas = async (name: string, width: number, height: number) => {
@@ -71,31 +67,6 @@ function CanvasDashboardContent() {
       console.error("Failed to rename canvas:", error);
       // Error is already handled by the hook
       throw error; // Re-throw to let CanvasCard handle the UI
-    }
-  };
-
-  // Handle data migration
-  const handleMigrate = async () => {
-    setIsMigrating(true);
-    try {
-      const response = await fetch("/api/migrate", {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Migration successful, reload the page to fetch new canvases
-        window.location.reload();
-      } else {
-        console.error("Migration failed:", result.message);
-        alert(`Migration failed: ${result.message}`);
-      }
-    } catch (error) {
-      console.error("Failed to trigger migration:", error);
-      alert("Failed to trigger migration. Please try again or contact support.");
-    } finally {
-      setIsMigrating(false);
     }
   };
 
@@ -148,11 +119,6 @@ function CanvasDashboardContent() {
         <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
-            {/* Migration Banner */}
-            {needsMigration && !checkingMigration && (
-              <MigrationBanner onMigrate={handleMigrate} migrating={isMigrating} />
-            )}
-
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
                 <Plus className="w-12 h-12 text-muted-foreground" />
@@ -183,11 +149,6 @@ function CanvasDashboardContent() {
       <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
       <main className="flex-1 overflow-auto p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Migration Banner */}
-          {needsMigration && !checkingMigration && (
-            <MigrationBanner onMigrate={handleMigrate} migrating={isMigrating} />
-          )}
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {canvases.map((canvas) => (
               <CanvasCard
