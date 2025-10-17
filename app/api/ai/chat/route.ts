@@ -270,8 +270,9 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
         });
 
         // Race between API call and timeout
+        // Using GPT-4 Turbo for fast tool calling. O3-mini is too slow for simple spatial commands (7+ seconds).
         const apiPromise = generateText({
-          model: openai("o3-mini"),
+          model: openai("gpt-4.1-mini"),
           messages,
           tools: aiTools,
           experimental_context: {
