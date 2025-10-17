@@ -21,6 +21,7 @@ import { UserPresence } from "@/types/user";
 import { screenToCanvasCoordinates } from "../_lib/coordinates";
 
 interface UseCursorsProps {
+  canvasId: string;
   stageRef: React.RefObject<Konva.Stage | null>;
   isReady: boolean;
 }
@@ -32,7 +33,7 @@ interface CursorData {
   color: string;
 }
 
-export function useCursors({ stageRef, isReady }: UseCursorsProps) {
+export function useCursors({ canvasId, stageRef, isReady }: UseCursorsProps) {
   const { user } = useAuth();
   const [remoteCursors, setRemoteCursors] = useState<Record<string, CursorData>>({});
   const [presenceData, setPresenceData] = useState<Record<string, UserPresence>>({});
@@ -47,6 +48,7 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
 
     // Set initial user presence
     setUserPresence(
+      canvasId,
       user.uid,
       displayName,
       user.email || "",
@@ -55,26 +57,26 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
 
     // Set up heartbeat to update lastSeen every 30 seconds
     const heartbeatInterval = setInterval(() => {
-      updatePresenceHeartbeat(user.uid);
+      updatePresenceHeartbeat(canvasId, user.uid);
     }, 30000); // 30 seconds
 
     return () => {
       clearInterval(heartbeatInterval);
     };
-  }, [user]);
+  }, [canvasId, user]);
 
   // Subscribe to presence data (for display names and colors)
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToPresence((presence) => {
+    const unsubscribe = subscribeToPresence(canvasId, (presence) => {
       setPresenceData(presence);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [canvasId, user]);
 
   // Track local cursor position and broadcast to Realtime Database
   const handleMouseMove = useCallback(
@@ -98,12 +100,12 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
       if (!canvasPoint) return;
 
       // Update cursor position in Realtime Database
-      updateCursorPosition(user.uid, canvasPoint.x, canvasPoint.y);
-      
+      updateCursorPosition(canvasId, user.uid, canvasPoint.x, canvasPoint.y);
+
       // Update presence heartbeat on activity (debounced via throttle)
-      updatePresenceHeartbeat(user.uid);
+      updatePresenceHeartbeat(canvasId, user.uid);
     },
-    [user, stageRef]
+    [canvasId, user, stageRef]
   );
 
   // Attach mouse move listener to stage
@@ -123,7 +125,7 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToCursors((cursors: CursorMap) => {
+    const unsubscribe = subscribeToCursors(canvasId, (cursors: CursorMap) => {
       // Filter out own cursor and merge with presence data
       const remoteCursorData: Record<string, CursorData> = {};
 
@@ -149,16 +151,16 @@ export function useCursors({ stageRef, isReady }: UseCursorsProps) {
     return () => {
       unsubscribe();
     };
-  }, [user, presenceData]);
+  }, [canvasId, user, presenceData]);
 
   // Cleanup on unmount
   useEffect(() => {
     if (!user) return;
 
     return () => {
-      removeCursor(user.uid);
+      removeCursor(canvasId, user.uid);
     };
-  }, [user]);
+  }, [canvasId, user]);
 
   return {
     remoteCursors,

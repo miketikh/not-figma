@@ -11,9 +11,7 @@ import {
   deleteObject,
   subscribeToObjects,
 } from "@/lib/firebase/firestore";
-import { generateObjectId } from "../_lib/objects";
-import { CanvasObject, RectangleObject } from "@/types/canvas";
-import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
+import { CanvasObject } from "@/types/canvas";
 import { getShapeFactory } from "../_lib/shapes";
 import type { PersistedRect, PersistedShape } from "../_types/shapes";
 
@@ -21,11 +19,12 @@ import type { PersistedRect, PersistedShape } from "../_types/shapes";
 export type { PersistedRect };
 
 interface UseObjectsProps {
+  canvasId: string;
   isReady: boolean;
   onObjectsUpdate: (objects: PersistedShape[]) => void;
 }
 
-export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
+export function useObjects({ canvasId, isReady, onObjectsUpdate }: UseObjectsProps) {
   const { user } = useAuth();
   const loadedRef = useRef(false);
   const savingRef = useRef(false);
@@ -58,9 +57,9 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
         throw new Error(`Factory not found for shape type: ${shapeType}`);
       }
 
-      return factory.toFirestore(shape, user?.uid || "unknown");
+      return factory.toFirestore(shape, user?.uid || "unknown", canvasId);
     },
-    [user]
+    [user, canvasId]
   );
 
   /**
@@ -101,14 +100,14 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
       try {
         savingRef.current = true;
         const canvasObject = shapeToCanvasObject(shape);
-        await createObject(canvasObject);
+        await createObject(canvasId, canvasObject);
       } catch (error) {
         console.error("Error saving object:", error);
       } finally {
         savingRef.current = false;
       }
     },
-    [user, shapeToCanvasObject]
+    [user, canvasId, shapeToCanvasObject]
   );
 
   /**
@@ -129,8 +128,8 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
         }
 
         // Convert to Firestore format using the appropriate factory
-        const firestoreObject = factory.toFirestore(shape, user.uid);
-        
+        const firestoreObject = factory.toFirestore(shape, user.uid, canvasId);
+
         // Extract all fields for update (Firestore will merge)
         const updates = {
           ...firestoreObject,
@@ -138,12 +137,12 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
           updatedAt: Date.now(),
         };
 
-        await updateObject(shape.id, updates);
+        await updateObject(canvasId, shape.id, updates);
       } catch (error) {
         console.error("Error updating object:", error);
       }
     },
-    [user]
+    [user, canvasId]
   );
 
   /**
@@ -151,24 +150,18 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
    */
   const deleteObjectFromFirestore = useCallback(async (objectId: string) => {
     try {
-      await deleteObject(objectId);
+      await deleteObject(canvasId, objectId);
     } catch (error) {
       console.error("Error deleting object:", error);
     }
-  }, []);
-
-  /**
-   * Generate ID for a new object
-   */
-  const generateId = useCallback(() => {
-    return generateObjectId();
-  }, []);
+  }, [canvasId]);
 
   // Set up real-time subscription to Firestore
   useEffect(() => {
     if (!isReady) return;
 
     const unsubscribe = subscribeToObjects(
+      canvasId,
       handleObjectsSync,
       (error) => {
         console.error("Subscription error:", error);
@@ -179,12 +172,11 @@ export function useObjects({ isReady, onObjectsUpdate }: UseObjectsProps) {
     return () => {
       unsubscribe();
     };
-  }, [isReady, handleObjectsSync]);
+  }, [canvasId, isReady, handleObjectsSync]);
 
   return {
     saveObject,
     updateObjectInFirestore,
     deleteObjectFromFirestore,
-    generateId,
   };
 }

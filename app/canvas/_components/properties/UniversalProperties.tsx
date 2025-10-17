@@ -17,8 +17,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  getMaxZIndex,
-  getMinZIndex,
   LayerOperation,
   calculateNewZIndex,
 } from "../../_lib/layer-management";

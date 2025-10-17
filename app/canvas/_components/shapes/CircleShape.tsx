@@ -53,7 +53,6 @@ export interface CircleShapeProps {
  */
 export default function CircleShape({
   shape,
-  isSelected,
   isLocked,
   isSelectable,
   zoom,

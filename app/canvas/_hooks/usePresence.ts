@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { subscribeToPresence, isUserActive } from "@/lib/firebase/realtime";
 import { UserPresence } from "@/types/user";
 
-export function usePresence() {
+export function usePresence(canvasId: string) {
   const { user } = useAuth();
   const [allPresence, setAllPresence] = useState<Record<string, UserPresence>>({});
 
@@ -15,14 +15,14 @@ export function usePresence() {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToPresence((presence) => {
+    const unsubscribe = subscribeToPresence(canvasId, (presence) => {
       setAllPresence(presence);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [canvasId, user]);
 
   // Get online users (excluding current user)
   const onlineUsers = Object.values(allPresence).filter(

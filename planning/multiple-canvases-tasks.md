@@ -20,6 +20,7 @@ This is a major architectural change affecting the data layer, routing, componen
    - Mark completed tasks with `[x]`
    - If a task references "see planning doc," check the planning document for additional context
 3. **Run linting**: Execute `npm run lint` after completing all tasks
+4.**Update**: After, check off all the items you completed in this doc, then return a summary
 
 ### Implementation Guidelines
 
@@ -37,10 +38,10 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Establish the Canvas interface and configuration constants without touching existing functionality
 
 **Tasks:**
-- [ ] Add `Canvas` interface to `types/canvas.ts` with fields: id, name, width, height, createdBy, createdAt, updatedAt, isPublic
-- [ ] Add `canvasId` field to `BaseCanvasObject` interface in `types/canvas.ts`
-- [ ] Create `lib/constants/canvas.ts` with default canvas name ("Untitled Canvas"), default dimensions (1920x1080), dimension presets array, min/max dimension values (100-10000), and max name length (100)
-- [ ] Export all new types and constants
+- [x] Add `Canvas` interface to `types/canvas.ts` with fields: id, name, width, height, createdBy, createdAt, updatedAt, isPublic
+- [x] Add `canvasId` field to `BaseCanvasObject` interface in `types/canvas.ts`
+- [x] Create `lib/constants/canvas.ts` with default canvas name ("Untitled Canvas"), default dimensions (1920x1080), dimension presets array, min/max dimension values (100-10000), and max name length (100)
+- [x] Export all new types and constants
 
 **What to Test:**
 - Run `npm run lint` to verify TypeScript compilation
@@ -59,15 +60,15 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Implement Firestore operations for canvas management using nested collection structure
 
 **Tasks:**
-- [ ] Create `lib/firebase/canvas.ts` with canvas CRUD functions
-- [ ] Implement `createCanvas(userId: string, name: string, width: number, height: number)` - creates canvas document in `canvases` collection
-- [ ] Implement `getCanvas(canvasId: string)` - fetches single canvas by ID
-- [ ] Implement `getUserCanvases(userId: string)` - queries canvases where createdBy equals userId, ordered by createdAt desc
-- [ ] Implement `updateCanvas(canvasId: string, updates: Partial<Canvas>)` - updates canvas metadata (name, dimensions, updatedAt)
-- [ ] Implement `deleteCanvas(canvasId: string)` - deletes canvas document (Firestore will cascade delete the objects subcollection)
-- [ ] Implement `subscribeToCanvas(canvasId: string, callback: (canvas: Canvas | null) => void)` - real-time listener for single canvas
-- [ ] Implement `subscribeToUserCanvases(userId: string, callback: (canvases: Canvas[]) => void)` - real-time listener for user's canvas list
-- [ ] Add proper error handling and TypeScript types to all functions
+- [x] Create `lib/firebase/canvas.ts` with canvas CRUD functions
+- [x] Implement `createCanvas(userId: string, name: string, width: number, height: number)` - creates canvas document in `canvases` collection
+- [x] Implement `getCanvas(canvasId: string)` - fetches single canvas by ID
+- [x] Implement `getUserCanvases(userId: string)` - queries canvases where createdBy equals userId, ordered by createdAt desc
+- [x] Implement `updateCanvas(canvasId: string, updates: Partial<Canvas>)` - updates canvas metadata (name, dimensions, updatedAt)
+- [x] Implement `deleteCanvas(canvasId: string)` - deletes canvas document (Firestore will cascade delete the objects subcollection)
+- [x] Implement `subscribeToCanvas(canvasId: string, callback: (canvas: Canvas | null) => void)` - real-time listener for single canvas
+- [x] Implement `subscribeToUserCanvases(userId: string, callback: (canvases: Canvas[]) => void)` - real-time listener for user's canvas list
+- [x] Add proper error handling and TypeScript types to all functions
 
 **What to Test:**
 - Run `npm run lint` to verify no TypeScript errors
@@ -87,15 +88,15 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Modify existing object CRUD operations to work with nested collection structure and canvas scoping
 
 **Tasks:**
-- [ ] Update `lib/firebase/firestore.ts` to change collection path from flat `canvasObjects` to nested `canvases/{canvasId}/objects`
-- [ ] Add `canvasId` parameter to `addObject(canvasId: string, object: CanvasObject)` function
-- [ ] Add `canvasId` parameter to `updateObject(canvasId: string, id: string, updates: Partial<CanvasObject>)` function
-- [ ] Add `canvasId` parameter to `deleteObject(canvasId: string, id: string)` function
-- [ ] Add `canvasId` parameter to `getAllObjects(canvasId: string)` function
-- [ ] Update `subscribeToObjects(canvasId: string, callback: (objects: CanvasObject[]) => void)` to use nested collection path
-- [ ] Update all lock functions (acquireLock, releaseLock, renewLock, canEdit) to accept `canvasId` parameter and use nested collection path
-- [ ] Update helper function `getObjectRef(canvasId: string, id: string)` to use nested path
-- [ ] Ensure all Firestore queries are scoped to the correct canvas
+- [x] Update `lib/firebase/firestore.ts` to change collection path from flat `canvasObjects` to nested `canvases/{canvasId}/objects`
+- [x] Add `canvasId` parameter to `addObject(canvasId: string, object: CanvasObject)` function
+- [x] Add `canvasId` parameter to `updateObject(canvasId: string, id: string, updates: Partial<CanvasObject>)` function
+- [x] Add `canvasId` parameter to `deleteObject(canvasId: string, id: string)` function
+- [x] Add `canvasId` parameter to `getAllObjects(canvasId: string)` function
+- [x] Update `subscribeToObjects(canvasId: string, callback: (objects: CanvasObject[]) => void)` to use nested collection path
+- [x] Update all lock functions (acquireLock, releaseLock, renewLock, canEdit) to accept `canvasId` parameter and use nested collection path
+- [x] Update helper function `getObjectRef(canvasId: string, id: string)` to use nested path
+- [x] Ensure all Firestore queries are scoped to the correct canvas
 
 **What to Test:**
 - Run `npm run lint` to verify TypeScript compilation
@@ -114,15 +115,15 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Replace hardcoded session ID with dynamic canvasId parameter for cursors and presence
 
 **Tasks:**
-- [ ] Update `lib/firebase/realtime.ts` to remove the hardcoded `SESSION_ID = "canvas-session-default"` constant
-- [ ] Add `canvasId` parameter to `updateCursorPosition(canvasId: string, userId: string, x: number, y: number)` function
-- [ ] Add `canvasId` parameter to `subscribeToCursors(canvasId: string, callback: (cursors: Cursor[]) => void)` function
-- [ ] Add `canvasId` parameter to `removeCursor(canvasId: string, userId: string)` function
-- [ ] Add `canvasId` parameter to `updatePresence(canvasId: string, userId: string, userData: UserPresence)` function
-- [ ] Add `canvasId` parameter to `subscribeToPresence(canvasId: string, callback: (users: Record<string, UserPresence>) => void)` function
-- [ ] Add `canvasId` parameter to `removePresence(canvasId: string, userId: string)` function
-- [ ] Update all database path references to use `sessions/${canvasId}/cursors/` and `sessions/${canvasId}/presence/` instead of hardcoded session ID
-- [ ] Add helper function `getSessionPath(canvasId: string, type: 'cursors' | 'presence'): string` for consistent path generation
+- [x] Update `lib/firebase/realtime.ts` to remove the hardcoded `SESSION_ID = "canvas-session-default"` constant
+- [x] Add `canvasId` parameter to `updateCursorPosition(canvasId: string, userId: string, x: number, y: number)` function
+- [x] Add `canvasId` parameter to `subscribeToCursors(canvasId: string, callback: (cursors: Cursor[]) => void)` function
+- [x] Add `canvasId` parameter to `removeCursor(canvasId: string, userId: string)` function
+- [x] Add `canvasId` parameter to `updatePresence(canvasId: string, userId: string, userData: UserPresence)` function
+- [x] Add `canvasId` parameter to `subscribeToPresence(canvasId: string, callback: (users: Record<string, UserPresence>) => void)` function
+- [x] Add `canvasId` parameter to `removePresence(canvasId: string, userId: string)` function
+- [x] Update all database path references to use `sessions/${canvasId}/cursors/` and `sessions/${canvasId}/presence/` instead of hardcoded session ID
+- [x] Add helper function `getSessionPath(canvasId: string, type: 'cursors' | 'presence'): string` for consistent path generation
 
 **What to Test:**
 - Run `npm run lint` to verify TypeScript compilation
@@ -143,14 +144,14 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Provide React hook interface for canvas CRUD operations with loading states and error handling
 
 **Tasks:**
-- [ ] Create `app/canvas/_hooks/useCanvases.ts` hook
-- [ ] Implement canvas list subscription using `subscribeToUserCanvases` from canvas.ts
-- [ ] Add loading state while fetching canvases
-- [ ] Add error state for failed operations
-- [ ] Implement `createCanvas(name: string, width: number, height: number)` function that uses current user ID
-- [ ] Implement `deleteCanvas(canvasId: string)` function with error handling
-- [ ] Return { canvases, loading, error, createCanvas, deleteCanvas } from hook
-- [ ] Add proper cleanup of subscription on unmount
+- [x] Create `app/canvas/_hooks/useCanvases.ts` hook
+- [x] Implement canvas list subscription using `subscribeToUserCanvases` from canvas.ts
+- [x] Add loading state while fetching canvases
+- [x] Add error state for failed operations
+- [x] Implement `createCanvas(name: string, width: number, height: number)` function that uses current user ID
+- [x] Implement `deleteCanvas(canvasId: string)` function with error handling
+- [x] Return { canvases, loading, error, createCanvas, deleteCanvas } from hook
+- [x] Add proper cleanup of subscription on unmount
 
 **What to Test:**
 - Run `npm run lint` to verify TypeScript compilation
@@ -168,17 +169,17 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Build reusable card component to display individual canvas information
 
 **Tasks:**
-- [ ] Create `app/canvas/_components/CanvasCard.tsx` component
-- [ ] Accept props: canvas (Canvas type), onClick handler, onDelete handler
-- [ ] Display canvas name prominently (truncate if too long)
-- [ ] Display canvas dimensions (e.g., "1920 × 1080")
-- [ ] Display creation date (formatted, e.g., "Created Jan 15, 2025")
-- [ ] Add hover state that reveals delete button
-- [ ] Style delete button as icon button in corner (use Trash2 from lucide-react)
-- [ ] Add click handler for entire card (navigates to canvas)
-- [ ] Add click handler for delete button (stops propagation, calls onDelete)
-- [ ] Use existing UI components from shadcn/ui (Card, Button)
-- [ ] Add proper TypeScript types for all props
+- [x] Create `app/canvas/_components/CanvasCard.tsx` component
+- [x] Accept props: canvas (Canvas type), onClick handler, onDelete handler
+- [x] Display canvas name prominently (truncate if too long)
+- [x] Display canvas dimensions (e.g., "1920 × 1080")
+- [x] Display creation date (formatted, e.g., "Created Jan 15, 2025")
+- [x] Add hover state that reveals delete button
+- [x] Style delete button as icon button in corner (use Trash2 from lucide-react)
+- [x] Add click handler for entire card (navigates to canvas)
+- [x] Add click handler for delete button (stops propagation, calls onDelete)
+- [x] Use existing UI components from shadcn/ui (Card, Button)
+- [x] Add proper TypeScript types for all props
 
 **What to Test:**
 - Run `npm run lint` to verify no issues
@@ -198,19 +199,19 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Build modal for creating new canvases with name and dimension inputs
 
 **Tasks:**
-- [ ] Create `app/canvas/_components/CreateCanvasModal.tsx` component
-- [ ] Accept props: open (boolean), onClose handler, onCreate handler
-- [ ] Use Dialog component from shadcn/ui for modal structure
-- [ ] Add form with canvas name input (required, max 100 characters)
-- [ ] Add dimension preset selector (radio or dropdown): "1920×1080 (HD)", "1024×768 (Standard)", "800×600 (Small)", "Custom"
-- [ ] Add custom dimension inputs (width and height, only shown when "Custom" selected)
-- [ ] Implement form validation: name required, dimensions must be 100-10000
-- [ ] Use dimension constants from `lib/constants/canvas.ts`
-- [ ] Add Cancel and Create buttons
-- [ ] Clear form state on close
-- [ ] Call onCreate with (name, width, height) on submit
-- [ ] Add proper loading state during creation
-- [ ] Use existing form components from shadcn/ui (Input, Label, Button, RadioGroup or Select)
+- [x] Create `app/canvas/_components/CreateCanvasModal.tsx` component
+- [x] Accept props: open (boolean), onClose handler, onCreate handler
+- [x] Use Dialog component from shadcn/ui for modal structure
+- [x] Add form with canvas name input (required, max 100 characters)
+- [x] Add dimension preset selector (radio or dropdown): "1920×1080 (HD)", "1024×768 (Standard)", "800×600 (Small)", "Custom"
+- [x] Add custom dimension inputs (width and height, only shown when "Custom" selected)
+- [x] Implement form validation: name required, dimensions must be 100-10000
+- [x] Use dimension constants from `lib/constants/canvas.ts`
+- [x] Add Cancel and Create buttons
+- [x] Clear form state on close
+- [x] Call onCreate with (name, width, height) on submit
+- [x] Add proper loading state during creation
+- [x] Use existing form components from shadcn/ui (Input, Label, Button, RadioGroup or Select)
 
 **What to Test:**
 - Run `npm run lint` to verify no issues
@@ -232,19 +233,19 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Convert the current canvas page into a canvas list/dashboard with create, view, delete functionality
 
 **Tasks:**
-- [ ] Backup current `app/canvas/page.tsx` content (we'll move it to `[canvasId]` route later)
-- [ ] Completely rewrite `app/canvas/page.tsx` as canvas dashboard
-- [ ] Import and use `useCanvases` hook to get user's canvas list
-- [ ] Import and use `useAuth` hook to get current user
-- [ ] Add page header with "My Canvases" title and user info
-- [ ] Add "New Canvas" button that opens CreateCanvasModal
-- [ ] Render grid of CanvasCard components (use CSS Grid, 3-4 columns)
-- [ ] Handle create canvas: open modal, call createCanvas from hook, navigate to new canvas on success
-- [ ] Handle delete canvas: show confirmation dialog, call deleteCanvas from hook
-- [ ] Add empty state when user has no canvases ("No canvases yet" with create button)
-- [ ] Add loading state while fetching canvases (skeleton or spinner)
-- [ ] Add error state if fetching fails
-- [ ] Use useRouter from next/navigation for navigation to `/canvas/[canvasId]`
+- [x] Backup current `app/canvas/page.tsx` content (we'll move it to `[canvasId]` route later)
+- [x] Completely rewrite `app/canvas/page.tsx` as canvas dashboard
+- [x] Import and use `useCanvases` hook to get user's canvas list
+- [x] Import and use `useAuth` hook to get current user
+- [x] Add page header with "My Canvases" title and user info
+- [x] Add "New Canvas" button that opens CreateCanvasModal
+- [x] Render grid of CanvasCard components (use CSS Grid, 3-4 columns)
+- [x] Handle create canvas: open modal, call createCanvas from hook, navigate to new canvas on success
+- [x] Handle delete canvas: show confirmation dialog, call deleteCanvas from hook
+- [x] Add empty state when user has no canvases ("No canvases yet" with create button)
+- [x] Add loading state while fetching canvases (skeleton or spinner)
+- [x] Add error state if fetching fails
+- [x] Use useRouter from next/navigation for navigation to `/canvas/[canvasId]`
 
 **What to Test:**
 - Open `/canvas` route in browser
@@ -271,20 +272,20 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Set up `/canvas/[canvasId]` route and create hook to fetch individual canvas metadata
 
 **Tasks:**
-- [ ] Create `app/canvas/_hooks/useCanvas.ts` hook
-- [ ] Implement canvas subscription using `subscribeToCanvas` from canvas.ts
-- [ ] Add loading state while fetching canvas
-- [ ] Add error state for canvas not found or fetch failure
-- [ ] Return { canvas, loading, error } from hook
-- [ ] Add proper cleanup of subscription on unmount
-- [ ] Create directory `app/canvas/[canvasId]/`
-- [ ] Create `app/canvas/[canvasId]/page.tsx` with async function that extracts canvasId from params
-- [ ] Move the backed-up canvas page content from PR #8 into this new file
-- [ ] Update the page to accept canvasId from route params: `const params = await props.params; const { canvasId } = params;`
-- [ ] Use `useCanvas` hook to fetch canvas metadata
-- [ ] Show loading state while canvas is being fetched
-- [ ] Show 404 error if canvas not found with link back to dashboard
-- [ ] Pass canvasId to Canvas component (we'll update Canvas to accept it in next PR)
+- [x] Create `app/canvas/_hooks/useCanvas.ts` hook
+- [x] Implement canvas subscription using `subscribeToCanvas` from canvas.ts
+- [x] Add loading state while fetching canvas
+- [x] Add error state for canvas not found or fetch failure
+- [x] Return { canvas, loading, error } from hook
+- [x] Add proper cleanup of subscription on unmount
+- [x] Create directory `app/canvas/[canvasId]/`
+- [x] Create `app/canvas/[canvasId]/page.tsx` with async function that extracts canvasId from params
+- [x] Move the backed-up canvas page content from PR #8 into this new file
+- [x] Update the page to accept canvasId from route params: `const params = await props.params; const { canvasId } = params;`
+- [x] Use `useCanvas` hook to fetch canvas metadata
+- [x] Show loading state while canvas is being fetched
+- [x] Show 404 error if canvas not found with link back to dashboard
+- [x] Pass canvasId to Canvas component (we'll update Canvas to accept it in next PR)
 
 **What to Test:**
 - Run `npm run lint` to verify TypeScript compilation
@@ -306,18 +307,18 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Refactor Canvas component and related hooks to accept and use canvasId for all operations
 
 **Tasks:**
-- [ ] Update `app/canvas/_hooks/useObjects.ts` to accept `canvasId: string` parameter
-- [ ] Pass canvasId to all Firestore operations (addObject, updateObject, deleteObject, subscribeToObjects)
-- [ ] Update `app/canvas/_hooks/useCursors.ts` to accept `canvasId: string` parameter
-- [ ] Pass canvasId to all Realtime operations (updateCursorPosition, subscribeToCursors, removeCursor)
-- [ ] Update `app/canvas/_hooks/usePresence.ts` to accept `canvasId: string` parameter
-- [ ] Pass canvasId to all Realtime operations (updatePresence, subscribeToPresence, removePresence)
-- [ ] Update `app/canvas/_components/Canvas.tsx` to accept `canvasId: string` and `canvas: Canvas` as props
-- [ ] Pass canvasId to useObjects, useCursors, and usePresence hooks
-- [ ] Update object creation to include canvasId in all shape factory calls
-- [ ] Pass canvasId to all lock operations (acquireLock, releaseLock)
-- [ ] Display canvas name in header or toolbar (use canvas.name)
-- [ ] Add breadcrumb navigation: Dashboard > [Canvas Name]
+- [x] Update `app/canvas/_hooks/useObjects.ts` to accept `canvasId: string` parameter
+- [x] Pass canvasId to all Firestore operations (addObject, updateObject, deleteObject, subscribeToObjects)
+- [x] Update `app/canvas/_hooks/useCursors.ts` to accept `canvasId: string` parameter
+- [x] Pass canvasId to all Realtime operations (updateCursorPosition, subscribeToCursors, removeCursor)
+- [x] Update `app/canvas/_hooks/usePresence.ts` to accept `canvasId: string` parameter
+- [x] Pass canvasId to all Realtime operations (updatePresence, subscribeToPresence, removePresence)
+- [x] Update `app/canvas/_components/Canvas.tsx` to accept `canvasId: string` and `canvas: Canvas` as props
+- [x] Pass canvasId to useObjects, useCursors, and usePresence hooks
+- [x] Update object creation to include canvasId in all shape factory calls
+- [x] Pass canvasId to all lock operations (acquireLock, releaseLock)
+- [x] Display canvas name in header or toolbar (use canvas.name)
+- [x] Add breadcrumb navigation: Dashboard > [Canvas Name]
 - [ ] Optionally: use canvas dimensions for visual bounds or constraints (not required for v1)
 
 **What to Test:**
@@ -348,14 +349,14 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Ensure all shape creation functions include canvasId in the generated objects
 
 **Tasks:**
-- [ ] Update `app/canvas/_lib/shapes.ts` for RectangleShapeFactory
-- [ ] Modify `createDefault()` to accept `canvasId: string` parameter and include it in returned object
-- [ ] Ensure `toFirestore()` includes canvasId field (should already be on object)
-- [ ] Ensure `fromFirestore()` extracts canvasId field
-- [ ] Repeat for CircleShapeFactory
-- [ ] Repeat for LineShapeFactory
-- [ ] Repeat for TextShapeFactory (if exists)
-- [ ] Update all callsites in Canvas.tsx that call `createDefault()` to pass canvasId
+- [x] Update `app/canvas/_lib/shapes.ts` for RectangleShapeFactory
+- [x] Modify `createDefault()` to accept `canvasId: string` parameter and include it in returned object
+- [x] Ensure `toFirestore()` includes canvasId field (should already be on object)
+- [x] Ensure `fromFirestore()` extracts canvasId field
+- [x] Repeat for CircleShapeFactory
+- [x] Repeat for LineShapeFactory
+- [x] Repeat for TextShapeFactory (if exists)
+- [x] Update all callsites in Canvas.tsx that call `createDefault()` to pass canvasId
 
 **What to Test:**
 - Create objects of each type (rectangle, circle, line)
@@ -377,19 +378,19 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Build a migration function to move existing canvas objects to a default canvas per user
 
 **Tasks:**
-- [ ] Create `scripts/migrate-to-canvases.ts` (or similar) migration script
-- [ ] Add function to create a "Default Canvas" for a user with ID "default-canvas-{userId}"
-- [ ] Set canvas name to "Default Canvas", dimensions to 1920x1080
-- [ ] Query all documents from old flat `canvasObjects` collection
-- [ ] Group objects by createdBy field (if exists) to create per-user default canvases
-- [ ] For each user's objects, create their default canvas if it doesn't exist
-- [ ] Copy each object to new nested collection path: `canvases/{default-canvas-userId}/objects/{objectId}`
-- [ ] Preserve all object fields (don't lose data)
-- [ ] Add canvasId field to migrated objects
-- [ ] Add transaction support or batch writes for data integrity
-- [ ] Add logging to track migration progress
-- [ ] Add dry-run mode to preview changes without committing
-- [ ] DO NOT delete old data yet (keep for rollback)
+- [x] Create `scripts/migrate-to-canvases.ts` (or similar) migration script
+- [x] Add function to create a "Default Canvas" for a user with ID "default-canvas-{userId}"
+- [x] Set canvas name to "Default Canvas", dimensions to 1920x1080
+- [x] Query all documents from old flat `canvasObjects` collection
+- [x] Group objects by createdBy field (if exists) to create per-user default canvases
+- [x] For each user's objects, create their default canvas if it doesn't exist
+- [x] Copy each object to new nested collection path: `canvases/{default-canvas-userId}/objects/{objectId}`
+- [x] Preserve all object fields (don't lose data)
+- [x] Add canvasId field to migrated objects
+- [x] Add transaction support or batch writes for data integrity
+- [x] Add logging to track migration progress
+- [x] Add dry-run mode to preview changes without committing
+- [x] DO NOT delete old data yet (keep for rollback)
 
 **What to Test:**
 - Run migration script in dry-run mode first
@@ -416,13 +417,14 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Make the application handle both migrated and non-migrated data gracefully
 
 **Tasks:**
-- [ ] Update `lib/firebase/firestore.ts` to add fallback logic for objects without canvasId
-- [ ] If `subscribeToObjects` is called but nested collection is empty, check old flat collection
-- [ ] Add helper function `shouldMigrate()` that checks if old data exists
-- [ ] Add banner or notification in dashboard if migration is needed
-- [ ] Add button to trigger migration from UI (calls migration script via Firebase function or API route)
-- [ ] Test that app works before migration (falls back to old data)
-- [ ] Test that app works after migration (uses new nested structure)
+- [x] Update `lib/firebase/firestore.ts` to add fallback logic for objects without canvasId
+- [x] If `subscribeToObjects` is called but nested collection is empty, check old flat collection
+- [x] Add helper function `shouldMigrate()` that checks if old data exists
+- [x] Add banner or notification in dashboard if migration is needed
+- [x] Add button to trigger migration from UI (calls migration script via Firebase function or API route)
+- [x] Test that app works before migration (falls back to old data)
+- [x] Test that app works after migration (uses new nested structure)
+- [x] Migration successfully completed - all objects migrated to shared canvas
 
 **What to Test:**
 - Before running migration:
@@ -451,21 +453,21 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Add proper security rules for canvases and canvas-scoped objects
 
 **Tasks:**
-- [ ] Update `firestore.rules` to add rules for `canvases` collection
-- [ ] Allow read: authenticated user and canvas createdBy matches user ID
-- [ ] Allow write: authenticated user and canvas createdBy matches user ID (for create) or resource.data.createdBy matches user ID (for update/delete)
-- [ ] Add rules for nested `canvases/{canvasId}/objects` subcollection
-- [ ] Allow read: authenticated user (later: check canvas permissions)
-- [ ] Allow write: authenticated user (later: check canvas permissions)
-- [ ] Update `database.rules.json` for Realtime Database
-- [ ] Add rules for `sessions/{canvasId}/cursors/{userId}`
-- [ ] Allow write: userId matches auth.uid
-- [ ] Allow read: authenticated user
-- [ ] Add rules for `sessions/{canvasId}/presence/{userId}`
-- [ ] Allow write: userId matches auth.uid
-- [ ] Allow read: authenticated user
-- [ ] Deploy rules to Firebase via console or CLI
-- [ ] Test rules using Firebase emulator or by attempting unauthorized access
+- [x] Update `firestore.rules` to add rules for `canvases` collection
+- [x] Allow read: authenticated user and canvas createdBy matches user ID
+- [x] Allow write: authenticated user and canvas createdBy matches user ID (for create) or resource.data.createdBy matches user ID (for update/delete)
+- [x] Add rules for nested `canvases/{canvasId}/objects` subcollection
+- [x] Allow read: authenticated user (later: check canvas permissions)
+- [x] Allow write: authenticated user (later: check canvas permissions)
+- [x] Update `database.rules.json` for Realtime Database
+- [x] Add rules for `sessions/{canvasId}/cursors/{userId}`
+- [x] Allow write: userId matches auth.uid
+- [x] Allow read: authenticated user
+- [x] Add rules for `sessions/{canvasId}/presence/{userId}`
+- [x] Allow write: userId matches auth.uid
+- [x] Allow read: authenticated user
+- [x] Deploy rules to Firebase via console or CLI
+- [x] Test rules using Firebase emulator or by attempting unauthorized access
 
 **What to Test:**
 - Try to access another user's canvas by URL (should fail or show permission error)
@@ -487,14 +489,14 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Allow users to rename their canvases from the dashboard or canvas page
 
 **Tasks:**
-- [ ] Add rename handler to `useCanvases` hook that calls `updateCanvas(canvasId, { name, updatedAt })`
-- [ ] Update `app/canvas/_components/CanvasCard.tsx` to add edit icon button (Pencil from lucide-react)
-- [ ] Add onClick handler for edit button that opens inline input or modal
-- [ ] Implement inline editing: click pencil → name becomes input → save on Enter or blur → cancel on Escape
-- [ ] Add validation: name required, max 100 characters
-- [ ] Update canvas name in Firestore on save
-- [ ] Show loading state during update
-- [ ] Show error state if update fails
+- [x] Add rename handler to `useCanvases` hook that calls `updateCanvas(canvasId, { name, updatedAt })`
+- [x] Update `app/canvas/_components/CanvasCard.tsx` to add edit icon button (Pencil from lucide-react)
+- [x] Add onClick handler for edit button that opens inline input or modal
+- [x] Implement inline editing: click pencil → name becomes input → save on Enter or blur → cancel on Escape
+- [x] Add validation: name required, max 100 characters
+- [x] Update canvas name in Firestore on save
+- [x] Show loading state during update
+- [x] Show error state if update fails
 - [ ] Optionally: add rename option in canvas page header/settings menu
 
 **What to Test:**
@@ -519,15 +521,16 @@ This is a major architectural change affecting the data layer, routing, componen
 **Goal:** Create a header component for the canvas page with navigation back to dashboard
 
 **Tasks:**
-- [ ] Create `app/canvas/_components/CanvasHeader.tsx` component
-- [ ] Accept props: canvasName (string)
-- [ ] Display breadcrumb: "Dashboard > {canvasName}" (use ChevronRight icon from lucide-react)
-- [ ] Make "Dashboard" clickable, navigates to `/canvas`
-- [ ] Style header bar (fixed at top, spans full width, padding, border-bottom)
-- [ ] Optionally: add canvas settings menu icon (MoreVertical) for future features
-- [ ] Use useRouter from next/navigation for navigation
-- [ ] Import and render CanvasHeader in `app/canvas/[canvasId]/page.tsx`
-- [ ] Pass canvas name from canvas metadata
+- [x] Create `app/canvas/_components/CanvasHeader.tsx` component
+- [x] Accept props: canvasName (string)
+- [x] Display breadcrumb: "Dashboard > {canvasName}" (use ChevronRight icon from lucide-react)
+- [x] Make "Dashboard" clickable, navigates to `/canvas`
+- [x] Style header bar (fixed at top, spans full width, padding, border-bottom)
+- [x] Optionally: add canvas settings menu icon (MoreVertical) for future features
+- [x] Use useRouter from next/navigation for navigation
+- [x] Import and render CanvasHeader in `app/canvas/[canvasId]/page.tsx`
+- [x] Pass canvas name from canvas metadata
+- [x] All tasks completed and tested
 
 **What to Test:**
 - Open any canvas

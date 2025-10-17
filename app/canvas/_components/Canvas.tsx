@@ -7,7 +7,7 @@ import Toolbar from "./Toolbar";
 import RemoteCursorKonva from "./RemoteCursorKonva";
 import ActiveTransformOverlay from "./ActiveTransformOverlay";
 import PropertiesPanel from "./PropertiesPanel";
-import { useObjects, PersistedRect } from "../_hooks/useObjects";
+import { useObjects } from "../_hooks/useObjects";
 import { batchUpdateObjects } from "@/lib/firebase/firestore";
 import { useCursors } from "../_hooks/useCursors";
 import { useActiveTransforms } from "../_hooks/useActiveTransforms";
@@ -26,11 +26,11 @@ import { Separator } from "@/components/ui/separator";
 import StageContainer from "./StageContainer";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
-import { Transformer, Rect, Circle, Ellipse, Line, Text } from "react-konva";
+import { Transformer, Rect, Circle, Ellipse, Line } from "react-konva";
 import { getShapeFactory } from "../_lib/shapes";
 import ShapeComponent from "./shapes";
 import { isDrawingTool, isShapeTool } from "../_constants/tools";
-import type { PersistedShape, PersistedText } from "../_types/shapes";
+import type { PersistedShape } from "../_types/shapes";
 import { getMaxZIndex, getMinZIndex } from "../_lib/layer-management";
 import {
   broadcastTransform,
@@ -43,6 +43,13 @@ import { screenToCanvasCoordinates } from "../_lib/coordinates";
 import { getIntersectingObjects } from "../_lib/intersection";
 
 interface CanvasProps {
+  canvasId: string;
+  canvas: {
+    id: string;
+    name: string;
+    width: number;
+    height: number;
+  };
   width?: number;
   height?: number;
 }
@@ -54,7 +61,7 @@ interface DraftRect {
   height: number;
 }
 
-export default function Canvas({ width, height }: CanvasProps) {
+export default function Canvas({ canvasId, canvas, width, height }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const [isReady, setIsReady] = useState(false);
@@ -91,7 +98,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   
   // Lock management with expiration callback
   const lockManagerRef = useRef<LockManager>(
-    new LockManager(null, (expiredObjectIds) => {
+    new LockManager(null, null, (expiredObjectIds) => {
       // Remove expired objects from selection when locks expire
       setSelectedIds(prev => prev.filter(id => !expiredObjectIds.includes(id)));
     })
@@ -118,23 +125,24 @@ export default function Canvas({ width, height }: CanvasProps) {
     saveObject,
     updateObjectInFirestore,
     deleteObjectFromFirestore,
-    generateId,
   } = useObjects({
+    canvasId,
     isReady,
     onObjectsUpdate: handleObjectsUpdate,
   });
-  
+
   // Cursor tracking
   const { remoteCursors } = useCursors({
+    canvasId,
     stageRef,
     isReady,
   });
 
   // Active transform tracking
-  const { activeTransformsWithUser } = useActiveTransforms();
+  const { activeTransformsWithUser } = useActiveTransforms(canvasId);
 
   // Presence tracking (for getting locking user info)
-  const { onlineUsers } = usePresence();
+  const { onlineUsers } = usePresence(canvasId);
 
   // Update Transformer when selection changes
   useEffect(() => {
@@ -281,7 +289,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       groupTransformThrottleTimer.current = setTimeout(() => {
         // Broadcast all accumulated transforms as a single group
         const transforms = { ...pendingGroupTransforms.current };
-        broadcastGroupTransform(selectedIds, user.uid, transforms);
+        broadcastGroupTransform(canvasId, selectedIds, user.uid, transforms);
 
         // Clear accumulated transforms and timer
         pendingGroupTransforms.current = {};
@@ -299,16 +307,16 @@ export default function Canvas({ width, height }: CanvasProps) {
       broadcastThrottleTimers.current.set(objectId, timer);
 
       // Broadcast to Realtime Database
-      broadcastTransform(objectId, user.uid, transformData);
+      broadcastTransform(canvasId, objectId, user.uid, transformData);
     }
-  }, [objects, user, selectedIds]);
+  }, [objects, user, selectedIds, canvasId]);
 
   const handleTransformEnd = useCallback((objectId: string) => {
     if (!user) return;
 
     // Multi-select: Clear group transform
     if (selectedIds.length > 1) {
-      clearGroupTransform(user.uid);
+      clearGroupTransform(canvasId, user.uid);
       // Clear any pending group transforms
       pendingGroupTransforms.current = {};
       if (groupTransformThrottleTimer.current) {
@@ -317,9 +325,9 @@ export default function Canvas({ width, height }: CanvasProps) {
       }
     } else {
       // Single selection: Clear individual transform
-      clearTransform(objectId);
+      clearTransform(canvasId, objectId);
     }
-  }, [user, selectedIds]);
+  }, [user, selectedIds, canvasId]);
 
   // Cleanup broadcast throttle timers on unmount
   useEffect(() => {
@@ -463,10 +471,11 @@ export default function Canvas({ width, height }: CanvasProps) {
     const containerHeight = height || containerRef.current.clientHeight;
 
     setContainerSize({ width: containerWidth, height: containerHeight });
-    
-    // Initialize lock manager with user
+
+    // Initialize lock manager with user and canvas
     lockManagerRef.current.setUserId(user?.uid || null);
-    
+    lockManagerRef.current.setCanvasId(canvasId);
+
     // Start lock expiration checker
     lockManagerRef.current.startExpirationChecker();
     
@@ -481,7 +490,7 @@ export default function Canvas({ width, height }: CanvasProps) {
       lockManagerRef.current.cleanup();
       setIsReady(false);
     };
-  }, [width, height, user?.uid, viewport.x, viewport.y, viewport.zoom]);
+  }, [canvasId, width, height, user?.uid, viewport.x, viewport.y, viewport.zoom]);
 
   // Wheel zoom handler (zoom to pointer)
   const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
@@ -595,7 +604,8 @@ export default function Canvas({ width, height }: CanvasProps) {
       // Create new text object at click position
       const newText = factory.createDefault(
         { x: canvasPoint.x, y: canvasPoint.y, width: 100, height: 30 },
-        defaults
+        defaults,
+        canvasId
       );
 
       // Save to Firestore
@@ -610,7 +620,7 @@ export default function Canvas({ width, height }: CanvasProps) {
   };
 
   // Mouse move handler for drawing and selection
-  const handleMouseMove = (e: KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = () => {
     const stage = stageRef.current;
     if (!stage) return;
 
@@ -707,7 +717,7 @@ export default function Canvas({ width, height }: CanvasProps) {
         : {};
 
       // Create shape from draft using factory with default properties
-      const newShape = factory.createDefault(draftRect, defaults);
+      const newShape = factory.createDefault(draftRect, defaults, canvasId);
 
       // Validate size
       if (!factory.validateSize(newShape)) {
@@ -923,7 +933,7 @@ export default function Canvas({ width, height }: CanvasProps) {
                       }));
 
                       // Batch write to Firestore
-                      batchUpdateObjects(updates);
+                      batchUpdateObjects(canvasId, updates);
 
                       // Clear pending updates
                       pendingTransformEndUpdates.current.clear();

@@ -31,11 +31,13 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
    */
   createDefault: (
     { x, y, width, height }: DrawingBounds,
-    overrides?: Partial<PersistedRect>
+    overrides?: Partial<PersistedRect>,
+    canvasId?: string
   ): PersistedRect => {
     return {
       id: generateObjectId(),
       type: "rectangle",
+      canvasId: canvasId || "",
       x,
       y,
       width,
@@ -64,12 +66,13 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
   /**
    * Convert local PersistedRect to Firestore RectangleObject
    */
-  toFirestore: (rect: PersistedRect, userId: string): RectangleObject => {
+  toFirestore: (rect: PersistedRect, userId: string, canvasId?: string): RectangleObject => {
     const now = Date.now();
 
     return {
       id: rect.id,
       type: "rectangle",
+      canvasId: canvasId || "",
 
       // Ownership & Sync
       createdBy: userId,
@@ -119,6 +122,7 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
     return {
       id: rectObj.id,
       type: "rectangle",
+      canvasId: rectObj.canvasId || "",
       x: rectObj.x,
       y: rectObj.y,
       width: rectObj.width,
@@ -203,19 +207,21 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
    */
   createDefault: (
     { x, y, width, height }: DrawingBounds,
-    overrides?: Partial<PersistedCircle>
+    overrides?: Partial<PersistedCircle>,
+    canvasId?: string
   ): PersistedCircle => {
     // Calculate radiusX and radiusY from bounding box
     const radiusX = (width || 0) / 2;
     const radiusY = (height || 0) / 2;
-    
+
     // Center position is the center of the bounding box
     const centerX = x + (width || 0) / 2;
     const centerY = y + (height || 0) / 2;
-    
+
     return {
       id: generateObjectId(),
       type: "circle",
+      canvasId: canvasId || "",
       x: centerX,
       y: centerY,
       radiusX,
@@ -243,9 +249,9 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
   /**
    * Convert local PersistedCircle to Firestore CircleObject
    */
-  toFirestore: (circle: PersistedCircle, userId: string): CanvasObject => {
+  toFirestore: (circle: PersistedCircle, userId: string, canvasId?: string): CanvasObject => {
     const now = Date.now();
-    
+
     // Convert radiusX and radiusY to width and height (diameter)
     const width = (circle.radiusX || 0) * 2;
     const height = (circle.radiusY || 0) * 2;
@@ -253,6 +259,7 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
     return {
       id: circle.id,
       type: "circle",
+      canvasId: canvasId || "",
 
       // Ownership & Sync
       createdBy: userId,
@@ -299,10 +306,11 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
     // CircleObject stores diameters as width/height, convert to radiusX/radiusY
     const radiusX = (circleObj.width || 0) / 2;
     const radiusY = (circleObj.height || 0) / 2;
-    
+
     return {
       id: circleObj.id,
       type: "circle",
+      canvasId: circleObj.canvasId || "",
       x: circleObj.x,
       y: circleObj.y,
       radiusX,
@@ -390,15 +398,17 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
    */
   createDefault: (
     { x, y, width, height }: DrawingBounds,
-    overrides?: Partial<PersistedLine>
+    overrides?: Partial<PersistedLine>,
+    canvasId?: string
   ): PersistedLine => {
     // Convert bounding box to line endpoints
     const x2 = x + width;
     const y2 = y + height;
-    
+
     return {
       id: generateObjectId(),
       type: "line",
+      canvasId: canvasId || "",
       x,
       y,
       x2,
@@ -424,12 +434,13 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
   /**
    * Convert local PersistedLine to Firestore LineObject
    */
-  toFirestore: (line: PersistedLine, userId: string): LineObject => {
+  toFirestore: (line: PersistedLine, userId: string, canvasId?: string): LineObject => {
     const now = Date.now();
 
     return {
       id: line.id,
       type: "line",
+      canvasId: canvasId || "",
 
       // Ownership & Sync
       createdBy: userId,
@@ -474,6 +485,7 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
     return {
       id: lineObj.id,
       type: "line",
+      canvasId: lineObj.canvasId || "",
       x: lineObj.x,
       y: lineObj.y,
       x2: lineObj.x2,
@@ -550,11 +562,13 @@ export const textFactory: ShapeFactory<PersistedText> = {
    */
   createDefault: (
     { x, y, width, height }: DrawingBounds,
-    overrides?: Partial<PersistedText>
+    overrides?: Partial<PersistedText>,
+    canvasId?: string
   ): PersistedText => {
     return {
       id: generateObjectId(),
       type: "text",
+      canvasId: canvasId || "",
       x,
       y,
       width: width || 100, // Default width
@@ -590,12 +604,13 @@ export const textFactory: ShapeFactory<PersistedText> = {
   /**
    * Convert local PersistedText to Firestore TextObject
    */
-  toFirestore: (text: PersistedText, userId: string): TextObject => {
+  toFirestore: (text: PersistedText, userId: string, canvasId?: string): TextObject => {
     const now = Date.now();
 
     return {
       id: text.id,
       type: "text",
+      canvasId: canvasId || "",
 
       // Ownership & Sync
       createdBy: userId,
@@ -654,6 +669,7 @@ export const textFactory: ShapeFactory<PersistedText> = {
     return {
       id: textObj.id,
       type: "text",
+      canvasId: textObj.canvasId || "",
       x: textObj.x,
       y: textObj.y,
       width: textObj.width,
@@ -681,7 +697,7 @@ export const textFactory: ShapeFactory<PersistedText> = {
   /**
    * Validate text has content
    */
-  validateSize: (text: PersistedText): boolean => {
+  validateSize: (): boolean => {
     // Allow empty text for MVP (user can edit in properties panel)
     return true;
     // Alternative: return text.content.length > 0;
@@ -690,14 +706,14 @@ export const textFactory: ShapeFactory<PersistedText> = {
   /**
    * Normalize drawing coordinates (not really used for text, but required by interface)
    */
-  normalizeDrawing: (start: Point, current: Point): DrawingBounds => {
+  normalizeDrawing: (start: Point): DrawingBounds => {
     // Text is click-to-place, not drag-to-draw
     // Just return the click position
-    return { 
-      x: start.x, 
-      y: start.y, 
-      width: 100, 
-      height: 30 
+    return {
+      x: start.x,
+      y: start.y,
+      width: 100,
+      height: 30
     };
   },
 
@@ -705,7 +721,7 @@ export const textFactory: ShapeFactory<PersistedText> = {
    * Get draft text data for preview rendering
    * For MVP, text doesn't show draft preview (click-to-place)
    */
-  getDraftData: (draft: DrawingBounds, styleOverrides = {}) => {
+  getDraftData: () => {
     return null; // No draft preview for text tool
   },
 };

@@ -11,8 +11,6 @@ interface LinePropertiesProps {
 
 export default function LineProperties({
   shape,
-  onUpdate,
-  disabled = false,
 }: LinePropertiesProps) {
   // Calculate line length
   const dx = shape.x2 - shape.x;

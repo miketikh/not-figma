@@ -57,7 +57,6 @@ export interface TextShapeProps {
  */
 export default function TextShape({
   shape,
-  isSelected,
   isLocked,
   isSelectable,
   zoom,

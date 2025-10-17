@@ -27,6 +27,7 @@ export interface DrawingBounds {
 export interface PersistedRect {
   id: string;
   type: "rectangle";
+  canvasId: string;
   x: number;
   y: number;
   width: number;
@@ -51,6 +52,7 @@ export interface PersistedRect {
 export interface PersistedCircle {
   id: string;
   type: "circle";
+  canvasId: string;
   x: number; // center x
   y: number; // center y
   radiusX: number; // horizontal radius
@@ -75,6 +77,7 @@ export interface PersistedCircle {
 export interface PersistedLine {
   id: string;
   type: "line";
+  canvasId: string;
   x: number; // start point x
   y: number; // start point y
   x2: number; // end point x
@@ -96,6 +99,7 @@ export interface PersistedLine {
 export interface PersistedText {
   id: string;
   type: "text";
+  canvasId: string;
   x: number; // top-left x
   y: number; // top-left y
   width: number; // bounding box width
@@ -145,8 +149,9 @@ export interface ShapeFactory<T> {
   /**
    * Create a shape with default styling
    * Optional overrides parameter allows customizing default properties
+   * Optional canvasId parameter for associating shape with a canvas
    */
-  createDefault: (params: any, overrides?: Partial<T>) => T;
+  createDefault: (params: any, overrides?: Partial<T>, canvasId?: string) => T;
 
   /**
    * Convert draft drawing bounds to final shape

@@ -2,8 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is the canvas owner
+    function isCanvasOwner(canvas) {
+      return isAuthenticated() && canvas.createdBy == request.auth.uid;
+    }
+
+    // Rules for canvases collection
+    // Each canvas is owned by the user who created it
+    match /canvases/{canvasId} {
+      // Allow read if authenticated and user is the canvas owner
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+
+      // Allow create if authenticated and the createdBy field matches the authenticated user
+      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
+
+      // Allow update/delete if authenticated and user is the canvas owner (check existing resource)
+      allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+
+      // Rules for nested objects subcollection within each canvas
+      // Currently allows any authenticated user to read/write
+      // TODO: In the future, check canvas-level permissions (e.g., shared canvases, collaborators)
+      match /objects/{objectId} {
+        // Allow read if authenticated
+        // Later: check if user has read permission on the parent canvas
+        allow read: if isAuthenticated();
+
+        // Allow write if authenticated
+        // Later: check if user has write permission on the parent canvas
+        allow write: if isAuthenticated();
+      }
     }
   }
 }

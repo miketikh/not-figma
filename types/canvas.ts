@@ -17,6 +17,32 @@ export interface FabricObjectData {
 }
 
 // ============================================================================
+// Canvas Metadata
+// ============================================================================
+
+/**
+ * Canvas interface
+ * Represents a canvas document with metadata
+ */
+export interface Canvas {
+  // Identity
+  id: string;
+  name: string;
+
+  // Dimensions
+  width: number;
+  height: number;
+
+  // Ownership & Sync
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number;
+
+  // Sharing
+  isPublic: boolean;
+}
+
+// ============================================================================
 // Canvas Objects
 // ============================================================================
 
@@ -28,6 +54,7 @@ export interface BaseCanvasObject {
   // Identity
   id: string;
   type: "rectangle" | "circle" | "line" | "text";
+  canvasId: string;
 
   // Ownership & Sync
   createdBy: string;

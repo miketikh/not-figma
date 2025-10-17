@@ -53,7 +53,6 @@ export interface LineShapeProps {
  */
 export default function LineShape({
   shape,
-  isSelected,
   isLocked,
   isSelectable,
   zoom,

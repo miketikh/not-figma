@@ -36,10 +36,12 @@ export class LockManager {
   private lastActivityTime: Map<string, number> = new Map();
   private expirationCheckInterval: NodeJS.Timeout | null = null;
   private userId: string | null = null;
+  private canvasId: string | null = null;
   private onLockExpired?: (objectIds: string[]) => void;
 
-  constructor(userId: string | null = null, onLockExpired?: (objectIds: string[]) => void) {
+  constructor(userId: string | null = null, canvasId: string | null = null, onLockExpired?: (objectIds: string[]) => void) {
     this.userId = userId;
+    this.canvasId = canvasId;
     this.onLockExpired = onLockExpired;
   }
 
@@ -51,14 +53,21 @@ export class LockManager {
   }
 
   /**
+   * Set the canvas ID for lock operations
+   */
+  setCanvasId(canvasId: string | null) {
+    this.canvasId = canvasId;
+  }
+
+  /**
    * Try to acquire a lock on an object
    * @returns true if lock was acquired, false otherwise
    */
   async tryAcquireLock(objectId: string): Promise<boolean> {
-    if (!this.userId) return false;
+    if (!this.userId || !this.canvasId) return false;
 
     try {
-      const lockResult = await acquireLock(objectId, this.userId);
+      const lockResult = await acquireLock(this.canvasId, objectId, this.userId);
 
       if (lockResult.success) {
         this.lockedObjects.add(objectId);
@@ -78,10 +87,10 @@ export class LockManager {
    * Release a specific lock
    */
   async releaseLock(objectId: string): Promise<void> {
-    if (!this.userId) return;
+    if (!this.userId || !this.canvasId) return;
 
     try {
-      await releaseLock(objectId, this.userId);
+      await releaseLock(this.canvasId, objectId, this.userId);
       this.lockedObjects.delete(objectId);
       this.lastActivityTime.delete(objectId);
     } catch (error) {
@@ -105,10 +114,10 @@ export class LockManager {
    * Renew lock for an object (called on user interaction)
    */
   async renewLockForObject(objectId: string): Promise<void> {
-    if (!this.userId || !this.lockedObjects.has(objectId)) return;
+    if (!this.userId || !this.canvasId || !this.lockedObjects.has(objectId)) return;
 
     try {
-      const renewed = await renewLock(objectId, this.userId);
+      const renewed = await renewLock(this.canvasId, objectId, this.userId);
       
       if (renewed) {
         // Update last activity time

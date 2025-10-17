@@ -21,7 +21,7 @@ import type { UserPresence } from "@/types/user";
 
 const STALE_TRANSFORM_THRESHOLD = 5000; // 5 seconds
 
-export function useActiveTransforms() {
+export function useActiveTransforms(canvasId: string) {
   const { user } = useAuth();
   const [activeTransforms, setActiveTransforms] = useState<ActiveTransformMap>({});
   const [groupTransforms, setGroupTransforms] = useState<Record<string, GroupActiveTransform>>({});
@@ -29,42 +29,42 @@ export function useActiveTransforms() {
 
   // Subscribe to presence data (for display names and colors)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !canvasId) return;
 
-    const unsubscribe = subscribeToPresence((presence) => {
+    const unsubscribe = subscribeToPresence(canvasId, (presence) => {
       setPresenceData(presence);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [user, canvasId]);
 
   // Subscribe to active transforms from other users
   useEffect(() => {
-    if (!user) return;
+    if (!user || !canvasId) return;
 
-    const unsubscribe = subscribeToActiveTransforms((transforms) => {
+    const unsubscribe = subscribeToActiveTransforms(canvasId, (transforms) => {
       setActiveTransforms(transforms);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [user, canvasId]);
 
   // Subscribe to group transforms from other users
   useEffect(() => {
-    if (!user) return;
+    if (!user || !canvasId) return;
 
-    const unsubscribe = subscribeToGroupTransforms((transforms) => {
+    const unsubscribe = subscribeToGroupTransforms(canvasId, (transforms) => {
       setGroupTransforms(transforms);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [user]);
+  }, [user, canvasId]);
 
   // Periodic cleanup of stale transforms
   useEffect(() => {

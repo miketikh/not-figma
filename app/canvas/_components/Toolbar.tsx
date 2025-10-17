@@ -3,7 +3,6 @@
 import type { CanvasTool } from "@/types/canvas";
 import { useCanvasStore } from "../_store/canvas-store";
 import { MousePointer2, Hand, Square, Circle, Minus, Type } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,

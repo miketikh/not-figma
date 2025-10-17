@@ -53,7 +53,6 @@ export interface RectangleShapeProps {
  */
 export default function RectangleShape({
   shape,
-  isSelected,
   isLocked,
   isSelectable,
   zoom,

@@ -1,7 +1,27 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    "sessions": {
+      "$canvasId": {
+        "cursors": {
+          "$userId": {
+            // Users can only write their own cursor position
+            // The userId in the path must match the authenticated user's uid
+            ".write": "$userId === auth.uid",
+            // Any authenticated user can read cursors (to see other users' cursors)
+            ".read": "auth != null"
+          }
+        },
+        "presence": {
+          "$userId": {
+            // Users can only write their own presence data
+            // The userId in the path must match the authenticated user's uid
+            ".write": "$userId === auth.uid",
+            // Any authenticated user can read presence data (to see who's online)
+            ".read": "auth != null"
+          }
+        }
+      }
+    }
   }
 }
 
