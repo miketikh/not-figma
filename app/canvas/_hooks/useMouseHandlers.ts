@@ -25,6 +25,7 @@ interface UseMouseHandlersParams {
   canvasId: string;
   saveObject: (obj: PersistedShape) => void;
   setActiveTool: (tool: CanvasTool) => void;
+  onCursorMove?: (coords: { x: number; y: number; visible: boolean }) => void;
   // Drawing hook interface
   drawing: {
     isDrawing: boolean;
@@ -65,6 +66,7 @@ export function useMouseHandlers({
   canvasId,
   saveObject,
   setActiveTool,
+  onCursorMove,
   drawing,
   selection,
 }: UseMouseHandlersParams) {
@@ -182,6 +184,15 @@ export function useMouseHandlers({
     const canvasPoint = screenToCanvasCoordinates(stage, pointer);
     if (!canvasPoint) return;
 
+    // Update cursor coordinates display
+    if (onCursorMove) {
+      onCursorMove({
+        x: canvasPoint.x,
+        y: canvasPoint.y,
+        visible: true,
+      });
+    }
+
     // Update selection rectangle while selecting
     if (selection.isSelecting) {
       selection.updateSelection(canvasPoint);
@@ -191,7 +202,7 @@ export function useMouseHandlers({
     if (drawing.isDrawing && drawing.draftRect) {
       drawing.updateDrawing(canvasPoint);
     }
-  }, [stageRef, drawing, selection]);
+  }, [stageRef, drawing, selection, onCursorMove]);
 
   const handleMouseUp = useCallback(
     (e: KonvaEventObject<MouseEvent>) => {
@@ -264,11 +275,44 @@ export function useMouseHandlers({
     setIsPanning,
   ]);
 
+  const handleMouseEnter = useCallback(() => {
+    // Cursor entered canvas area
+    if (onCursorMove) {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+
+      const canvasPoint = screenToCanvasCoordinates(stage, pointer);
+      if (!canvasPoint) return;
+
+      onCursorMove({
+        x: canvasPoint.x,
+        y: canvasPoint.y,
+        visible: true,
+      });
+    }
+  }, [stageRef, onCursorMove]);
+
+  const handleMouseLeave = useCallback(() => {
+    // Cursor left canvas area
+    if (onCursorMove) {
+      onCursorMove({
+        x: 0,
+        y: 0,
+        visible: false,
+      });
+    }
+  }, [onCursorMove]);
+
   return {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
     handleDragBound,
     handleDragEnd,
+    handleMouseEnter,
+    handleMouseLeave,
   };
 }

@@ -11,6 +11,7 @@ import ViewControls from "./ViewControls";
 import DraftShapeRenderer from "./DraftShapeRenderer";
 import SelectionRectRenderer from "./SelectionRectRenderer";
 import AIChatPanel from "./AIChatPanel";
+import CursorCoordinates from "./CursorCoordinates";
 import { useObjects } from "../_hooks/useObjects";
 import { batchUpdateObjects } from "@/lib/firebase/firestore";
 import { useCursors } from "../_hooks/useCursors";
@@ -61,6 +62,13 @@ export default function Canvas({
   const [isPanning, setIsPanning] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
   const [shiftPressed, setShiftPressed] = useState(false);
+
+  // Cursor coordinates state
+  const [cursorCoords, setCursorCoords] = useState<{
+    x: number;
+    y: number;
+    visible: boolean;
+  }>({ x: 0, y: 0, visible: false });
 
   // Persisted shapes
   const [objects, setObjects] = useState<PersistedShape[]>([]);
@@ -174,6 +182,7 @@ export default function Canvas({
     canvasId,
     saveObject,
     setActiveTool,
+    onCursorMove: setCursorCoords,
     drawing,
     selection,
   });
@@ -339,6 +348,8 @@ export default function Canvas({
           onMouseDown={mouseHandlers.handleMouseDown}
           onMouseMove={mouseHandlers.handleMouseMove}
           onMouseUp={mouseHandlers.handleMouseUp}
+          onMouseEnter={mouseHandlers.handleMouseEnter}
+          onMouseLeave={mouseHandlers.handleMouseLeave}
           onDragEnd={mouseHandlers.handleDragEnd}
           canvasWidth={canvas.width}
           canvasHeight={canvas.height}
@@ -554,6 +565,15 @@ export default function Canvas({
           onAutoSelect={(objectId) => {
             setSelectedIds([objectId]);
           }}
+        />
+      )}
+
+      {/* Cursor Coordinates Display */}
+      {isReady && (
+        <CursorCoordinates
+          x={cursorCoords.x}
+          y={cursorCoords.y}
+          visible={cursorCoords.visible}
         />
       )}
 
