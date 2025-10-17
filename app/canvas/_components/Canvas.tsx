@@ -7,8 +7,7 @@ import Toolbar from "./Toolbar";
 import RemoteCursorKonva from "./RemoteCursorKonva";
 import ActiveTransformOverlay from "./ActiveTransformOverlay";
 import PropertiesPanel from "./PropertiesPanel";
-import ZoomControls from "./ZoomControls";
-import GridToggle from "./GridToggle";
+import ViewControls from "./ViewControls";
 import DraftShapeRenderer from "./DraftShapeRenderer";
 import SelectionRectRenderer from "./SelectionRectRenderer";
 import { useObjects } from "../_hooks/useObjects";
@@ -504,9 +503,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       {/* Toolbar (centered bottom) */}
       {isReady && <Toolbar />}
 
-      {/* Grid Toggle (top-left) */}
-      {isReady && <GridToggle showGrid={showGrid} onToggle={toggleGrid} />}
-
       {/* Properties Panel (right side) */}
       {isReady && (
         <PropertiesPanel
@@ -520,13 +516,15 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
         />
       )}
 
-      {/* Zoom Controls (bottom-right) */}
+      {/* View Controls (bottom-right) - Grid toggle and zoom controls */}
       {isReady && (
-        <ZoomControls
+        <ViewControls
           zoom={viewport.zoom}
           onZoomIn={zoom.zoomIn}
           onZoomOut={zoom.zoomOut}
           onResetZoom={zoom.resetZoom}
+          showGrid={showGrid}
+          onToggleGrid={toggleGrid}
         />
       )}
       
