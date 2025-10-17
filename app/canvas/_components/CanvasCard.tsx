@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Lock, Globe } from "lucide-react";
 import { Canvas } from "@/types/canvas";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -206,6 +206,28 @@ export function CanvasCard({ canvas, onClick, onDelete, onRename }: CanvasCardPr
           </Button>
         </>
       )}
+
+      {/* Public/Private badge - positioned at bottom right */}
+      <div
+        className={cn(
+          "absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap",
+          canvas.isPublic
+            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+        )}
+      >
+        {canvas.isPublic ? (
+          <>
+            <Globe className="h-3 w-3" />
+            Public
+          </>
+        ) : (
+          <>
+            <Lock className="h-3 w-3" />
+            Private
+          </>
+        )}
+      </div>
     </Card>
   );
 }

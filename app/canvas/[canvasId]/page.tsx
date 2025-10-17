@@ -4,12 +4,15 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FileQuestion, Home, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import Canvas from "../_components/Canvas";
 import OnlineUsers from "../_components/OnlineUsers";
 import CanvasHeader from "../_components/CanvasHeader";
 import { useCanvas } from "../_hooks/useCanvas";
+import { Button } from "@/components/ui/button";
+import { ToastProvider } from "@/components/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,60 +29,130 @@ interface CanvasPageProps {
 function CanvasPageContent({ canvasId }: { canvasId: string }) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { canvas, loading, error } = useCanvas(canvasId);
+  const { canvas, loading, error, retry } = useCanvas(canvasId);
 
-  // Loading state
+  // Loading state - show page skeleton
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading canvas...</p>
+      <div className="flex flex-col h-screen bg-background">
+        {/* Header Skeleton */}
+        <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
+          <div className="h-full px-6 flex items-center justify-between">
+            {/* Left Side - Logo */}
+            <div className="flex items-center gap-2">
+              <Image
+                src="/favicon/apple-touch-icon.png"
+                alt="Not-Figma Logo"
+                width={32}
+                height={32}
+                className="rounded"
+              />
+              <h1 className="text-xl font-semibold text-foreground">
+                Not-Figma
+              </h1>
+            </div>
+
+            {/* Center - skeleton for online users */}
+            <div className="flex-1 flex justify-center">
+              <div className="h-8 w-32 bg-muted rounded animate-pulse" />
+            </div>
+
+            {/* Right Side - User Info skeleton */}
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+            </div>
+          </div>
+        </header>
+
+        {/* Canvas Header Skeleton */}
+        <div className="flex-shrink-0 bg-card border-b h-12 shadow-sm">
+          <div className="h-full px-6 flex items-center gap-2">
+            <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+          </div>
         </div>
+
+        {/* Canvas Area - centered spinner */}
+        <main className="flex-1 overflow-hidden flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading canvas...</p>
+          </div>
+        </main>
       </div>
     );
   }
 
-  // Error state - canvas not found
+  // Error state - canvas not found or permission denied
   if (error || !canvas) {
+    // Check if it's a permission denied error
+    const isPermissionDenied = error?.message?.includes("permission-denied") ||
+                               error?.message?.includes("Missing or insufficient permissions");
+
+    // Check if it's a network error (can retry)
+    const isNetworkError = error?.message?.includes("network") ||
+                          error?.message?.includes("offline") ||
+                          error?.message?.includes("Failed to fetch");
+
+    const errorTitle = isPermissionDenied
+      ? "Access Denied"
+      : isNetworkError
+      ? "Connection Error"
+      : "Canvas Not Found";
+
+    const errorMessage = isPermissionDenied
+      ? "You don't have permission to view this canvas. It may be private or you may not be invited to collaborate."
+      : isNetworkError
+      ? "Unable to load the canvas. Please check your internet connection and try again."
+      : "This canvas doesn't exist or has been deleted.";
+
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center max-w-md">
-          <div className="mb-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-24 w-24 mx-auto text-muted-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+        <div className="text-center max-w-md px-6">
+          <div className="mb-6 flex justify-center">
+            {isNetworkError ? (
+              <div className="p-4 rounded-full bg-destructive/10">
+                <AlertCircle className="h-16 w-16 text-destructive" />
+              </div>
+            ) : (
+              <FileQuestion className="h-24 w-24 text-muted-foreground" strokeWidth={1.5} />
+            )}
           </div>
-          <h1 className="text-2xl font-semibold mb-2">Canvas not found</h1>
-          <p className="text-muted-foreground mb-6">
-            This canvas doesn&apos;t exist or you don&apos;t have permission to view it.
+
+          <h1 className="text-3xl font-bold mb-3 text-foreground">
+            {errorTitle}
+          </h1>
+
+          <p className="text-muted-foreground mb-8 text-base leading-relaxed">
+            {errorMessage}
           </p>
-          <Link
-            href="/canvas"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Go to Dashboard
-          </Link>
+
+          <div className="flex gap-3 justify-center">
+            {isNetworkError && (
+              <Button onClick={retry} size="lg" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </Button>
+            )}
+            <Button asChild size="lg" variant={isNetworkError ? "outline" : "default"} className="gap-2">
+              <Link href="/canvas">
+                <Home className="h-4 w-4" />
+                Go to Dashboard
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Main Header - Logo, Online Users, User Info */}
-      <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
+    <ToastProvider>
+      <div className="flex flex-col h-screen bg-background">
+        {/* Main Header - Logo, Online Users, User Info */}
+        <header className="flex-shrink-0 bg-card border-b h-16 shadow-sm">
         <div className="h-full px-6 flex items-center justify-between">
           {/* Left Side - Logo */}
           <div className="flex items-center gap-2">
@@ -97,7 +170,7 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
 
           {/* Center - Online Users */}
           <div className="flex-1 flex justify-center">
-            <OnlineUsers />
+            <OnlineUsers canvasId={canvasId} />
           </div>
 
           {/* Right Side - User Info */}
@@ -131,13 +204,14 @@ function CanvasPageContent({ canvasId }: { canvasId: string }) {
       </header>
 
       {/* Canvas Header with Breadcrumb */}
-      <CanvasHeader canvasName={canvas.name} />
+      <CanvasHeader canvasId={canvasId} canvasName={canvas.name} />
 
       {/* Canvas Area */}
       <main className="flex-1 overflow-hidden">
         <Canvas canvasId={canvasId} canvas={canvas} />
       </main>
     </div>
+    </ToastProvider>
   );
 }
 

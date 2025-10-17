@@ -10,8 +10,12 @@ import {
 
 const MAX_VISIBLE_AVATARS = 3;
 
-export default function OnlineUsers() {
-  const { onlineUsers, onlineCount } = usePresence();
+interface OnlineUsersProps {
+  canvasId: string;
+}
+
+export default function OnlineUsers({ canvasId }: OnlineUsersProps) {
+  const { onlineUsers, onlineCount } = usePresence(canvasId);
 
   if (onlineCount === 0) {
     return null;

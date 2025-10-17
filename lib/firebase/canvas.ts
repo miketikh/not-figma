@@ -82,6 +82,7 @@ function convertTimestamp(timestamp: any): number {
  * @param name - Name of the canvas
  * @param width - Width of the canvas in pixels
  * @param height - Height of the canvas in pixels
+ * @param isPublic - Whether the canvas is public (default: false)
  * @returns Promise<string> - ID of the created canvas
  * @throws Error if validation fails or creation fails
  */
@@ -89,7 +90,8 @@ export async function createCanvas(
   userId: string,
   name: string = DEFAULT_CANVAS_NAME,
   width: number = DEFAULT_CANVAS_WIDTH,
-  height: number = DEFAULT_CANVAS_HEIGHT
+  height: number = DEFAULT_CANVAS_HEIGHT,
+  isPublic: boolean = false
 ): Promise<string> {
   try {
     // Validate inputs
@@ -114,7 +116,7 @@ export async function createCanvas(
       createdBy: userId,
       createdAt: now,
       updatedAt: now,
-      isPublic: false,
+      isPublic,
     };
 
     // Save to Firestore

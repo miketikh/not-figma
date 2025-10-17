@@ -60,6 +60,10 @@ interface CanvasStore {
   isPanning: boolean;
   setIsPanning: (isPanning: boolean) => void;
 
+  // Grid state
+  showGrid: boolean;
+  toggleGrid: () => void;
+
   // Default shape properties
   defaultShapeProperties: DefaultShapeProperties;
   updateDefaultShapeProperty: <T extends keyof DefaultShapeProperties>(
@@ -117,14 +121,14 @@ export const useCanvasStore = create<CanvasStore>()(
     (set) => ({
       // Viewport state
       viewport: DEFAULT_VIEWPORT,
-      
+
       setViewport: (viewport) => set({ viewport }),
-      
+
       updateViewport: (updates) =>
         set((state) => ({
           viewport: { ...state.viewport, ...updates },
         })),
-      
+
       resetViewport: () => set({ viewport: DEFAULT_VIEWPORT }),
 
       // Tool state
@@ -137,9 +141,13 @@ export const useCanvasStore = create<CanvasStore>()(
       isPanning: false,
       setIsPanning: (isPanning) => set({ isPanning }),
 
+      // Grid state
+      showGrid: true, // Show grid by default
+      toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+
       // Default shape properties
       defaultShapeProperties: DEFAULT_SHAPE_PROPERTIES,
-      
+
       updateDefaultShapeProperty: (shapeType, updates) =>
         set((state) => ({
           defaultShapeProperties: {
@@ -150,15 +158,16 @@ export const useCanvasStore = create<CanvasStore>()(
             },
           },
         })),
-      
+
       resetDefaultShapeProperties: () =>
         set({ defaultShapeProperties: DEFAULT_SHAPE_PROPERTIES }),
     }),
     {
       name: "canvas-viewport-storage", // localStorage key
       partialize: (state) => ({
-        // Persist viewport and default shape properties
+        // Persist viewport, grid, and default shape properties
         viewport: state.viewport,
+        showGrid: state.showGrid,
         defaultShapeProperties: state.defaultShapeProperties,
       }),
     }

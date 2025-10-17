@@ -17,9 +17,10 @@ interface UseCanvasesReturn {
   canvases: Canvas[];
   loading: boolean;
   error: Error | null;
-  createCanvas: (name: string, width: number, height: number) => Promise<string>;
+  createCanvas: (name: string, width: number, height: number, isPublic: boolean) => Promise<string>;
   deleteCanvas: (canvasId: string) => Promise<void>;
   renameCanvas: (canvasId: string, name: string) => Promise<void>;
+  retry: () => void;
 }
 
 /**
@@ -32,18 +33,19 @@ export function useCanvases(): UseCanvasesReturn {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   /**
    * Create a new canvas
    */
   const createCanvas = useCallback(
-    async (name: string, width: number, height: number): Promise<string> => {
+    async (name: string, width: number, height: number, isPublic: boolean): Promise<string> => {
       if (!user) {
         throw new Error("User must be authenticated to create a canvas");
       }
 
       try {
-        const canvasId = await createCanvasFirestore(user.uid, name, width, height);
+        const canvasId = await createCanvasFirestore(user.uid, name, width, height, isPublic);
         return canvasId;
       } catch (err) {
         const error = err instanceof Error ? err : new Error("Failed to create canvas");
@@ -113,6 +115,15 @@ export function useCanvases(): UseCanvasesReturn {
   }, []);
 
   /**
+   * Retry function to manually trigger re-subscription
+   */
+  const retry = useCallback(() => {
+    setRetryCount((prev) => prev + 1);
+    setError(null);
+    setLoading(true);
+  }, []);
+
+  /**
    * Subscribe to user's canvas list
    */
   useEffect(() => {
@@ -135,7 +146,7 @@ export function useCanvases(): UseCanvasesReturn {
     return () => {
       unsubscribe();
     };
-  }, [user, handleCanvasesUpdate, handleError]);
+  }, [user, handleCanvasesUpdate, handleError, retryCount]);
 
   return {
     canvases,
@@ -144,5 +155,6 @@ export function useCanvases(): UseCanvasesReturn {
     createCanvas,
     deleteCanvas,
     renameCanvas,
+    retry,
   };
 }

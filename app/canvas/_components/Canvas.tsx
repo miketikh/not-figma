@@ -14,7 +14,7 @@ import { useActiveTransforms } from "../_hooks/useActiveTransforms";
 import { usePresence } from "../_hooks/usePresence";
 import { LockManager, isLockedByOtherUser } from "../_lib/locks";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -41,6 +41,7 @@ import {
 import type { ObjectTransformData } from "@/app/canvas/_types/active-transform";
 import { screenToCanvasCoordinates } from "../_lib/coordinates";
 import { getIntersectingObjects } from "../_lib/intersection";
+import { isPointInBounds, clampPointToBounds } from "../_lib/bounds";
 
 interface CanvasProps {
   canvasId: string;
@@ -66,8 +67,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
   const stageRef = useRef<Konva.Stage>(null);
   const [isReady, setIsReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const [gridTransform, setGridTransform] = useState({ x: 0, y: 0, zoom: 1 });
-  
+
   // Pan state
   const [isPanning, setIsPanning] = useState(false);
   const [spacePressed, setSpacePressed] = useState(false);
@@ -105,13 +105,15 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
   );
   
   // Zustand store
-  const { 
-    viewport, 
-    updateViewport, 
-    activeTool, 
+  const {
+    viewport,
+    updateViewport,
+    activeTool,
     setActiveTool,
     defaultShapeProperties,
     updateDefaultShapeProperty,
+    showGrid,
+    toggleGrid,
   } = useCanvasStore();
   const { user } = useAuth();
   
@@ -478,10 +480,7 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
 
     // Start lock expiration checker
     lockManagerRef.current.startExpirationChecker();
-    
-    // Restore grid transform from viewport
-    setGridTransform({ x: viewport.x, y: viewport.y, zoom: viewport.zoom });
-    
+
     setIsReady(true);
 
     // Cleanup on unmount
@@ -525,7 +524,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
 
     // Update viewport store
     updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
-    setGridTransform({ x: newPos.x, y: newPos.y, zoom: newZoom });
   };
 
   // Mouse down handler for pan and drawing
@@ -574,6 +572,11 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       const canvasPoint = screenToCanvasCoordinates(stage, pointer);
       if (!canvasPoint) return;
 
+      // Check if click is within canvas bounds
+      if (!isPointInBounds(canvasPoint.x, canvasPoint.y, canvas.width, canvas.height)) {
+        return; // Don't start drawing outside bounds
+      }
+
       setIsDrawing(true);
       drawStartRef.current = { x: canvasPoint.x, y: canvasPoint.y };
       setDraftRect({
@@ -591,6 +594,11 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
 
       const canvasPoint = screenToCanvasCoordinates(stage, pointer);
       if (!canvasPoint) return;
+
+      // Check if click is within canvas bounds
+      if (!isPointInBounds(canvasPoint.x, canvasPoint.y, canvas.width, canvas.height)) {
+        return; // Don't place text outside bounds
+      }
 
       // Get the text factory
       const factory = getShapeFactory("text");
@@ -655,14 +663,22 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       const canvasPoint = screenToCanvasCoordinates(stage, pointer);
       if (!canvasPoint) return;
 
+      // Clamp current point to canvas bounds during dragging
+      const clampedPoint = clampPointToBounds(
+        canvasPoint.x,
+        canvasPoint.y,
+        canvas.width,
+        canvas.height
+      );
+
       // Get factory for current tool
       const factory = getShapeFactory(activeTool);
       if (!factory) return;
 
-      // Use factory to normalize drawing coordinates
+      // Use factory to normalize drawing coordinates with clamped point
       const normalized = factory.normalizeDrawing(
         drawStartRef.current,
-        canvasPoint
+        clampedPoint
       );
 
       setDraftRect(normalized);
@@ -747,7 +763,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     
     const newPos = { x: stage.x(), y: stage.y() };
     updateViewport(newPos);
-    setGridTransform({ x: newPos.x, y: newPos.y, zoom: viewport.zoom });
     setIsPanning(false);
   };
 
@@ -775,7 +790,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     };
 
     updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
-    setGridTransform({ x: newPos.x, y: newPos.y, zoom: newZoom });
   };
 
   const handleZoomOut = () => {
@@ -802,7 +816,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     };
 
     updateViewport({ x: newPos.x, y: newPos.y, zoom: newZoom });
-    setGridTransform({ x: newPos.x, y: newPos.y, zoom: newZoom });
   };
 
   const handleResetZoom = () => {
@@ -813,7 +826,6 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
     };
 
     updateViewport({ x: center.x, y: center.y, zoom: 1 });
-    setGridTransform({ x: center.x, y: center.y, zoom: 1 });
   };
 
 
@@ -827,14 +839,11 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
   };
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="relative w-full h-full overflow-hidden"
       style={{
-        backgroundColor: '#ffffff',
-        backgroundImage: `radial-gradient(circle, var(--color-gray-300) 1px, transparent 1px)`,
-        backgroundSize: `${20 * gridTransform.zoom}px ${20 * gridTransform.zoom}px`,
-        backgroundPosition: `${gridTransform.x}px ${gridTransform.y}px`,
+        backgroundColor: '#f3f4f6',
         cursor: getCursorStyle(),
       }}
     >
@@ -853,6 +862,9 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onDragEnd={handleDragEnd}
+          canvasWidth={canvas.width}
+          canvasHeight={canvas.height}
+          showGrid={showGrid}
         >
           {/* Persisted shapes - sorted by zIndex for correct rendering order */}
           {objects
@@ -1047,7 +1059,30 @@ export default function Canvas({ canvasId, canvas, width, height }: CanvasProps)
       
       {/* Toolbar (centered bottom) */}
       {isReady && <Toolbar />}
-      
+
+      {/* Grid Toggle (top-left) */}
+      {isReady && (
+        <TooltipProvider>
+          <div className="absolute top-6 left-6">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleGrid}
+                  className={`bg-white border shadow-md ${showGrid ? "bg-accent" : ""}`}
+                >
+                  <Grid3x3 size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{showGrid ? "Hide Grid" : "Show Grid"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      )}
+
       {/* Properties Panel (right side) */}
       {isReady && (
         <PropertiesPanel

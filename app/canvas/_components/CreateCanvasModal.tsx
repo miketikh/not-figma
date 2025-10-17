@@ -24,7 +24,7 @@ import {
 interface CreateCanvasModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string, width: number, height: number) => void;
+  onCreate: (name: string, width: number, height: number, isPublic: boolean) => void;
 }
 
 type PresetValue = "preset-0" | "preset-1" | "preset-2" | "custom";
@@ -38,6 +38,7 @@ export function CreateCanvasModal({
   const [selectedPreset, setSelectedPreset] = useState<PresetValue>("preset-0");
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
@@ -52,6 +53,7 @@ export function CreateCanvasModal({
       setSelectedPreset("preset-0");
       setCustomWidth("");
       setCustomHeight("");
+      setIsPublic(false);
       setLoading(false);
       setErrors({});
     }
@@ -116,7 +118,7 @@ export function CreateCanvasModal({
         height = preset.height;
       }
 
-      await onCreate(name.trim(), width, height);
+      await onCreate(name.trim(), width, height, isPublic);
       onClose();
     } catch (error) {
       console.error("Failed to create canvas:", error);
@@ -230,6 +232,34 @@ export function CreateCanvasModal({
                 </div>
               </div>
             )}
+
+            {/* Privacy Settings */}
+            <div className="grid gap-3">
+              <Label>Privacy</Label>
+              <RadioGroup
+                value={isPublic ? "public" : "private"}
+                onValueChange={(value) => setIsPublic(value === "public")}
+                disabled={loading}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="private" id="private" />
+                  <Label htmlFor="private" className="font-normal cursor-pointer">
+                    Private
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="public" id="public" />
+                  <Label htmlFor="public" className="font-normal cursor-pointer">
+                    Public
+                  </Label>
+                </div>
+              </RadioGroup>
+              <p className="text-sm text-muted-foreground">
+                {isPublic
+                  ? "Public canvases can be viewed and edited by all users"
+                  : "Only you can access this canvas"}
+              </p>
+            </div>
           </div>
 
           <DialogFooter>

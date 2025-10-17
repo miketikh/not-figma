@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanvases } from "./_hooks/useCanvases";
 import ProtectedRoute from "@/components/providers/ProtectedRoute";
 import { CanvasCard } from "./_components/CanvasCard";
+import { CanvasCardSkeleton } from "./_components/CanvasCardSkeleton";
 import { CreateCanvasModal } from "./_components/CreateCanvasModal";
+import { DeleteCanvasDialog } from "./_components/DeleteCanvasDialog";
+import { EmptyCanvasState } from "./_components/EmptyCanvasState";
 import { Button } from "@/components/ui/button";
+import { ToastProvider, useToast } from "@/components/ui/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,37 +24,59 @@ import {
 function CanvasDashboardContent() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { canvases, loading, error, createCanvas, deleteCanvas, renameCanvas } = useCanvases();
+  const { canvases, loading, error, createCanvas, deleteCanvas, renameCanvas, retry } = useCanvases();
+  const { addToast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [canvasToDelete, setCanvasToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Handle canvas creation
-  const handleCreateCanvas = async (name: string, width: number, height: number) => {
+  const handleCreateCanvas = async (name: string, width: number, height: number, isPublic: boolean) => {
     try {
-      const canvasId = await createCanvas(name, width, height);
-      // Navigate to the new canvas (route doesn't exist yet, will be created in Phase 3)
+      const canvasId = await createCanvas(name, width, height, isPublic);
+      addToast({
+        title: "Canvas created",
+        description: `"${name}" has been created successfully.`,
+        variant: "success",
+      });
       router.push(`/canvas/${canvasId}`);
     } catch (error) {
       console.error("Failed to create canvas:", error);
-      // Error is already handled by the hook
+      addToast({
+        title: "Failed to create canvas",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
   };
 
   // Handle canvas deletion with confirmation
-  const handleDeleteCanvas = async (canvasId: string) => {
+  const handleDeleteCanvas = (canvasId: string) => {
     const canvas = canvases.find((c) => c.id === canvasId);
     if (!canvas) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${canvas.name}"? This action cannot be undone.`
-    );
+    // Open the delete confirmation dialog
+    setCanvasToDelete({ id: canvas.id, name: canvas.name });
+  };
 
-    if (confirmed) {
-      try {
-        await deleteCanvas(canvasId);
-      } catch (error) {
-        console.error("Failed to delete canvas:", error);
-        // Error is already handled by the hook
-      }
+  // Confirm deletion after user types canvas name
+  const confirmDeleteCanvas = async () => {
+    if (!canvasToDelete) return;
+
+    try {
+      await deleteCanvas(canvasToDelete.id);
+      addToast({
+        title: "Canvas deleted",
+        description: `"${canvasToDelete.name}" has been deleted successfully.`,
+        variant: "success",
+      });
+      setCanvasToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete canvas:", error);
+      addToast({
+        title: "Failed to delete canvas",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -63,9 +89,18 @@ function CanvasDashboardContent() {
   const handleRenameCanvas = async (canvasId: string, name: string) => {
     try {
       await renameCanvas(canvasId, name);
+      addToast({
+        title: "Canvas renamed",
+        description: `Canvas renamed to "${name}".`,
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to rename canvas:", error);
-      // Error is already handled by the hook
+      addToast({
+        title: "Failed to rename canvas",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
       throw error; // Re-throw to let CanvasCard handle the UI
     }
   };
@@ -79,10 +114,7 @@ function CanvasDashboardContent() {
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-32 bg-muted animate-pulse rounded-lg"
-                />
+                <CanvasCardSkeleton key={i} />
               ))}
             </div>
           </div>
@@ -99,12 +131,22 @@ function CanvasDashboardContent() {
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg text-destructive mb-4">
-                Failed to load canvases: {error.message}
+              <div className="mb-6 p-4 rounded-full bg-destructive/10">
+                <AlertCircle className="h-12 w-12 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-2">Failed to load canvases</h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                {error.message || "An unexpected error occurred while loading your canvases."}
               </p>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={retry} size="lg">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+                <Button onClick={() => window.location.reload()} variant="outline" size="lg">
+                  Reload Page
+                </Button>
+              </div>
             </div>
           </div>
         </main>
@@ -119,25 +161,19 @@ function CanvasDashboardContent() {
         <DashboardHeader user={user} signOut={signOut} onCreateClick={() => setIsCreateModalOpen(true)} />
         <main className="flex-1 overflow-auto p-8">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-                <Plus className="w-12 h-12 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-semibold mb-2">No canvases yet</h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Get started by creating your first canvas. Design, collaborate, and bring your ideas to life.
-              </p>
-              <Button onClick={() => setIsCreateModalOpen(true)} size="lg">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Canvas
-              </Button>
-            </div>
+            <EmptyCanvasState onCreateClick={() => setIsCreateModalOpen(true)} />
           </div>
         </main>
         <CreateCanvasModal
           open={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleCreateCanvas}
+        />
+        <DeleteCanvasDialog
+          open={!!canvasToDelete}
+          canvasName={canvasToDelete?.name || ""}
+          onConfirm={confirmDeleteCanvas}
+          onCancel={() => setCanvasToDelete(null)}
         />
       </div>
     );
@@ -166,6 +202,12 @@ function CanvasDashboardContent() {
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateCanvas}
+      />
+      <DeleteCanvasDialog
+        open={!!canvasToDelete}
+        canvasName={canvasToDelete?.name || ""}
+        onConfirm={confirmDeleteCanvas}
+        onCancel={() => setCanvasToDelete(null)}
       />
     </div>
   );
@@ -246,7 +288,9 @@ function DashboardHeader({
 export default function CanvasPage() {
   return (
     <ProtectedRoute>
-      <CanvasDashboardContent />
+      <ToastProvider>
+        <CanvasDashboardContent />
+      </ToastProvider>
     </ProtectedRoute>
   );
 }
