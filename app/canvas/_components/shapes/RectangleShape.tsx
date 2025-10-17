@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Group, Rect } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedRect } from "../../_types/shapes";
 import LockedByBadge from "../LockedByBadge";
+import { createRectangleDragBound } from "../../_lib/drag-bounds";
 
 /**
  * Props for RectangleShape component
@@ -45,6 +47,12 @@ export interface RectangleShapeProps {
 
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
+
+  /** Canvas width for drag bounds constraints */
+  canvasWidth: number;
+
+  /** Canvas height for drag bounds constraints */
+  canvasHeight: number;
 }
 
 /**
@@ -63,6 +71,8 @@ export default function RectangleShape({
   onTransformMove,
   shapeRef,
   onRenewLock,
+  canvasWidth,
+  canvasHeight,
 }: RectangleShapeProps) {
   // Determine stroke color based on lock status
   // Use locking user's color if available, otherwise fallback to red
@@ -80,16 +90,36 @@ export default function RectangleShape({
 
   /**
    * Handle drag move to broadcast position in real-time
+   * Also constrain position to keep object partially visible
    */
   const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    if (!onTransformMove) return;
-
     const node = e.target as Konva.Rect;
 
-    // Broadcast position update in real-time
+    // Constrain position to keep at least 20 pixels visible
+    const MIN_VISIBLE = 20;
+    let x = node.x();
+    let y = node.y();
+
+    // Constrain X
+    const minX = -(shape.width - MIN_VISIBLE);
+    const maxX = canvasWidth - MIN_VISIBLE;
+    x = Math.max(minX, Math.min(maxX, x));
+
+    // Constrain Y
+    const minY = -(shape.height - MIN_VISIBLE);
+    const maxY = canvasHeight - MIN_VISIBLE;
+    y = Math.max(minY, Math.min(maxY, y));
+
+    // Apply constrained position
+    node.x(x);
+    node.y(y);
+
+    if (!onTransformMove) return;
+
+    // Broadcast constrained position update in real-time
     onTransformMove({
-      x: node.x(),
-      y: node.y(),
+      x,
+      y,
     });
   };
 
@@ -154,6 +184,12 @@ export default function RectangleShape({
     onRenewLock();
   };
 
+  // Memoize drag bound function to ensure stable reference
+  const dragBoundFunc = useMemo(
+    () => createRectangleDragBound(shape.width, shape.height, canvasWidth, canvasHeight),
+    [shape.width, shape.height, canvasWidth, canvasHeight]
+  );
+
   return (
     <Group>
       <Rect
@@ -170,6 +206,7 @@ export default function RectangleShape({
         cornerRadius={shape.cornerRadius || 0}
         draggable={isSelectable}
         listening={isSelectable}
+        dragBoundFunc={dragBoundFunc}
         onClick={handleClick}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}

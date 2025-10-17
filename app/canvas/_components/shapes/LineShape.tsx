@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Group, Line } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedLine } from "../../_types/shapes";
 import LockedByBadge from "../LockedByBadge";
+import { createLineDragBound } from "../../_lib/drag-bounds";
 
 /**
  * Props for LineShape component
@@ -45,6 +47,12 @@ export interface LineShapeProps {
 
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
+
+  /** Canvas width for drag bounds constraints */
+  canvasWidth: number;
+
+  /** Canvas height for drag bounds constraints */
+  canvasHeight: number;
 }
 
 /**
@@ -63,6 +71,8 @@ export default function LineShape({
   onTransformMove,
   shapeRef,
   onRenewLock,
+  canvasWidth,
+  canvasHeight,
 }: LineShapeProps) {
   // Determine stroke color based on lock status
   // Use locking user's color if available, otherwise fallback to red
@@ -80,17 +90,41 @@ export default function LineShape({
 
   /**
    * Handle drag move to broadcast position in real-time
+   * Also constrain position to keep object partially visible
    */
   const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    if (!onTransformMove) return;
-
     const node = e.target as Konva.Line;
 
     // Calculate the delta from the drag
-    const dx = node.x();
-    const dy = node.y();
+    let dx = node.x();
+    let dy = node.y();
 
-    // Broadcast endpoint translation in real-time
+    // Constrain delta to keep at least 20 pixels visible
+    const MIN_VISIBLE = 20;
+
+    // Calculate line bounding box
+    const minX = Math.min(shape.x, shape.x2);
+    const maxX = Math.max(shape.x, shape.x2);
+    const minY = Math.min(shape.y, shape.y2);
+    const maxY = Math.max(shape.y, shape.y2);
+
+    // Constrain X delta
+    const lineMinX = -(maxX - MIN_VISIBLE);
+    const lineMaxX = canvasWidth - minX - MIN_VISIBLE;
+    dx = Math.max(lineMinX, Math.min(lineMaxX, dx));
+
+    // Constrain Y delta
+    const lineMinY = -(maxY - MIN_VISIBLE);
+    const lineMaxY = canvasHeight - minY - MIN_VISIBLE;
+    dy = Math.max(lineMinY, Math.min(lineMaxY, dy));
+
+    // Apply constrained position
+    node.x(dx);
+    node.y(dy);
+
+    if (!onTransformMove) return;
+
+    // Broadcast constrained endpoint translation in real-time
     onTransformMove({
       x: shape.x + dx,
       y: shape.y + dy,
@@ -195,6 +229,12 @@ export default function LineShape({
   const badgeX = Math.max(shape.x, shape.x2);
   const badgeY = Math.min(shape.y, shape.y2);
 
+  // Memoize drag bound function to ensure stable reference
+  const dragBoundFunc = useMemo(
+    () => createLineDragBound(shape.x, shape.y, shape.x2, shape.y2, canvasWidth, canvasHeight),
+    [shape.x, shape.y, shape.x2, shape.y2, canvasWidth, canvasHeight]
+  );
+
   return (
     <Group>
       <Line
@@ -205,6 +245,7 @@ export default function LineShape({
         opacity={shape.opacity ?? 1}
         draggable={isSelectable}
         listening={isSelectable}
+        dragBoundFunc={dragBoundFunc}
         onClick={handleClick}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}

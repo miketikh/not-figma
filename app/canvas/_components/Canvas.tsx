@@ -377,6 +377,8 @@ export default function Canvas({
                   lockingUserName={
                     lockingUser?.displayName || lockingUser?.email
                   }
+                  canvasWidth={canvas.width}
+                  canvasHeight={canvas.height}
                   onSelect={(e) => {
                     const shiftPressed = e.evt.shiftKey;
 

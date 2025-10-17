@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Group, Ellipse } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedCircle } from "../../_types/shapes";
 import LockedByBadge from "../LockedByBadge";
+import { createCircleDragBound } from "../../_lib/drag-bounds";
 
 /**
  * Props for CircleShape component
@@ -45,6 +47,12 @@ export interface CircleShapeProps {
 
   /** Callback to renew lock during interaction */
   onRenewLock: () => void;
+
+  /** Canvas width for drag bounds constraints */
+  canvasWidth: number;
+
+  /** Canvas height for drag bounds constraints */
+  canvasHeight: number;
 }
 
 /**
@@ -63,6 +71,8 @@ export default function CircleShape({
   onTransformMove,
   shapeRef,
   onRenewLock,
+  canvasWidth,
+  canvasHeight,
 }: CircleShapeProps) {
   // Determine stroke color based on lock status
   // Use locking user's color if available, otherwise fallback to red
@@ -80,16 +90,40 @@ export default function CircleShape({
 
   /**
    * Handle drag move to broadcast position in real-time
+   * Also constrain position to keep object partially visible
    */
   const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    if (!onTransformMove) return;
-
     const node = e.target as Konva.Ellipse;
 
-    // Broadcast position update in real-time
+    // Constrain position to keep at least 20 pixels visible
+    const MIN_VISIBLE = 20;
+    let x = node.x();
+    let y = node.y();
+
+    // Constrain X (x is center, so account for radius)
+    // When going left: bottom edge (x + radiusX) must stay >= MIN_VISIBLE
+    // When going right: top edge (x - radiusX) must stay <= canvasWidth - MIN_VISIBLE
+    const minX = MIN_VISIBLE - shape.radiusX;
+    const maxX = canvasWidth - MIN_VISIBLE + shape.radiusX;
+    x = Math.max(minX, Math.min(maxX, x));
+
+    // Constrain Y (y is center, so account for radius)
+    // When going up: bottom edge (y + radiusY) must stay >= MIN_VISIBLE
+    // When going down: top edge (y - radiusY) must stay <= canvasHeight - MIN_VISIBLE
+    const minY = MIN_VISIBLE - shape.radiusY;
+    const maxY = canvasHeight - MIN_VISIBLE + shape.radiusY;
+    y = Math.max(minY, Math.min(maxY, y));
+
+    // Apply constrained position
+    node.x(x);
+    node.y(y);
+
+    if (!onTransformMove) return;
+
+    // Broadcast constrained position update in real-time
     onTransformMove({
-      x: node.x(),
-      y: node.y(),
+      x,
+      y,
     });
   };
 
@@ -152,6 +186,12 @@ export default function CircleShape({
     onRenewLock();
   };
 
+  // Memoize drag bound function to ensure stable reference
+  const dragBoundFunc = useMemo(
+    () => createCircleDragBound(shape.radiusX, shape.radiusY, canvasWidth, canvasHeight),
+    [shape.radiusX, shape.radiusY, canvasWidth, canvasHeight]
+  );
+
   return (
     <Group>
       <Ellipse
@@ -166,6 +206,7 @@ export default function CircleShape({
         opacity={shape.opacity ?? 1}
         draggable={isSelectable}
         listening={isSelectable}
+        dragBoundFunc={dragBoundFunc}
         onClick={handleClick}
         onDragMove={handleDragMove}
         onDragEnd={handleDragEnd}

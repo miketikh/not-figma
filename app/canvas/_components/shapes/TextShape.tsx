@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { Group, Text } from "react-konva";
 import Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 import type { PersistedText } from "../../_types/shapes";
 import LockedByBadge from "../LockedByBadge";
+import { createTextDragBound } from "../../_lib/drag-bounds";
 
 /**
  * Props for TextShape component
@@ -48,6 +50,12 @@ export interface TextShapeProps {
 
   /** Callback when double-clicked to edit */
   onEditRequest?: (textId: string) => void;
+
+  /** Canvas width for drag bounds constraints */
+  canvasWidth: number;
+
+  /** Canvas height for drag bounds constraints */
+  canvasHeight: number;
 }
 
 /**
@@ -68,6 +76,8 @@ export default function TextShape({
   shapeRef,
   onRenewLock,
   onEditRequest,
+  canvasWidth,
+  canvasHeight,
 }: TextShapeProps) {
   // Determine fill color based on lock status
   // Use locking user's color if available, otherwise fallback to red
@@ -95,16 +105,36 @@ export default function TextShape({
 
   /**
    * Handle drag move to broadcast position in real-time
+   * Also constrain position to keep object partially visible
    */
   const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
-    if (!onTransformMove) return;
-
     const node = e.target as Konva.Text;
 
-    // Broadcast position update in real-time
+    // Constrain position to keep at least 20 pixels visible
+    const MIN_VISIBLE = 20;
+    let x = node.x();
+    let y = node.y();
+
+    // Constrain X
+    const minX = -(shape.width - MIN_VISIBLE);
+    const maxX = canvasWidth - MIN_VISIBLE;
+    x = Math.max(minX, Math.min(maxX, x));
+
+    // Constrain Y
+    const minY = -(shape.height - MIN_VISIBLE);
+    const maxY = canvasHeight - MIN_VISIBLE;
+    y = Math.max(minY, Math.min(maxY, y));
+
+    // Apply constrained position
+    node.x(x);
+    node.y(y);
+
+    if (!onTransformMove) return;
+
+    // Broadcast constrained position update in real-time
     onTransformMove({
-      x: node.x(),
-      y: node.y(),
+      x,
+      y,
     });
   };
 
@@ -178,6 +208,12 @@ export default function TextShape({
   const textDecoration =
     shape.textDecoration !== "none" ? shape.textDecoration : undefined;
 
+  // Memoize drag bound function to ensure stable reference
+  const dragBoundFunc = useMemo(
+    () => createTextDragBound(shape.width, shape.height, canvasWidth, canvasHeight),
+    [shape.width, shape.height, canvasWidth, canvasHeight]
+  );
+
   return (
     <Group>
       <Text
@@ -201,6 +237,7 @@ export default function TextShape({
         wrap="char" // Enable character-level wrapping (breaks mid-word at boundary)
         draggable={isSelectable}
         listening={isSelectable}
+        dragBoundFunc={dragBoundFunc}
         onClick={handleClick}
         onDblClick={handleDblClick}
         onDragMove={handleDragMove}

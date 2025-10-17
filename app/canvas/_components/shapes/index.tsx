@@ -67,6 +67,12 @@ export interface ShapeComponentProps {
 
   /** Optional callback for text editing (double-click) */
   onEditRequest?: (textId: string) => void;
+
+  /** Canvas width for drag bounds constraints */
+  canvasWidth: number;
+
+  /** Canvas height for drag bounds constraints */
+  canvasHeight: number;
 }
 
 /**
@@ -88,6 +94,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
     shapeRef,
     onRenewLock,
     onEditRequest,
+    canvasWidth,
+    canvasHeight,
   } = props;
 
   // Route to the appropriate shape component based on type
@@ -107,6 +115,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Rect | null) => void}
           onRenewLock={onRenewLock}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
       );
 
@@ -125,6 +135,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Ellipse | null) => void}
           onRenewLock={onRenewLock}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
       );
 
@@ -143,6 +155,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           onTransformMove={onTransformMove}
           shapeRef={shapeRef as (node: Konva.Line | null) => void}
           onRenewLock={onRenewLock}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
       );
 
@@ -162,6 +176,8 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           shapeRef={shapeRef as (node: Konva.Text | null) => void}
           onRenewLock={onRenewLock}
           onEditRequest={onEditRequest}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
       );
 
