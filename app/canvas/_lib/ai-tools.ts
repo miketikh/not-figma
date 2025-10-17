@@ -159,9 +159,10 @@ export const createRectangle = tool({
   }),
   execute: async (
     { x, y, width, height, fill, stroke, strokeWidth, rotation, cornerRadius },
-    context: ToolContext
+    { experimental_context }
   ) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds
@@ -250,9 +251,10 @@ export const createCircle = tool({
   }),
   execute: async (
     { x, y, radius, fill, stroke, strokeWidth },
-    context: ToolContext
+    { experimental_context }
   ) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds (check center point)
@@ -342,9 +344,10 @@ export const createLine = tool({
   }),
   execute: async (
     { x1, y1, x2, y2, stroke, strokeWidth },
-    context: ToolContext
+    { experimental_context }
   ) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds for both endpoints
@@ -455,9 +458,10 @@ export const createText = tool({
       fontStyle,
       textAlign,
     },
-    context: ToolContext
+    { experimental_context }
   ) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, sessionId } = context;
 
       // Validate canvas bounds
@@ -584,8 +588,9 @@ export const updateObject = tool({
       })
       .describe("Properties to update"),
   }),
-  execute: async ({ objectId, properties }, context: ToolContext) => {
+  execute: async ({ objectId, properties }, { experimental_context }) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, selectedIds, sessionId } = context;
 
       // Inference logic: determine which object to update
@@ -725,8 +730,9 @@ export const getCanvasObjects = tool({
         "Filter objects: 'all' for all objects, 'selected' for only selected objects"
       ),
   }),
-  execute: async ({ filter }, context: ToolContext) => {
+  execute: async ({ filter }, { experimental_context }) => {
     try {
+      const context = experimental_context as ToolContext;
       const { userId, canvasId, selectedIds = [] } = context;
 
       // Build canvas context

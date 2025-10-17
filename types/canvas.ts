@@ -90,7 +90,6 @@ export interface BaseCanvasObject {
   visible: boolean;
 
   // AI Attribution (Phase 1: Session tracking)
-  createdBy?: "user" | "ai";
   aiSessionId?: string;
   aiMessageId?: string;
 }

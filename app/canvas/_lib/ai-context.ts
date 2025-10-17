@@ -69,16 +69,35 @@ export async function buildCanvasContext(
 
     // Helper function to build object summary
     const buildObjectSummary = (obj: CanvasObject): SelectedObjectSummary => {
+      // Handle lines differently (they don't have width/height/fill)
+      if (obj.type === "line") {
+        const lineObj = obj as { type: "line"; x: number; y: number; x2: number; y2: number; stroke?: string; rotation: number };
+        return {
+          id: obj.id,
+          type: obj.type,
+          position: { x: Math.round(lineObj.x), y: Math.round(lineObj.y) },
+          size: {
+            width: Math.round(Math.abs(lineObj.x2 - lineObj.x)),
+            height: Math.round(Math.abs(lineObj.y2 - lineObj.y)),
+          },
+          colors: {
+            stroke: lineObj.stroke,
+          },
+          rotation: Math.round(lineObj.rotation),
+        };
+      }
+
+      // For all other objects (rectangle, circle, text)
       const summary: SelectedObjectSummary = {
         id: obj.id,
         type: obj.type,
         position: { x: Math.round(obj.x), y: Math.round(obj.y) },
         size: {
-          width: Math.round(obj.width),
-          height: Math.round(obj.height),
+          width: Math.round((obj as any).width),
+          height: Math.round((obj as any).height),
         },
         colors: {
-          fill: obj.fill,
+          fill: (obj as any).fill,
           stroke: obj.stroke,
         },
         rotation: Math.round(obj.rotation),

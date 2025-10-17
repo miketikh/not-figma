@@ -258,25 +258,6 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
     let aiResponse;
     let lastError: Error | null = null;
 
-    // Inject context into tool execute functions by wrapping them
-    const toolsWithContext = Object.fromEntries(
-      Object.entries(aiTools).map(([key, tool]) => [
-        key,
-        {
-          ...tool,
-          execute: async (params: any) => {
-            // Pass context to tool execute function
-            return await (tool as any).execute(params, {
-              userId,
-              canvasId,
-              selectedIds,
-              sessionId,
-            });
-          },
-        },
-      ])
-    );
-
     // Retry loop for OpenAI API calls
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
@@ -292,7 +273,13 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
         const apiPromise = generateText({
           model: openai("o3-mini"),
           messages,
-          tools: toolsWithContext,
+          tools: aiTools,
+          experimental_context: {
+            userId,
+            canvasId,
+            selectedIds,
+            sessionId,
+          },
         });
 
         aiResponse = (await Promise.race([apiPromise, timeoutPromise])) as any;
