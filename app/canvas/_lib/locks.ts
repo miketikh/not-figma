@@ -81,10 +81,8 @@ export class LockManager {
         this.lockedObjects.add(objectId);
         this.lastActivityTime.set(objectId, Date.now());
         return true;
-      } else {
-        console.log(`Object locked by another user: ${lockResult.lockedBy}`);
-        return false;
       }
+      return false;
     } catch (error) {
       console.error("Error acquiring lock:", error);
       return false;

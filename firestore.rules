@@ -2,44 +2,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to check if user is the canvas owner
-    function isCanvasOwner(canvasId) {
-      return isAuthenticated() && get(/databases/$(database)/documents/canvases/$(canvasId)).data.createdBy == request.auth.uid;
-    }
-
-    // Helper function to check if user can read a canvas (owner or public)
-    function canReadCanvas(canvasId) {
-      let canvas = get(/databases/$(database)/documents/canvases/$(canvasId)).data;
-      return isAuthenticated() && (canvas.createdBy == request.auth.uid || canvas.isPublic == true);
-    }
-
-    // Rules for canvases collection
-    // Each canvas is owned by the user who created it
-    match /canvases/{canvasId} {
-      // Allow read if authenticated and (user is owner OR canvas is public)
-      allow read: if isAuthenticated() && (resource.data.createdBy == request.auth.uid || resource.data.isPublic == true);
-
-      // Allow create if authenticated and the createdBy field matches the authenticated user
-      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
-
-      // Allow update/delete if authenticated and user is the canvas owner (check existing resource)
-      allow update, delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
-
-      // Rules for nested objects subcollection within each canvas
-      // Users can read/write objects if they have access to the parent canvas
-      match /objects/{objectId} {
-        // Allow read if user can read the parent canvas (owner or public)
-        allow read: if canReadCanvas(canvasId);
-
-        // Allow write if user can read the parent canvas
-        // This allows collaboration on public canvases
-        allow write: if canReadCanvas(canvasId);
-      }
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
