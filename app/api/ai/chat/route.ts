@@ -159,8 +159,18 @@ export async function POST(req: NextRequest) {
       );
     } catch (error) {
       console.error("Error building canvas context:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      // Check for Firebase Admin credential errors
+      if (errorMessage.includes("credentials") || errorMessage.includes("FIREBASE_ADMIN")) {
+        return NextResponse.json(
+          { error: "Firebase authentication error. Check environment variables." },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
-        { error: "Failed to fetch canvas data" },
+        { error: "Failed to fetch canvas data. Please try again." },
         { status: 500 }
       );
     }
@@ -186,9 +196,37 @@ ${
 }
 ${
   canvasContext.aiCreatedObjects.length > 0
-    ? `\nYou can reference these objects by their properties (e.g., "the red circle", "the rectangle at (100, 100)") or use their IDs directly when updating them.`
+    ? `\n**IMPORTANT:** These are YOUR objects from this conversation. When the user says "move it", "change it", "the circle", or "the rectangle", they are referring to these objects. Use updateObject to modify them.`
     : ""
 }
+
+**COMMAND INTENT CLASSIFICATION:**
+
+Before choosing a tool, identify the user's INTENT:
+
+1. **UPDATE/MODIFY Intent** → Use updateObject tool:
+   - "move the circle" / "move it" / "move that"
+   - "make it bigger" / "resize it" / "change the size"
+   - "make it red" / "change its color" / "update the fill"
+   - "rotate it" / "turn it" / "rotate the square"
+   - User references object with "the", "it", "that" (definite reference)
+
+2. **CREATE Intent** → Use create tools (createCircle, createRectangle, etc.):
+   - "create a circle" / "add a rectangle" / "make a new circle"
+   - "draw a line" / "put a circle at X,Y" (when no circle exists)
+   - User uses "a", "new", or explicit creation verbs
+
+3. **CRITICAL DISAMBIGUATION RULES:**
+   - "the circle" = definite article = existing object → updateObject
+   - "a circle" = indefinite article = new object → createCircle
+   - "it" / "that" = pronoun = existing object → updateObject
+   - "move X" = movement command = existing object → updateObject
+   - If user says "the X" but no X exists in aiCreatedObjects or selection → ask for clarification
+
+**INFERENCE PRIORITY:** When user says "move it" or "change it":
+   1. First check: Is an object selected? → Use that object's ID
+   2. Then check: Did I create an object in this conversation? → Use lastCreatedObjectId
+   3. If neither: Ask "Which object would you like me to modify? Please select it or describe it more specifically."
 
 **CRITICAL: Understanding the Coordinate System**
 

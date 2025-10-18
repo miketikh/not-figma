@@ -116,7 +116,7 @@ interface ToolContext {
 
 export const createRectangle = tool({
   description:
-    "Create a rectangle on the canvas. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the rectangle, NOT the center. To center a rectangle at position (centerX, centerY), calculate: x = centerX - width/2, y = centerY - height/2. Example: To center a 300×200 rectangle at (960, 540), use x=810, y=440.",
+    "Create a NEW rectangle on the canvas. USE THIS TOOL only when the user wants to CREATE a new rectangle (keywords: 'create', 'add', 'new', 'draw', or when they use 'a rectangle'). DO NOT use this when the user says 'move the rectangle' or 'move it' - use updateObject instead. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the rectangle, NOT the center. To center a rectangle at position (centerX, centerY), calculate: x = centerX - width/2, y = centerY - height/2. Example: To center a 300×200 rectangle at (960, 540), use x=810, y=440.",
   inputSchema: z.object({
     x: z
       .number()
@@ -225,7 +225,7 @@ export const createRectangle = tool({
 
 export const createCircle = tool({
   description:
-    "Create a circle on the canvas. IMPORTANT: The x,y parameters represent the CENTER of the circle (unlike rectangles which use top-left). To center a circle at position (centerX, centerY), use those coordinates directly as x,y. Example: To center a circle with radius 100 at (960, 540), use x=960, y=540.",
+    "Create a NEW circle on the canvas. USE THIS TOOL only when the user wants to CREATE a new circle (keywords: 'create', 'add', 'new', 'draw', or when they use 'a circle'). DO NOT use this when the user says 'move the circle' or 'move it' - use updateObject instead. IMPORTANT: The x,y parameters represent the CENTER of the circle (unlike rectangles which use top-left). To center a circle at position (centerX, centerY), use those coordinates directly as x,y. Example: To center a circle with radius 100 at (960, 540), use x=960, y=540.",
   inputSchema: z.object({
     x: z.number().min(0).max(10000).describe("X position (center) in pixels"),
     y: z.number().min(0).max(10000).describe("Y position (center) in pixels"),
@@ -325,7 +325,7 @@ export const createCircle = tool({
 
 export const createLine = tool({
   description:
-    "Create a straight line on the canvas. Use this when the user wants to create a line segment between two points.",
+    "Create a NEW straight line on the canvas. USE THIS TOOL only when the user wants to CREATE a new line (keywords: 'create', 'add', 'new', 'draw', or when they use 'a line'). DO NOT use this when the user says 'move the line' or 'move it' - use updateObject instead. Use this when the user wants to create a line segment between two points.",
   inputSchema: z.object({
     x1: z.number().min(0).max(10000).describe("Starting X position in pixels"),
     y1: z.number().min(0).max(10000).describe("Starting Y position in pixels"),
@@ -413,7 +413,7 @@ export const createLine = tool({
 
 export const createText = tool({
   description:
-    "Create a text object on the canvas. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the text box, NOT the center (same as rectangles). To center text at position (centerX, centerY), calculate: x = centerX - estimatedWidth/2, y = centerY - fontSize/2.",
+    "Create a NEW text object on the canvas. USE THIS TOOL only when the user wants to CREATE new text (keywords: 'create', 'add', 'new', 'write', or when they use 'a text'). DO NOT use this when the user says 'move the text' or 'move it' - use updateObject instead. IMPORTANT: The x,y parameters represent the TOP-LEFT CORNER of the text box, NOT the center (same as rectangles). To center text at position (centerX, centerY), calculate: x = centerX - estimatedWidth/2, y = centerY - fontSize/2.",
   inputSchema: z.object({
     x: z
       .number()
@@ -521,7 +521,7 @@ export const createText = tool({
 
 export const updateObject = tool({
   description:
-    "Update properties of an existing canvas object. Use this when the user wants to modify an object's position, size, colors, or other properties. Always check if the object is locked before updating.",
+    "Update properties of an existing canvas object. USE THIS TOOL when the user wants to MODIFY or MOVE an existing object (keywords: 'move', 'change', 'make it', 'rotate', 'resize', or when they use 'the'/'it'/'that' to reference an object). DO NOT create a new object when the user says 'move the circle' - update the existing circle instead. Always check if the object is locked before updating.",
   inputSchema: z.object({
     objectId: z
       .string()

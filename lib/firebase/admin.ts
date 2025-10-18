@@ -24,25 +24,54 @@ function initAdmin() {
   // Then extract the values and add to .env.local (or deployment environment variables)
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+  let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
 
   if (!projectId || !clientEmail || !privateKey) {
+    const missingVars = [];
+    if (!projectId) missingVars.push("FIREBASE_ADMIN_PROJECT_ID");
+    if (!clientEmail) missingVars.push("FIREBASE_ADMIN_CLIENT_EMAIL");
+    if (!privateKey) missingVars.push("FIREBASE_ADMIN_PRIVATE_KEY");
+
     throw new Error(
-      "Firebase Admin credentials not configured. " +
-      "Please provide FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL, and FIREBASE_ADMIN_PRIVATE_KEY " +
-      "in your environment variables (.env.local or deployment platform)"
+      `Missing Firebase Admin credentials, check that all are specified in the .env.local file`
     );
   }
 
-  return initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      // Replace escaped newlines in private key
-      privateKey: privateKey.replace(/\\n/g, "\n"),
-    }),
-    databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-  });
+  // Handle different private key formats that might come from Vercel
+  // The key might be:
+  // 1. Already properly formatted (local .env.local)
+  // 2. With literal \n that need to be converted (Vercel environment variables)
+  // 3. With actual newlines (some platforms)
+  // 4. Wrapped in quotes that need to be removed
+
+  // Remove outer quotes if present (Vercel sometimes adds them)
+  privateKey = privateKey.trim();
+  if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+      (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+    privateKey = privateKey.slice(1, -1);
+  }
+
+  // Replace literal \n with actual newlines
+  // This is the most common issue in Vercel deployments
+  privateKey = privateKey.replace(/\\n/g, "\n");
+
+  try {
+    return initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+    });
+  } catch (error) {
+    // Provide more helpful error message
+    console.error("Firebase Admin initialization failed:", error);
+    throw new Error(
+      `Failed to initialize Firebase Admin SDK: ${error instanceof Error ? error.message : "Unknown error"}. ` +
+      `Check that firebase admin private key properly pasted in the .env.local file`
+    );
+  }
 }
 
 // Initialize app
