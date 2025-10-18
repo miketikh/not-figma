@@ -138,7 +138,7 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
       height: rectObj.height,
       fill: rectObj.fill,
       stroke: rectObj.stroke,
-      strokeWidth: rectObj.strokeWidth,
+      strokeWidth: rectObj.strokeWidth ?? 0, // backward compatibility
       rotation: rectObj.rotation,
       opacity: rectObj.fillOpacity ?? 1, // backward compatibility
       zIndex: rectObj.zIndex ?? 0, // backward compatibility
@@ -330,7 +330,7 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
       radiusY,
       fill: circleObj.fill,
       stroke: circleObj.stroke,
-      strokeWidth: circleObj.strokeWidth,
+      strokeWidth: circleObj.strokeWidth ?? 0, // backward compatibility
       rotation: circleObj.rotation || 0,
       opacity: circleObj.fillOpacity ?? 1, // backward compatibility
       zIndex: circleObj.zIndex ?? 0, // backward compatibility
@@ -508,7 +508,7 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
       x2: lineObj.x2,
       y2: lineObj.y2,
       stroke: lineObj.stroke,
-      strokeWidth: lineObj.strokeWidth,
+      strokeWidth: lineObj.strokeWidth ?? 0, // backward compatibility
       opacity: lineObj.strokeOpacity ?? 1, // backward compatibility
       zIndex: lineObj.zIndex ?? 0, // backward compatibility
       lockedBy: lineObj.lockedBy,
