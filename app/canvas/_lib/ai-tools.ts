@@ -200,7 +200,6 @@ export const createRectangle = tool({
 
       await createObject(canvasId, firestoreRect);
 
-      console.log(`[AI Tool] Created rectangle ${rect.id} at (${x}, ${y})`);
 
       return {
         success: true,
@@ -300,7 +299,6 @@ export const createCircle = tool({
 
       await createObject(canvasId, firestoreCircle);
 
-      console.log(`[AI Tool] Created circle ${circle.id} at (${x}, ${y})`);
 
       return {
         success: true,
@@ -386,9 +384,6 @@ export const createLine = tool({
 
       await createObject(canvasId, firestoreLine);
 
-      console.log(
-        `[AI Tool] Created line ${line.id} from (${x1}, ${y1}) to (${x2}, ${y2})`
-      );
 
       return {
         success: true,
@@ -496,7 +491,6 @@ export const createText = tool({
 
       await createObject(canvasId, firestoreText);
 
-      console.log(`[AI Tool] Created text ${text.id} at (${x}, ${y})`);
 
       return {
         success: true,
@@ -600,9 +594,6 @@ export const updateObject = tool({
         // First, check if user has something selected
         if (selectedIds && selectedIds.length > 0) {
           targetId = selectedIds[0];
-          console.log(
-            `[AI Tool] Inferred object from selection: ${targetId}`
-          );
         } else {
           // No selection, try to find last AI-created object from this session
           const canvasContext = await buildCanvasContext(
@@ -614,9 +605,6 @@ export const updateObject = tool({
 
           if (canvasContext.lastCreatedObjectId) {
             targetId = canvasContext.lastCreatedObjectId;
-            console.log(
-              `[AI Tool] Inferred object from last created: ${targetId}`
-            );
           }
         }
       }
@@ -722,7 +710,6 @@ export const updateObject = tool({
       // Update the object in Firestore
       await firestoreUpdateObject(canvasId, targetId, updates);
 
-      console.log(`[AI Tool] Updated object ${targetId}`, updates);
 
       return {
         success: true,
@@ -769,7 +756,6 @@ export const getCanvasObjects = tool({
         selectedIds
       );
 
-      console.log(`[AI Tool] Getting canvas objects (filter: ${filter})`);
 
       // Handle empty canvas case
       if (canvasContext.objectCount === 0) {

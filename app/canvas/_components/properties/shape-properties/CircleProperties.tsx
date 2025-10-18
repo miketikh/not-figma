@@ -4,20 +4,28 @@ import { useState } from "react";
 import { PersistedCircle } from "../../../_types/shapes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useNumericInput } from "../../../_hooks/useNumericInput";
 
 interface CirclePropertiesProps {
   shape: PersistedCircle;
   onUpdate: (updates: Partial<PersistedCircle>) => void;
   disabled?: boolean;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 export default function CircleProperties({
   shape,
   onUpdate,
   disabled = false,
+  canvasWidth,
+  canvasHeight,
 }: CirclePropertiesProps) {
   const isCircle = Math.abs(shape.radiusX - shape.radiusY) < 0.1;
   const [lockAspectRatio, setLockAspectRatio] = useState(isCircle);
+
+  // Dynamic max radius based on canvas dimensions
+  const maxRadius = Math.min(canvasWidth, canvasHeight) / 2;
 
   const handleRadiusXChange = (value: number) => {
     if (lockAspectRatio) {
@@ -35,6 +43,23 @@ export default function CircleProperties({
     }
   };
 
+  // Validation hooks for radiusX and radiusY with dynamic canvas-based limits
+  const radiusXInput = useNumericInput({
+    value: Math.round(shape.radiusX),
+    onChange: handleRadiusXChange,
+    min: 5,
+    max: maxRadius,
+    defaultValue: 50,
+  });
+
+  const radiusYInput = useNumericInput({
+    value: Math.round(shape.radiusY),
+    onChange: handleRadiusYChange,
+    min: 5,
+    max: maxRadius,
+    defaultValue: 50,
+  });
+
   return (
     <div className="space-y-3">
       {/* Radius inputs */}
@@ -46,11 +71,11 @@ export default function CircleProperties({
           <Input
             id="radius-x"
             type="number"
-            min="1"
-            value={Math.round(shape.radiusX)}
-            onChange={(e) =>
-              handleRadiusXChange(parseFloat(e.target.value) || 1)
-            }
+            min="5"
+            max={maxRadius}
+            value={radiusXInput.displayValue}
+            onChange={radiusXInput.handleChange}
+            onBlur={radiusXInput.handleBlur}
             disabled={disabled}
             className="h-8"
           />
@@ -62,11 +87,11 @@ export default function CircleProperties({
           <Input
             id="radius-y"
             type="number"
-            min="1"
-            value={Math.round(shape.radiusY)}
-            onChange={(e) =>
-              handleRadiusYChange(parseFloat(e.target.value) || 1)
-            }
+            min="5"
+            max={maxRadius}
+            value={radiusYInput.displayValue}
+            onChange={radiusYInput.handleChange}
+            onBlur={radiusYInput.handleBlur}
             disabled={disabled}
             className="h-8"
           />

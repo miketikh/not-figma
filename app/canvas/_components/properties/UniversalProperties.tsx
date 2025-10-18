@@ -15,12 +15,15 @@ import {
   LayerOperation,
   calculateNewZIndex,
 } from "../../_lib/layer-management";
+import { useNumericInput } from "../../_hooks/useNumericInput";
 
 interface UniversalPropertiesProps {
   object: PersistedShape;
   allObjects: PersistedShape[];
   onUpdate: (updates: Partial<PersistedShape>) => void;
   disabled?: boolean;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 export default function UniversalProperties({
@@ -28,6 +31,8 @@ export default function UniversalProperties({
   allObjects,
   onUpdate,
   disabled = false,
+  canvasWidth,
+  canvasHeight,
 }: UniversalPropertiesProps) {
   const handleLayerOperation = (operation: LayerOperation) => {
     const newZIndex = calculateNewZIndex(
@@ -44,39 +49,93 @@ export default function UniversalProperties({
   // Get width/height for display (handle circle/ellipse differently)
   const getWidth = () => {
     if (object.type === "circle") {
-      return Math.round((object.radiusX || 0) * 2);
+      const width = Math.round((object.radiusX || 0) * 2);
+      return isNaN(width) ? 0 : width;
     }
     if (object.type === "line") {
       return 0; // Lines don't have width
     }
-    return Math.round(object.width || 0);
+    const width = Math.round(object.width || 0);
+    return isNaN(width) ? 0 : width;
   };
 
   const getHeight = () => {
     if (object.type === "circle") {
-      return Math.round((object.radiusY || 0) * 2);
+      const height = Math.round((object.radiusY || 0) * 2);
+      return isNaN(height) ? 0 : height;
     }
     if (object.type === "line") {
       return 0; // Lines don't have height
     }
-    return Math.round(object.height || 0);
+    const height = Math.round(object.height || 0);
+    return isNaN(height) ? 0 : height;
   };
 
   const handleWidthChange = (value: number) => {
+    // Safety check: don't update with NaN
+    if (isNaN(value)) return;
+
     if (object.type === "circle") {
       onUpdate({ radiusX: value / 2 });
-    } else if (object.type === "rectangle") {
+    } else if (object.type === "rectangle" || object.type === "text") {
       onUpdate({ width: value });
     }
   };
 
   const handleHeightChange = (value: number) => {
+    // Safety check: don't update with NaN
+    if (isNaN(value)) return;
+
     if (object.type === "circle") {
       onUpdate({ radiusY: value / 2 });
-    } else if (object.type === "rectangle") {
+    } else if (object.type === "rectangle" || object.type === "text") {
       onUpdate({ height: value });
     }
   };
+
+  // Calculate minimum width based on object type
+  // For text objects, minimum width should accommodate at least one character
+  const getMinWidth = () => {
+    if (object.type === "text") {
+      // Estimate minimum width as fontSize * 0.8 to fit at least one character
+      const fontSize = object.fontSize || 16;
+      return Math.max(10, fontSize * 0.8);
+    }
+    return 10; // Default minimum for other shapes
+  };
+
+  // Validation hooks for width and height with dynamic canvas-based limits
+  const widthInput = useNumericInput({
+    value: getWidth(),
+    onChange: handleWidthChange,
+    min: getMinWidth(),
+    max: canvasWidth,
+    defaultValue: 100,
+  });
+
+  const heightInput = useNumericInput({
+    value: getHeight(),
+    onChange: handleHeightChange,
+    min: 10,
+    max: canvasHeight,
+    defaultValue: 100,
+  });
+
+  // Validation hook for rotation with normalization
+  const handleRotationChange = (value: number) => {
+    // Normalize to 0-360
+    let normalized = value % 360;
+    if (normalized < 0) normalized += 360;
+    onUpdate({ rotation: normalized });
+  };
+
+  const rotationInput = useNumericInput({
+    value: Math.round(object.rotation || 0),
+    onChange: handleRotationChange,
+    min: 0,
+    max: 360,
+    defaultValue: 0,
+  });
 
   return (
     <div className="space-y-4">
@@ -129,11 +188,11 @@ export default function UniversalProperties({
               <Input
                 id="size-w"
                 type="number"
-                min="1"
-                value={getWidth()}
-                onChange={(e) =>
-                  handleWidthChange(parseFloat(e.target.value) || 1)
-                }
+                min={getMinWidth()}
+                max={canvasWidth}
+                value={widthInput.displayValue}
+                onChange={widthInput.handleChange}
+                onBlur={widthInput.handleBlur}
                 disabled={disabled}
                 className="h-8"
               />
@@ -145,11 +204,11 @@ export default function UniversalProperties({
               <Input
                 id="size-h"
                 type="number"
-                min="1"
-                value={getHeight()}
-                onChange={(e) =>
-                  handleHeightChange(parseFloat(e.target.value) || 1)
-                }
+                min="10"
+                max={canvasHeight}
+                value={heightInput.displayValue}
+                onChange={heightInput.handleChange}
+                onBlur={heightInput.handleBlur}
                 disabled={disabled}
                 className="h-8"
               />
@@ -173,14 +232,9 @@ export default function UniversalProperties({
               type="number"
               min="0"
               max="360"
-              value={Math.round(object.rotation || 0)}
-              onChange={(e) => {
-                let value = parseFloat(e.target.value) || 0;
-                // Normalize to 0-360
-                value = value % 360;
-                if (value < 0) value += 360;
-                onUpdate({ rotation: value });
-              }}
+              value={rotationInput.displayValue}
+              onChange={rotationInput.handleChange}
+              onBlur={rotationInput.handleBlur}
               disabled={disabled}
               className="h-8"
             />

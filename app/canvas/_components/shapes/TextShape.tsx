@@ -163,8 +163,12 @@ export default function TextShape({
     const node = e.target as Konva.Text;
     const scaleX = node.scaleX();
 
-    // Calculate new width from scale
-    const newWidth = Math.max(50, node.width() * scaleX);
+    // Calculate minimum width based on fontSize to ensure at least one character is visible
+    // Use 0.8 * fontSize as minimum (conservative estimate that works for most fonts)
+    const minWidth = Math.max(50, shape.fontSize * 0.8);
+
+    // Calculate new width from scale, clamped to minimum
+    const newWidth = Math.max(minWidth, node.width() * scaleX);
 
     // Reset scale and apply to width
     node.scaleX(1);

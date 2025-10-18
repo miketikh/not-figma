@@ -144,9 +144,27 @@ export function useMouseHandlers({
         // Get default properties for text (including user-edited content)
         const defaults = isShapeTool("text") ? defaultShapeProperties.text : {};
 
-        // Create new text object at clamped position
+        // Calculate appropriate width for text based on fontSize
+        // The width should be wide enough to accommodate the text, or max 1/2 canvas width
+        const fontSize = defaults.fontSize ?? 16;
+        const content = defaults.content ?? "Text";
+        const fontFamily = defaults.fontFamily ?? "Arial";
+
+        // Estimate text width: approximate character width is 0.6 * fontSize
+        // This is a rough heuristic that works reasonably well for most fonts
+        const estimatedTextWidth = content.length * fontSize * 0.6;
+
+        // Clamp to a minimum of 100px and maximum of half canvas width
+        const maxWidth = canvas.width / 2;
+        const width = Math.max(100, Math.min(estimatedTextWidth, maxWidth));
+
+        // Height estimation: fontSize * lineHeight + small padding
+        const lineHeight = defaults.lineHeight ?? 1.2;
+        const height = Math.max(30, fontSize * lineHeight * 1.2);
+
+        // Create new text object at clamped position with calculated dimensions
         const newText = factory.createDefault(
-          { x: clampedPoint.x, y: clampedPoint.y, width: 100, height: 30 },
+          { x: clampedPoint.x, y: clampedPoint.y, width, height },
           defaults,
           canvasId
         );

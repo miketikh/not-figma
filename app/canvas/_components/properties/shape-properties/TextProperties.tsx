@@ -14,6 +14,7 @@ import {
   Underline,
   Strikethrough,
 } from "lucide-react";
+import { useNumericInput } from "../../../_hooks/useNumericInput";
 
 interface TextPropertiesProps {
   shape: PersistedText;
@@ -47,6 +48,34 @@ export default function TextProperties({
   const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
   const pendingValueRef = useRef<string | null>(null);
+
+  // Use validation hook for fontSize
+  const fontSizeInput = useNumericInput({
+    value: shape.fontSize,
+    onChange: (value) => {
+      // Calculate minimum width for the new fontSize
+      const minWidth = Math.max(10, value * 0.8);
+
+      // If current width is less than minimum, update both fontSize and width
+      if (shape.width < minWidth) {
+        onUpdate({ fontSize: value, width: minWidth });
+      } else {
+        onUpdate({ fontSize: value });
+      }
+    },
+    min: 8,
+    max: 500,
+    defaultValue: 16,
+  });
+
+  // Use validation hook for lineHeight
+  const lineHeightInput = useNumericInput({
+    value: shape.lineHeight,
+    onChange: (value) => onUpdate({ lineHeight: value }),
+    min: 0.5,
+    max: 3,
+    defaultValue: 1.2,
+  });
 
   // Update local state when shape.content changes externally (e.g., from another user)
   // but only if we're not actively typing
@@ -152,15 +181,14 @@ export default function TextProperties({
           id="font-size"
           type="number"
           min="8"
-          max="200"
-          value={shape.fontSize}
-          onChange={(e) =>
-            onUpdate({ fontSize: parseInt(e.target.value) || 16 })
-          }
+          max="500"
+          value={fontSizeInput.displayValue}
+          onChange={fontSizeInput.handleChange}
+          onBlur={fontSizeInput.handleBlur}
           disabled={disabled}
           className="h-8"
         />
-        <p className="text-xs text-gray-400 mt-1">Range: 8-200px</p>
+        <p className="text-xs text-gray-400 mt-1">Range: 8-500px</p>
       </div>
 
       {/* Font Weight & Style */}
@@ -296,10 +324,9 @@ export default function TextProperties({
           min="0.5"
           max="3"
           step="0.1"
-          value={shape.lineHeight}
-          onChange={(e) =>
-            onUpdate({ lineHeight: parseFloat(e.target.value) || 1.2 })
-          }
+          value={lineHeightInput.displayValue}
+          onChange={lineHeightInput.handleChange}
+          onBlur={lineHeightInput.handleBlur}
           disabled={disabled}
           className="h-8"
         />

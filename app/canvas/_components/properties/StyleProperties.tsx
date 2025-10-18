@@ -5,6 +5,7 @@ import { PersistedShape } from "../../_types/shapes";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HexColorPicker } from "react-colorful";
+import { useNumericInput } from "../../_hooks/useNumericInput";
 
 interface StylePropertiesProps {
   object: PersistedShape;
@@ -22,6 +23,15 @@ export default function StyleProperties({
 
   const fillPickerRef = useRef<HTMLDivElement>(null);
   const strokePickerRef = useRef<HTMLDivElement>(null);
+
+  // Use validation hook for stroke width
+  const strokeWidthInput = useNumericInput({
+    value: object.strokeWidth || 0,
+    onChange: (value) => onUpdate({ strokeWidth: value }),
+    min: 0,
+    max: 100,
+    defaultValue: 2,
+  });
 
   // Close color pickers when clicking outside
   useEffect(() => {
@@ -251,10 +261,10 @@ export default function StyleProperties({
               id="stroke-width"
               type="number"
               min="0"
-              value={object.strokeWidth || 0}
-              onChange={(e) =>
-                onUpdate({ strokeWidth: parseFloat(e.target.value) || 0 })
-              }
+              max="100"
+              value={strokeWidthInput.displayValue}
+              onChange={strokeWidthInput.handleChange}
+              onBlur={strokeWidthInput.handleBlur}
               disabled={disabled}
               className="h-8"
             />

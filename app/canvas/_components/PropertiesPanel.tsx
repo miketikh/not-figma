@@ -22,6 +22,8 @@ interface PropertiesPanelProps {
     shapeType: "rectangle" | "circle" | "line" | "text",
     updates: any
   ) => void;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 export default function PropertiesPanel({
@@ -32,6 +34,8 @@ export default function PropertiesPanel({
   activeTool,
   defaultShapeProperties,
   onUpdateDefaults,
+  canvasWidth,
+  canvasHeight,
 }: PropertiesPanelProps) {
   // Get selected objects
   const selectedObjects = objects.filter((obj) => selectedIds.includes(obj.id));
@@ -132,6 +136,8 @@ export default function PropertiesPanel({
                     onUpdateDefaults(shapeType, updates)
                   }
                   disabled={false}
+                  canvasWidth={canvasWidth}
+                  canvasHeight={canvasHeight}
                 />
               </div>
             </>
@@ -257,6 +263,8 @@ export default function PropertiesPanel({
           allObjects={objects}
           onUpdate={(updates) => onUpdate(selectedObject.id, updates)}
           disabled={lockedByOther}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
 
         <Separator />
@@ -282,6 +290,8 @@ export default function PropertiesPanel({
                   onUpdate(selectedObject.id, updates)
                 }
                 disabled={lockedByOther}
+                canvasWidth={canvasWidth}
+                canvasHeight={canvasHeight}
               />
             </div>
           </>

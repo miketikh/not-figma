@@ -542,6 +542,8 @@ export default function Canvas({
           activeTool={activeTool}
           defaultShapeProperties={defaultShapeProperties}
           onUpdateDefaults={updateDefaultShapeProperty}
+          canvasWidth={canvas.width}
+          canvasHeight={canvas.height}
         />
       )}
 

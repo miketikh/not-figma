@@ -22,6 +22,26 @@ import type {
 } from "../_types/shapes";
 
 // ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Sanitize numeric values to prevent NaN and enforce bounds
+ * Used when converting Firestore objects to prevent invalid data from breaking the UI
+ */
+function sanitizeNumber(
+  val: number,
+  defaultVal: number,
+  min?: number,
+  max?: number
+): number {
+  if (val == null || !isFinite(val) || isNaN(val)) return defaultVal;
+  if (min !== undefined && val < min) return min;
+  if (max !== undefined && val > max) return max;
+  return val;
+}
+
+// ============================================================================
 // Rectangle Factory
 // ============================================================================
 
@@ -132,17 +152,17 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
       id: rectObj.id,
       type: "rectangle",
       canvasId: rectObj.canvasId || "",
-      x: rectObj.x,
-      y: rectObj.y,
-      width: rectObj.width,
-      height: rectObj.height,
+      x: sanitizeNumber(rectObj.x, 0),
+      y: sanitizeNumber(rectObj.y, 0),
+      width: sanitizeNumber(rectObj.width, 100, 1, 10000),
+      height: sanitizeNumber(rectObj.height, 100, 1, 10000),
       fill: rectObj.fill,
       stroke: rectObj.stroke,
-      strokeWidth: rectObj.strokeWidth ?? 0, // backward compatibility
-      rotation: rectObj.rotation,
-      opacity: rectObj.fillOpacity ?? 1, // backward compatibility
-      zIndex: rectObj.zIndex ?? 0, // backward compatibility
-      cornerRadius: rectObj.cornerRadius || 0,
+      strokeWidth: sanitizeNumber(rectObj.strokeWidth, 0, 0, 100),
+      rotation: sanitizeNumber(rectObj.rotation, 0),
+      opacity: sanitizeNumber(rectObj.fillOpacity, 1, 0, 1),
+      zIndex: sanitizeNumber(rectObj.zIndex, 0),
+      cornerRadius: sanitizeNumber(rectObj.cornerRadius, 0, 0, 500),
       lockedBy: rectObj.lockedBy,
       lockedAt: rectObj.lockedAt,
       lockTimeout: rectObj.lockTimeout,
@@ -317,23 +337,23 @@ export const circleFactory: ShapeFactory<PersistedCircle> = {
 
     const circleObj = obj as any;
     // CircleObject stores diameters as width/height, convert to radiusX/radiusY
-    const radiusX = (circleObj.width || 0) / 2;
-    const radiusY = (circleObj.height || 0) / 2;
+    const radiusX = sanitizeNumber(circleObj.width, 100, 1, 10000) / 2;
+    const radiusY = sanitizeNumber(circleObj.height, 100, 1, 10000) / 2;
 
     return {
       id: circleObj.id,
       type: "circle",
       canvasId: circleObj.canvasId || "",
-      x: circleObj.x,
-      y: circleObj.y,
+      x: sanitizeNumber(circleObj.x, 0),
+      y: sanitizeNumber(circleObj.y, 0),
       radiusX,
       radiusY,
       fill: circleObj.fill,
       stroke: circleObj.stroke,
-      strokeWidth: circleObj.strokeWidth ?? 0, // backward compatibility
-      rotation: circleObj.rotation || 0,
-      opacity: circleObj.fillOpacity ?? 1, // backward compatibility
-      zIndex: circleObj.zIndex ?? 0, // backward compatibility
+      strokeWidth: sanitizeNumber(circleObj.strokeWidth, 0, 0, 100),
+      rotation: sanitizeNumber(circleObj.rotation, 0),
+      opacity: sanitizeNumber(circleObj.fillOpacity, 1, 0, 1),
+      zIndex: sanitizeNumber(circleObj.zIndex, 0),
       lockedBy: circleObj.lockedBy,
       lockedAt: circleObj.lockedAt,
       lockTimeout: circleObj.lockTimeout,
@@ -503,14 +523,14 @@ export const lineFactory: ShapeFactory<PersistedLine> = {
       id: lineObj.id,
       type: "line",
       canvasId: lineObj.canvasId || "",
-      x: lineObj.x,
-      y: lineObj.y,
-      x2: lineObj.x2,
-      y2: lineObj.y2,
+      x: sanitizeNumber(lineObj.x, 0),
+      y: sanitizeNumber(lineObj.y, 0),
+      x2: sanitizeNumber(lineObj.x2, 100),
+      y2: sanitizeNumber(lineObj.y2, 100),
       stroke: lineObj.stroke,
-      strokeWidth: lineObj.strokeWidth ?? 0, // backward compatibility
-      opacity: lineObj.strokeOpacity ?? 1, // backward compatibility
-      zIndex: lineObj.zIndex ?? 0, // backward compatibility
+      strokeWidth: sanitizeNumber(lineObj.strokeWidth, 2, 0, 100),
+      opacity: sanitizeNumber(lineObj.strokeOpacity, 1, 0, 1),
+      zIndex: sanitizeNumber(lineObj.zIndex, 0),
       lockedBy: lineObj.lockedBy,
       lockedAt: lineObj.lockedAt,
       lockTimeout: lineObj.lockTimeout,
@@ -692,16 +712,17 @@ export const textFactory: ShapeFactory<PersistedText> = {
     if (obj.type !== "text") return null;
 
     const textObj = obj as TextObject;
+
     return {
       id: textObj.id,
       type: "text",
       canvasId: textObj.canvasId || "",
-      x: textObj.x,
-      y: textObj.y,
-      width: textObj.width,
-      height: textObj.height,
+      x: sanitizeNumber(textObj.x, 0), // Default to origin if NaN
+      y: sanitizeNumber(textObj.y, 0), // Default to origin if NaN
+      width: sanitizeNumber(textObj.width, 100, 10, 10000), // Min 10px, max 10000px
+      height: sanitizeNumber(textObj.height, 30, 10, 10000), // Min 10px, max 10000px
       content: textObj.content,
-      fontSize: textObj.fontSize,
+      fontSize: sanitizeNumber(textObj.fontSize, 16, 8, 500), // Min 8px, max 500px
       fontFamily: textObj.fontFamily || "Arial", // backward compatibility
       fontWeight: textObj.fontWeight || "normal", // backward compatibility
       fontStyle: textObj.fontStyle || "normal", // backward compatibility
@@ -711,9 +732,9 @@ export const textFactory: ShapeFactory<PersistedText> = {
       fill: textObj.fill,
       stroke: textObj.stroke || "#000000", // backward compatibility
       strokeWidth: textObj.strokeWidth ?? 0, // backward compatibility
-      rotation: textObj.rotation || 0,
-      opacity: textObj.fillOpacity ?? 1, // backward compatibility
-      zIndex: textObj.zIndex ?? 0, // backward compatibility
+      rotation: sanitizeNumber(textObj.rotation, 0),
+      opacity: sanitizeNumber(textObj.fillOpacity, 1, 0, 1), // 0-1 range
+      zIndex: sanitizeNumber(textObj.zIndex, 0),
       lockedBy: textObj.lockedBy,
       lockedAt: textObj.lockedAt,
       lockTimeout: textObj.lockTimeout,
