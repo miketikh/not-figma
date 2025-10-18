@@ -56,7 +56,7 @@ export function useMouseHandlers({
   activeTool,
   spacePressed,
   setIsPanning,
-  selectedIds,
+  selectedIds: _selectedIds,
   setSelectedIds,
   canvas,
   viewport,
@@ -148,7 +148,6 @@ export function useMouseHandlers({
         // The width should be wide enough to accommodate the text, or max 1/2 canvas width
         const fontSize = defaults.fontSize ?? 16;
         const content = defaults.content ?? "Text";
-        const fontFamily = defaults.fontFamily ?? "Arial";
 
         // Estimate text width: approximate character width is 0.6 * fontSize
         // This is a rough heuristic that works reasonably well for most fonts

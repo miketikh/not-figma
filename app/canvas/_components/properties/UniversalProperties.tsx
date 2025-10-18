@@ -130,7 +130,7 @@ export default function UniversalProperties({
   };
 
   const rotationInput = useNumericInput({
-    value: Math.round(object.rotation || 0),
+    value: Math.round(("rotation" in object ? object.rotation : 0) || 0),
     onChange: handleRotationChange,
     min: 0,
     max: 360,

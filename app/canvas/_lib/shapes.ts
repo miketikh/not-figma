@@ -162,7 +162,7 @@ export const rectangleFactory: ShapeFactory<PersistedRect> = {
       rotation: sanitizeNumber(rectObj.rotation, 0),
       opacity: sanitizeNumber(rectObj.fillOpacity, 1, 0, 1),
       zIndex: sanitizeNumber(rectObj.zIndex, 0),
-      cornerRadius: sanitizeNumber(rectObj.cornerRadius, 0, 0, 500),
+      cornerRadius: sanitizeNumber(rectObj.cornerRadius ?? 0, 0, 0, 500),
       lockedBy: rectObj.lockedBy,
       lockedAt: rectObj.lockedAt,
       lockTimeout: rectObj.lockTimeout,
