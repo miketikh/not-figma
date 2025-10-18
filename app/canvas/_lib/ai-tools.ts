@@ -17,7 +17,7 @@ import {
   updateObject as firestoreUpdateObject,
   getObject,
   canEdit,
-} from "@/lib/firebase/firestore";
+} from "@/app/api/_lib/firebase-server";
 import { buildCanvasContext } from "./ai-context";
 
 // ============================================================================

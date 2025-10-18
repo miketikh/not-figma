@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.4.0",
+    "firebase-admin": "^13.5.0",
     "konva": "^10.0.2",
     "lucide-react": "^0.545.0",
     "next": "15.5.5",

@@ -28,6 +28,7 @@ import {
 import { db } from "./config";
 import { CanvasObject, ObjectUpdate } from "@/types/canvas";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
+import { removeUndefinedValues } from "./utils";
 
 /**
  * Get the nested collection path for canvas objects
@@ -51,26 +52,6 @@ function getObjectRef(canvasId: string, objectId: string) {
 // ============================================================================
 // Safe Wrapper Utilities
 // ============================================================================
-
-/**
- * Recursively remove undefined values from an object.
- * Firebase Firestore doesn't accept undefined values in documents.
- *
- * This helper is kept for backward compatibility, but new code should use
- * the safe wrapper functions below (safeSetDoc, safeUpdateDoc, etc.)
- *
- * @param obj - Object to clean
- * @returns Cleaned object with undefined values removed
- */
-function removeUndefinedValues<T extends Record<string, any>>(obj: T): T {
-  const cleaned: Record<string, any> = {};
-  for (const key in obj) {
-    if (obj[key] !== undefined) {
-      cleaned[key] = obj[key];
-    }
-  }
-  return cleaned as T;
-}
 
 /**
  * Safe wrapper for Firestore setDoc that filters undefined values.

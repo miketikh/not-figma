@@ -4,8 +4,7 @@
  * Optimized for token efficiency by summarizing unselected objects
  */
 
-import { getAllObjects } from "@/lib/firebase/firestore";
-import { getCanvas } from "@/lib/firebase/canvas";
+import { getCanvasServerSide, getAllObjectsServerSide } from "@/lib/firebase/admin-helpers";
 import { CanvasObject } from "@/types/canvas";
 import type {
   CanvasContextResult,
@@ -36,10 +35,10 @@ export async function buildCanvasContext(
   sessionId?: string
 ): Promise<CanvasContextResult> {
   try {
-    // Fetch canvas metadata and all objects from Firestore
+    // Fetch canvas metadata and all objects from Firestore using server-side helpers
     const [canvas, allObjects] = await Promise.all([
-      getCanvas(canvasId),
-      getAllObjects(canvasId),
+      getCanvasServerSide(canvasId),
+      getAllObjectsServerSide(canvasId),
     ]);
 
     if (!canvas) {
