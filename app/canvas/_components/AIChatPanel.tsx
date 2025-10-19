@@ -6,13 +6,28 @@ import { useAIChat } from "../_hooks/useAIChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { X, Sparkles, Send, Loader2, AlertCircle, Square, Circle, Minus, Type, Check } from "lucide-react";
+import { X, Send, Loader2, AlertCircle, Square, Circle, Minus, Type, Check } from "lucide-react";
 
 interface AIChatPanelProps {
   canvasId: string;
   selectedIds: string[];
   onAutoSelect?: (objectId: string) => void;
 }
+
+const LOADING_MESSAGES = [
+  "🎨 Mixing colors...",
+  "📐 Measuring twice, cutting once...",
+  "✏️ Sketching it out...",
+  "🧮 Crunching the numbers...",
+  "🎯 Finding the perfect spot...",
+  "✨ Working some magic...",
+  "🔍 Analyzing the canvas...",
+  "⚡ Powering up...",
+];
+
+const getRandomLoadingMessage = () => {
+  return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
+};
 
 export default function AIChatPanel({
   canvasId,
@@ -117,6 +132,25 @@ export default function AIChatPanel({
     return <Check className="w-3.5 h-3.5" />;
   };
 
+  // Get color gradient for tool type
+  const getToolColorClass = (toolName: string) => {
+    const lowerName = toolName.toLowerCase();
+    if (lowerName.includes("rectangle") || lowerName.includes("rect")) {
+      return "bg-gradient-to-br from-blue-400 to-blue-600";
+    }
+    if (lowerName.includes("circle")) {
+      return "bg-gradient-to-br from-purple-400 to-purple-600";
+    }
+    if (lowerName.includes("line")) {
+      return "bg-gradient-to-br from-orange-400 to-orange-600";
+    }
+    if (lowerName.includes("text")) {
+      return "bg-gradient-to-br from-green-400 to-green-600";
+    }
+    // Default for updates/other operations
+    return "bg-gradient-to-br from-yellow-400 to-yellow-600";
+  };
+
   // Format tool name for display
   const formatToolName = (toolName: string) => {
     // Convert camelCase to Title Case with spaces
@@ -145,8 +179,11 @@ export default function AIChatPanel({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-50 to-blue-50">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <h2 className="font-semibold text-lg">AI Assistant</h2>
+            <span className="text-2xl">🤖</span>
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-lg leading-tight">Sketchy</h2>
+              <p className="text-xs text-gray-500">AI design assistant</p>
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -177,67 +214,37 @@ export default function AIChatPanel({
             // Welcome message
             <Card className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
               <div className="flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <span className="text-xl">👋</span>
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
-                      Welcome to your AI Canvas Assistant!
+                      Hey there! I&apos;m Sketchy, your AI design buddy.
                     </p>
                     <p className="text-xs text-gray-600 mt-1">
-                      Control the canvas with natural language. I can create
-                      shapes, modify objects, and answer questions about your
-                      design.
+                      Tell me what you want to create, and I&apos;ll bring it to life!
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <p className="text-xs text-gray-700 font-semibold">
-                      Creating shapes:
+                      Try things like:
                     </p>
                     <ul className="text-xs text-gray-600 space-y-0.5 ml-3">
                       <li>
-                        &bull; &ldquo;Create a red circle at 300, 300&rdquo;
+                        &bull; &ldquo;Make a red circle at 300, 300&rdquo;
                       </li>
                       <li>
-                        &bull; &ldquo;Add a blue rectangle 200x150 at 100,
-                        100&rdquo;
+                        &bull; &ldquo;Create a blue rectangle&rdquo;
                       </li>
                       <li>
-                        &bull; &ldquo;Draw a line from 50, 50 to 300, 200&rdquo;
+                        &bull; &ldquo;Move it to the center&rdquo;
                       </li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700 font-semibold">
-                      Modifying objects:
-                    </p>
-                    <ul className="text-xs text-gray-600 space-y-0.5 ml-3">
-                      <li>
-                        &bull; &ldquo;Make it green&rdquo; (select an object
-                        first)
-                      </li>
-                      <li>&bull; &ldquo;Rotate it 45 degrees&rdquo;</li>
-                      <li>
-                        &bull; &ldquo;Change stroke to red with width 3&rdquo;
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-700 font-semibold">
-                      Asking questions:
-                    </p>
-                    <ul className="text-xs text-gray-600 space-y-0.5 ml-3">
-                      <li>&bull; &ldquo;What&apos;s on the canvas?&rdquo;</li>
-                      <li>&bull; &ldquo;How many objects are there?&rdquo;</li>
                     </ul>
                   </div>
 
                   <div className="pt-2 border-t border-purple-100">
-                    <p className="text-xs text-gray-500 italic">
-                      Tip: Be specific with coordinates and measurements for
-                      best results!
+                    <p className="text-xs text-gray-600">
+                      Let&apos;s make something awesome! 🎨
                     </p>
                   </div>
                 </div>
@@ -286,10 +293,10 @@ export default function AIChatPanel({
                         >
                           <div className="flex items-center gap-2.5">
                             <div
-                              className={`flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 ${
+                              className={`flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0 text-white animate-popIn ${
                                 result.success
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-red-500 text-white"
+                                  ? getToolColorClass(result.toolName)
+                                  : "bg-red-500"
                               }`}
                             >
                               {result.success ? (
@@ -339,7 +346,7 @@ export default function AIChatPanel({
               <div className="bg-gray-100 rounded-lg px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
-                  <p className="text-sm text-gray-600">Thinking...</p>
+                  <p className="text-sm text-gray-600">{getRandomLoadingMessage()}</p>
                 </div>
               </div>
             </div>

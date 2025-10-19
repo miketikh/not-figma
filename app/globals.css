@@ -139,3 +139,25 @@ body {
   color: hsl(var(--foreground));
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
 }
+
+/* ============================================================================
+   Custom animations
+   ============================================================================ */
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-popIn {
+  animation: popIn 0.3s ease-out;
+}
