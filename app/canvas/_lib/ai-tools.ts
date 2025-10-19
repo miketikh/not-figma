@@ -19,6 +19,26 @@ import {
   canEdit,
 } from "@/app/api/_lib/firebase-server";
 import { buildCanvasContext } from "./ai-context";
+import {
+  getCreateRectangleMessage,
+  getCreateCircleMessage,
+  getCreateLineMessage,
+  getCreateTextMessage,
+  getUpdateColorMessage,
+  getUpdatePositionMessage,
+  getUpdateRotationMessage,
+  getUpdateSizeMessage,
+  getUpdateOpacityMessage,
+  getUpdateGenericMessage,
+  getCanvasEmptyMessage,
+  getObjectCountMessage,
+  getNoSelectionMessage,
+  getSelectionCountMessage,
+  getObjectLockedMessage,
+  getObjectNotFoundMessage,
+  getBoundsErrorMessage,
+  getMilestoneMessage,
+} from "./ai-responses";
 
 // ============================================================================
 // Helper Functions
@@ -29,15 +49,8 @@ import { buildCanvasContext } from "./ai-context";
  * Objects should be created within reasonable bounds (0-10000 pixels)
  */
 function validateCanvasBounds(x: number, y: number): void {
-  if (x < 0 || x > 10000) {
-    throw new Error(
-      `Invalid X coordinate (${x}). Coordinates must be between 0 and 10000 pixels.`
-    );
-  }
-  if (y < 0 || y > 10000) {
-    throw new Error(
-      `Invalid Y coordinate (${y}). Coordinates must be between 0 and 10000 pixels.`
-    );
+  if (x < 0 || x > 10000 || y < 0 || y > 10000) {
+    throw new Error(getBoundsErrorMessage());
   }
 }
 
@@ -204,7 +217,7 @@ export const createRectangle = tool({
       return {
         success: true,
         id: rect.id,
-        message: `Created rectangle at (${x}, ${y}) with size ${width}×${height}`,
+        message: getCreateRectangleMessage({ x, y, width, height }),
       };
     } catch (error) {
       const errorMessage =
@@ -303,7 +316,7 @@ export const createCircle = tool({
       return {
         success: true,
         id: circle.id,
-        message: `Created circle at (${x}, ${y}) with radius ${radius}`,
+        message: getCreateCircleMessage({ x, y, radius }),
       };
     } catch (error) {
       const errorMessage =
@@ -388,7 +401,7 @@ export const createLine = tool({
       return {
         success: true,
         id: line.id,
-        message: `Created line from (${x1}, ${y1}) to (${x2}, ${y2})`,
+        message: getCreateLineMessage({ x1, y1, x2, y2 }),
       };
     } catch (error) {
       const errorMessage =
@@ -495,7 +508,7 @@ export const createText = tool({
       return {
         success: true,
         id: text.id,
-        message: `Created text "${content}" at (${x}, ${y})`,
+        message: getCreateTextMessage({ x, y, content }),
       };
     } catch (error) {
       const errorMessage =
@@ -613,8 +626,7 @@ export const updateObject = tool({
       if (!targetId) {
         return {
           success: false,
-          error:
-            "No object specified, no objects selected, and no objects created by AI in this session. Please select an object or specify which object to update.",
+          error: getNoSelectionMessage(),
         };
       }
 
@@ -624,7 +636,7 @@ export const updateObject = tool({
       if (!existingObject) {
         return {
           success: false,
-          error: `Object with ID ${targetId} not found. It may have been deleted.`,
+          error: getObjectNotFoundMessage(),
         };
       }
 
@@ -633,7 +645,7 @@ export const updateObject = tool({
         const lockerName = existingObject.lockedBy || "another user";
         return {
           success: false,
-          error: `Cannot modify object - it is currently being edited by ${lockerName}. Please wait for them to finish or select a different object.`,
+          error: getObjectLockedMessage(lockerName),
         };
       }
 
@@ -710,11 +722,78 @@ export const updateObject = tool({
       // Update the object in Firestore
       await firestoreUpdateObject(canvasId, targetId, updates);
 
+      // Get canvas dimensions for context-aware position messages
+      const canvasContext = await buildCanvasContext(canvasId, userId, []);
+
+      // Generate context-aware message based on what was updated
+      // Priority: position > color > size > rotation > opacity > other
+      let message: string;
+
+      // Check position update (highest priority)
+      if (properties.x !== undefined || properties.y !== undefined) {
+        const finalX =
+          properties.x !== undefined ? properties.x : existingObject.x;
+        const finalY =
+          properties.y !== undefined ? properties.y : existingObject.y;
+        const deltaX =
+          properties.x !== undefined ? properties.x - existingObject.x : 0;
+        const deltaY =
+          properties.y !== undefined ? properties.y - existingObject.y : 0;
+
+        message = getUpdatePositionMessage({
+          x: finalX,
+          y: finalY,
+          deltaX,
+          deltaY,
+          canvasWidth: canvasContext.canvasWidth,
+          canvasHeight: canvasContext.canvasHeight,
+        });
+      }
+      // Check color update (fill or stroke)
+      else if (properties.fill !== undefined) {
+        message = getUpdateColorMessage({
+          color: properties.fill,
+          property: "fill",
+        });
+      } else if (properties.stroke !== undefined) {
+        message = getUpdateColorMessage({
+          color: properties.stroke,
+          property: "stroke",
+        });
+      }
+      // Check size update
+      else if (properties.width !== undefined || properties.height !== undefined) {
+        const finalWidth =
+          properties.width !== undefined
+            ? properties.width
+            : existingObject.width;
+        const finalHeight =
+          properties.height !== undefined
+            ? properties.height
+            : existingObject.height;
+
+        message = getUpdateSizeMessage({
+          width: finalWidth,
+          height: finalHeight,
+        });
+      }
+      // Check rotation update
+      else if (properties.rotation !== undefined) {
+        message = getUpdateRotationMessage({ rotation: properties.rotation });
+      }
+      // Check opacity update
+      else if (properties.opacity !== undefined) {
+        message = getUpdateOpacityMessage({ opacity: properties.opacity });
+      }
+      // Generic fallback for other updates
+      else {
+        message = getUpdateGenericMessage();
+      }
 
       return {
         success: true,
         id: targetId,
-        message: `Updated object successfully`,
+        message,
       };
     } catch (error) {
       const errorMessage =
@@ -761,8 +840,7 @@ export const getCanvasObjects = tool({
       if (canvasContext.objectCount === 0) {
         return {
           success: true,
-          message:
-            "The canvas is empty. Would you like me to create something?",
+          message: getCanvasEmptyMessage(),
           objectCount: 0,
           objects: [],
         };
@@ -773,23 +851,33 @@ export const getCanvasObjects = tool({
         if (canvasContext.selectedObjects.length === 0) {
           return {
             success: true,
-            message:
-              "No objects are currently selected. Please select an object first if you want to modify it.",
+            message: getNoSelectionMessage(),
             objects: [],
           };
         }
 
         return {
           success: true,
-          message: `Found ${canvasContext.selectedObjects.length} selected object(s)`,
+          message: getSelectionCountMessage(
+            canvasContext.selectedObjects.length
+          ),
           objects: canvasContext.selectedObjects,
         };
       }
 
-      // Return all objects with context summary
+      // Return all objects with context summary and friendly count message
+      const countMessage = getObjectCountMessage(canvasContext.objectCount);
+      let message = `${countMessage} ${canvasContext.summary}`;
+
+      // Check if this is a milestone and append celebration message
+      const milestoneMessage = getMilestoneMessage(canvasContext.objectCount);
+      if (milestoneMessage) {
+        message = `${message} ${milestoneMessage}`;
+      }
+
       return {
         success: true,
-        message: canvasContext.summary,
+        message,
         objectCount: canvasContext.objectCount,
         selectedObjects: canvasContext.selectedObjects,
         unselectedCounts: canvasContext.unselectedCounts,

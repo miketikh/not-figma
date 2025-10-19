@@ -25,6 +25,15 @@ const LOADING_MESSAGES = [
   "⚡ Powering up...",
 ];
 
+const PLACEHOLDER_MESSAGES = [
+  "What should we create? 🎨",
+  "Tell me what you're thinking... 💭",
+  "Let's make something cool! ✨",
+  "Ready for your next idea... 🚀",
+  "Type a command or ask me anything!",
+  "What are we building today? 🎪",
+];
+
 const getRandomLoadingMessage = () => {
   return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
 };
@@ -37,6 +46,7 @@ export default function AIChatPanel({
   const { aiChatOpen, chatHistory, toggleAIChat } = useCanvasStore();
   const { sendMessage, isLoading, error } = useAIChat({ onAutoSelect });
   const [inputValue, setInputValue] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const prevLoadingRef = useRef(isLoading);
@@ -83,6 +93,18 @@ export default function AIChatPanel({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [aiChatOpen, toggleAIChat]);
+
+  // Rotate placeholder every 5 seconds (pause when user is typing)
+  useEffect(() => {
+    // Don't rotate if user is typing
+    if (inputValue.length > 0) return;
+
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_MESSAGES.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [inputValue]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -362,7 +384,7 @@ export default function AIChatPanel({
             <Input
               ref={inputRef}
               type="text"
-              placeholder="Type a command..."
+              placeholder={PLACEHOLDER_MESSAGES[placeholderIndex]}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
