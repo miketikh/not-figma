@@ -185,11 +185,12 @@ export const useCanvasStore = create<CanvasStore>()(
               aiSessionId: crypto.randomUUID(),
             };
           }
-          // Close chat and clear session
+          // Close chat and clear session + history
           if (state.aiChatOpen) {
             return {
               aiChatOpen: false,
               aiSessionId: null,
+              chatHistory: [],
             };
           }
           // Reopen with existing session (shouldn't happen)

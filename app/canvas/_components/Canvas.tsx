@@ -89,6 +89,7 @@ export default function Canvas({
     showGrid,
     toggleGrid,
     toggleAIChat,
+    clearChatHistory,
   } = useCanvasStore();
   const { user } = useAuth();
 
@@ -302,6 +303,12 @@ export default function Canvas({
       setIsReady(false);
     };
   }, [width, height]);
+
+  // Clear AI chat history when canvasId changes
+  useEffect(() => {
+    // Clear chat history to ensure each canvas has isolated chat
+    clearChatHistory();
+  }, [canvasId, clearChatHistory]);
 
   // Apply viewport constraints when container size or canvas size changes
   useEffect(() => {
