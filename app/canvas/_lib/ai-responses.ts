@@ -655,3 +655,24 @@ export function getPositionDescription(
   // Default: no specific position descriptor
   return "";
 }
+
+// ============================================================================
+// Delete Object Messages
+// ============================================================================
+
+/**
+ * Get a fun message for when an object is deleted
+ * @param context - Object type and optional object ID
+ * @returns Random delete confirmation message
+ */
+export function getDeleteObjectMessage(context: ResponseContext): string {
+  const templates = [
+    "Poof! {type} deleted - gone without a trace! ✨",
+    "Deleted that {type} - clean slate! 🗑️",
+    "{type} removed - all clear! 👋",
+    "Sayonara, {type}! Deletion complete! 🚮",
+    "Zapped that {type} out of existence! ⚡",
+  ];
+
+  return interpolate(pickRandom(templates), context);
+}

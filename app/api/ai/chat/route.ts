@@ -259,6 +259,7 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
 - createLine: Create lines (x1,y1 = start, x2,y2 = end)
 - createText: Create text (x,y = top-left corner)
 - updateObject: Modify existing objects (requires object to be unlocked)
+- deleteObject: Delete/remove objects from canvas (requires object to be unlocked)
 - getCanvasObjects: Query canvas state
 
 **Guidelines:**

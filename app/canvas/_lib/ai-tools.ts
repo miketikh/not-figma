@@ -17,6 +17,7 @@ import {
   updateObject as firestoreUpdateObject,
   getObject,
   canEdit,
+  deleteObject as firestoreDeleteObject,
 } from "@/app/api/_lib/firebase-server";
 import { buildCanvasContext } from "./ai-context";
 import {
@@ -38,6 +39,7 @@ import {
   getObjectNotFoundMessage,
   getBoundsErrorMessage,
   getMilestoneMessage,
+  getDeleteObjectMessage,
 } from "./ai-responses";
 
 // ============================================================================
@@ -808,6 +810,76 @@ export const updateObject = tool({
 });
 
 // ============================================================================
+// Delete Object Tool
+// ============================================================================
+
+export const deleteObject = tool({
+  description:
+    "Delete an object from the canvas. Use this when the user wants to remove or delete a shape. Requires the object to be unlocked (not being edited by another user).",
+  inputSchema: z.object({
+    objectId: z
+      .string()
+      .describe(
+        "ID of the object to delete. Use lastCreatedObjectId when user says 'delete it' or 'remove that'"
+      ),
+  }),
+  execute: async ({ objectId }, { experimental_context }) => {
+    try {
+      const context = experimental_context as ToolContext;
+      const { userId, canvasId } = context;
+
+      // Validate object ID
+      if (!objectId) {
+        return {
+          success: false,
+          error: "Object ID is required to delete an object",
+        };
+      }
+
+      // Get the object to check if it exists and get its type
+      const object = await getObject(canvasId, objectId);
+      if (!object) {
+        return {
+          success: false,
+          error: getObjectNotFoundMessage(),
+        };
+      }
+
+      // Check if user can edit (object must be unlocked)
+      const editable = canEdit(object, userId);
+      if (!editable) {
+        const lockerName = object.lockedBy || "another user";
+        return {
+          success: false,
+          error: getObjectLockedMessage(lockerName),
+        };
+      }
+
+      // Delete the object from Firestore
+      await firestoreDeleteObject(canvasId, objectId);
+
+      // Get object type for message
+      const objectType = object.type || "object";
+
+      // Return success with fun message
+      return {
+        success: true,
+        id: objectId,
+        message: getDeleteObjectMessage({ type: objectType }),
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error(`[AI Tool] Failed to delete object:`, error);
+      return {
+        success: false,
+        error: `Failed to delete object: ${errorMessage}`,
+      };
+    }
+  },
+});
+
+// ============================================================================
 // Get Canvas Objects Tool
 // ============================================================================
 
@@ -908,5 +980,6 @@ export const aiTools = {
   createLine,
   createText,
   updateObject,
+  deleteObject,
   getCanvasObjects,
 };

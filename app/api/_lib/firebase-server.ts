@@ -44,6 +44,14 @@ export async function updateObject(
 }
 
 /**
+ * Delete a canvas object (server-side)
+ */
+export async function deleteObject(canvasId: string, objectId: string): Promise<void> {
+  const objectRef = adminDb.collection("canvases").doc(canvasId).collection("objects").doc(objectId);
+  await objectRef.delete();
+}
+
+/**
  * Check if user can edit an object (pure function, works anywhere)
  */
 export function canEdit(object: CanvasObject, userId: string): boolean {
