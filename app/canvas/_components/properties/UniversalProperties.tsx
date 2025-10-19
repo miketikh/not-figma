@@ -77,7 +77,7 @@ export default function UniversalProperties({
 
     if (object.type === "circle") {
       onUpdate({ radiusX: value / 2 });
-    } else if (object.type === "rectangle" || object.type === "text") {
+    } else if (object.type === "rectangle" || object.type === "text" || object.type === "image") {
       onUpdate({ width: value });
     }
   };
@@ -88,7 +88,7 @@ export default function UniversalProperties({
 
     if (object.type === "circle") {
       onUpdate({ radiusY: value / 2 });
-    } else if (object.type === "rectangle" || object.type === "text") {
+    } else if (object.type === "rectangle" || object.type === "text" || object.type === "image") {
       onUpdate({ height: value });
     }
   };

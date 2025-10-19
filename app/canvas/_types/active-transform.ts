@@ -10,7 +10,7 @@
 export interface BaseActiveTransform {
   userId: string;
   objectId: string;
-  type: "rectangle" | "circle" | "line" | "text";
+  type: "rectangle" | "circle" | "line" | "text" | "image";
   x: number;
   y: number;
   rotation?: number;
@@ -60,13 +60,24 @@ export interface TextActiveTransform extends BaseActiveTransform {
 }
 
 /**
+ * Active transform for images
+ * Includes width and height for image sizing
+ */
+export interface ImageActiveTransform extends BaseActiveTransform {
+  type: "image";
+  width: number;
+  height: number;
+}
+
+/**
  * Union type for any active transform
  */
 export type ActiveTransform =
   | RectangleActiveTransform
   | CircleActiveTransform
   | LineActiveTransform
-  | TextActiveTransform;
+  | TextActiveTransform
+  | ImageActiveTransform;
 
 /**
  * Active transform with user display information
@@ -97,7 +108,7 @@ export type ActiveTransformWithUserMap = Record<
  * Contains only the transformed properties (position, size, rotation)
  */
 export interface ObjectTransformData {
-  type: "rectangle" | "circle" | "line" | "text";
+  type: "rectangle" | "circle" | "line" | "text" | "image";
   x: number;
   y: number;
   // Shape-specific properties

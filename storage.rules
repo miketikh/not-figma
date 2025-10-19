@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Not-Figma Image Support
+// Deploy with: firebase deploy --only storage
+// Or manually copy to Firebase Console > Storage > Rules tab
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to validate image file type
+    function isValidImageType() {
+      // Allow PNG, JPEG, JPG, WebP, GIF, and SVG
+      return request.resource.contentType.matches('image/(png|jpeg|jpg|webp|gif|svg\\+xml)');
+    }
+
+    // Helper function to validate file size (5MB limit)
+    function isValidSize() {
+      // 5MB = 5 * 1024 * 1024 bytes = 5242880 bytes
+      return request.resource.size <= 5242880;
+    }
+
+    // Rules for images stored in: images/{canvasId}/{imageId}
+    match /images/{canvasId}/{imageId} {
+
+      // Allow authenticated users to read images
+      allow read: if isAuthenticated();
+
+      // Allow authenticated users to write (create/update) images
+      // Only if file type is valid and size is under 5MB
+      allow write: if isAuthenticated()
+                   && isValidImageType()
+                   && isValidSize();
+
+      // Allow authenticated users to delete images
+      allow delete: if isAuthenticated();
+    }
+
+    // Deny all other paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

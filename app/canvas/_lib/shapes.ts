@@ -8,6 +8,7 @@ import {
   RectangleObject,
   LineObject,
   TextObject,
+  ImageObject,
 } from "@/types/canvas";
 import { generateObjectId } from "./objects";
 import { LOCK_TIMEOUT_MS } from "@/lib/constants/locks";
@@ -18,6 +19,7 @@ import type {
   PersistedCircle,
   PersistedLine,
   PersistedText,
+  PersistedImage,
   ShapeFactory,
 } from "../_types/shapes";
 
@@ -774,6 +776,181 @@ export const textFactory: ShapeFactory<PersistedText> = {
 };
 
 // ============================================================================
+// Image Factory
+// ============================================================================
+
+/**
+ * Image shape factory
+ * Handles creation, conversion, and validation of image objects
+ */
+export const imageFactory: ShapeFactory<PersistedImage> = {
+  /**
+   * Create an image with default styling
+   * Optional overrides parameter allows customizing default properties
+   * Required overrides: imageUrl, originalWidth, originalHeight
+   */
+  createDefault: (
+    { x, y, width, height }: DrawingBounds,
+    overrides?: Partial<PersistedImage>,
+    canvasId?: string
+  ): PersistedImage => {
+    return {
+      id: generateObjectId(),
+      type: "image",
+      canvasId: canvasId || "",
+      x,
+      y,
+      width,
+      height,
+      imageUrl: overrides?.imageUrl || "",
+      originalWidth: overrides?.originalWidth || width,
+      originalHeight: overrides?.originalHeight || height,
+      fileName: overrides?.fileName,
+      fileSize: overrides?.fileSize,
+      aspectRatioLocked: overrides?.aspectRatioLocked ?? true, // Default to locked
+      fill: "transparent", // Not used visually but kept for consistency
+      stroke: "transparent", // Not used visually but kept for consistency
+      strokeWidth: 0,
+      rotation: 0,
+      opacity: 1,
+      zIndex: 0,
+      lockedBy: null,
+      lockedAt: null,
+      lockTimeout: LOCK_TIMEOUT_MS,
+      ...overrides, // Apply any additional overrides
+    };
+  },
+
+  /**
+   * Create image from draft drawing bounds
+   * Not really used for images (images are placed, not drawn), but required by interface
+   */
+  createFromDraft: (draft: DrawingBounds): PersistedImage => {
+    return imageFactory.createDefault(draft);
+  },
+
+  /**
+   * Convert local PersistedImage to Firestore ImageObject
+   */
+  toFirestore: (
+    image: PersistedImage,
+    userId: string,
+    canvasId?: string
+  ): ImageObject => {
+    const now = Date.now();
+
+    return {
+      id: image.id,
+      type: "image",
+      canvasId: canvasId || "",
+
+      // Ownership & Sync
+      createdBy: userId,
+      createdAt: now,
+      updatedBy: userId,
+      updatedAt: now,
+
+      // Locking
+      lockedBy: image.lockedBy,
+      lockedAt: image.lockedAt,
+      lockTimeout: image.lockTimeout,
+
+      // Transform
+      x: image.x,
+      y: image.y,
+      width: image.width,
+      height: image.height,
+      rotation: image.rotation,
+
+      // Image-specific fields
+      imageUrl: image.imageUrl,
+      originalWidth: image.originalWidth,
+      originalHeight: image.originalHeight,
+      fileName: image.fileName,
+      fileSize: image.fileSize,
+      aspectRatioLocked: image.aspectRatioLocked,
+
+      // Styling (not used visually for images, but kept for consistency)
+      fill: image.fill,
+      fillOpacity: image.opacity,
+      stroke: image.stroke,
+      strokeWidth: image.strokeWidth,
+      strokeOpacity: image.opacity,
+      strokeStyle: "solid",
+
+      // Layer
+      zIndex: image.zIndex,
+
+      // Interaction
+      locked: false,
+      visible: true,
+    };
+  },
+
+  /**
+   * Convert Firestore ImageObject to local PersistedImage
+   */
+  fromFirestore: (obj: CanvasObject): PersistedImage | null => {
+    if (obj.type !== "image") return null;
+
+    const imageObj = obj as ImageObject;
+    return {
+      id: imageObj.id,
+      type: "image",
+      canvasId: imageObj.canvasId || "",
+      x: sanitizeNumber(imageObj.x, 0),
+      y: sanitizeNumber(imageObj.y, 0),
+      width: sanitizeNumber(imageObj.width, 100, 5, 10000),
+      height: sanitizeNumber(imageObj.height, 100, 5, 10000),
+      imageUrl: imageObj.imageUrl,
+      originalWidth: sanitizeNumber(imageObj.originalWidth, 100, 1, 10000),
+      originalHeight: sanitizeNumber(imageObj.originalHeight, 100, 1, 10000),
+      fileName: imageObj.fileName,
+      fileSize: imageObj.fileSize,
+      aspectRatioLocked: imageObj.aspectRatioLocked ?? true, // Default to locked if not set
+      fill: imageObj.fill || "transparent",
+      stroke: imageObj.stroke || "transparent",
+      strokeWidth: sanitizeNumber(imageObj.strokeWidth, 0, 0, 100),
+      rotation: sanitizeNumber(imageObj.rotation, 0),
+      opacity: sanitizeNumber(imageObj.fillOpacity, 1, 0, 1),
+      zIndex: sanitizeNumber(imageObj.zIndex, 0),
+      lockedBy: imageObj.lockedBy,
+      lockedAt: imageObj.lockedAt,
+      lockTimeout: imageObj.lockTimeout,
+    };
+  },
+
+  /**
+   * Validate image meets minimum size requirements
+   */
+  validateSize: (image: PersistedImage): boolean => {
+    return image.width >= 5 && image.height >= 5;
+  },
+
+  /**
+   * Normalize drawing coordinates
+   * Not really used for images (images are placed, not drawn), but required by interface
+   */
+  normalizeDrawing: (start: Point): DrawingBounds => {
+    // Return bounds from start point with default dimensions
+    return {
+      x: start.x,
+      y: start.y,
+      width: 100,
+      height: 100,
+    };
+  },
+
+  /**
+   * Get draft image data for preview rendering
+   * Images don't show draft preview during upload, return null
+   */
+  getDraftData: (): null => {
+    return null;
+  },
+};
+
+// ============================================================================
 // Shape Factory Registry
 // ============================================================================
 
@@ -786,6 +963,7 @@ export const shapeFactories: Record<string, ShapeFactory<any>> = {
   circle: circleFactory,
   line: lineFactory,
   text: textFactory,
+  image: imageFactory,
 };
 
 /**

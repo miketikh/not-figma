@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Not-Figma is a real-time collaborative design canvas built with Next.js 15, Firebase, and Konva.js. Users can create/edit shapes (rectangles, circles, lines, text) with live multiplayer cursors, real-time sync, and a comprehensive properties panel. The project uses a distributed locking system to prevent edit conflicts between collaborators.
+Not-Figma is a real-time collaborative design canvas built with Next.js 15, Firebase, and Konva.js. Users can create/edit shapes (rectangles, circles, lines, text, images) with live multiplayer cursors, real-time sync, and a comprehensive properties panel. The project uses a distributed locking system to prevent edit conflicts between collaborators.
 
 ## Commands
 
@@ -21,9 +21,9 @@ npm run format:check # Check Prettier formatting
 
 ### Firebase Setup
 
-- Create Firebase project with Authentication (email/password), Firestore, and Realtime Database
+- Create Firebase project with Authentication (email/password), Firestore, Realtime Database, and Storage
 - Copy `.env.example` to `.env.local` and add Firebase credentials
-- Deploy `firestore.rules` and `database.rules.json` to Firebase Console
+- Deploy `firestore.rules`, `database.rules.json`, and `storage.rules` to Firebase Console
 
 ### Testing Multiplayer
 
@@ -35,6 +35,7 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 
 - **Firestore**: Persistent storage for canvas objects with real-time listeners (subscribeToObjects)
 - **Realtime Database**: High-frequency updates for cursors (50ms throttle) and presence (30s heartbeat)
+- **Firebase Storage**: Image file storage with authenticated download URLs (path: `images/{canvasId}/{imageId}.{ext}`)
 - **Lock System**: Distributed locks prevent edit conflicts. Users acquire locks on selection (acquireLock), automatically released after LOCK_TIMEOUT_MS or on deselection (releaseLock)
 
 ### State Management
@@ -53,8 +54,9 @@ Open app in multiple browser windows/tabs (use incognito for different users) to
 ### Shape System
 
 - **Shape Factories** (`app/canvas/_lib/shapes.ts`): Each shape type has a factory with `toFirestore()` and `fromFirestore()` converters
-- **Shape Components** (`app/canvas/_components/shapes/`): Konva components (KonvaRectangle, KonvaCircle, KonvaLine, KonvaText)
-- **Type System** (`types/canvas.ts`): BaseCanvasObject extended by RectangleObject, CircleObject, LineObject, TextObject
+- **Shape Components** (`app/canvas/_components/shapes/`): Konva components (KonvaRectangle, KonvaCircle, KonvaLine, KonvaText, ImageShape)
+- **Type System** (`types/canvas.ts`): BaseCanvasObject extended by RectangleObject, CircleObject, LineObject, TextObject, ImageObject
+- **Image System**: Images are stored in Firebase Storage, with metadata and download URLs in Firestore. Drag-and-drop upload, URL import, client/server-side validation (5MB limit, approved MIME types), and aspect ratio locking
 
 ### Lock System
 
@@ -168,22 +170,23 @@ await safeUpdate(userRef, {
 - `lib/firebase/canvas.ts` - Canvas metadata operations
 - `lib/firebase/realtime.ts` - Cursor and presence updates
 - `lib/firebase/realtime-transforms.ts` - Active transform broadcasts
+- `lib/firebase/storage.ts` - Image upload operations
 
 ## Current State
 
 ### Working Features ✅
 
-- Canvas pan/zoom, shape creation (rectangle, circle, line)
+- Canvas pan/zoom, shape creation (rectangle, circle, line, text)
+- Image upload via drag-and-drop or URL import with validation
 - Multi-user collaboration with live cursors
 - Properties panel with position, size, rotation, colors, opacity, stroke
 - Layer management (z-index reordering)
 - Lock system preventing edit conflicts
-- Keyboard shortcuts (V/H/R/C/L for tools, Delete, Cmd+[/] for layers, Space+drag for pan)
+- Keyboard shortcuts (V/H/R/C/L/I for tools, Delete, Cmd+[/] for layers, Space+drag for pan)
 - Auto-save to Firebase
 
 ### In Progress 🚧
 
-- Text layers (see `planning/add_text_object.md`)
 - Multi-select (see `planning/multi_select.md`)
 
 ### Planned 📅
@@ -195,17 +198,20 @@ await safeUpdate(userRef, {
 
 ## Known Issues
 
-- Text layers not yet implemented
 - Multi-select not yet available
 - Copy/paste not yet functional
 - No undo/redo yet
 - Stroke dash styles not implemented
+- Image replace functionality not yet implemented (can delete and re-upload)
 
 ## Key Files Reference
 
 - Canvas component: `app/canvas/_components/Canvas.tsx`
 - Firestore operations: `lib/firebase/firestore.ts`
+- Storage operations: `lib/firebase/storage.ts`
+- Storage validation: `lib/firebase/storage-validation.ts`
 - Shape factories: `app/canvas/_lib/shapes.ts`
+- Image utilities: `app/canvas/_lib/image-utils.ts`
 - Canvas store: `app/canvas/_store/canvas-store.ts`
 - Object sync hook: `app/canvas/_hooks/useObjects.ts`
 - Type definitions: `types/canvas.ts`

@@ -125,13 +125,44 @@ export interface PersistedText {
 }
 
 /**
+ * Persisted image shape (local representation)
+ * Represents an uploaded or URL-imported image on the canvas
+ */
+export interface PersistedImage {
+  id: string;
+  type: "image";
+  canvasId: string;
+  x: number; // top-left x
+  y: number; // top-left y
+  width: number; // display width
+  height: number; // display height
+  imageUrl: string; // Firebase Storage download URL or external URL
+  originalWidth: number; // Natural width of the image for aspect ratio
+  originalHeight: number; // Natural height of the image for aspect ratio
+  fileName?: string; // Original file name (optional metadata)
+  fileSize?: number; // File size in bytes (optional metadata)
+  aspectRatioLocked?: boolean; // Whether aspect ratio should be locked during transforms (default true)
+  fill: string; // Not used visually but kept for consistency
+  stroke: string; // Not used visually but kept for consistency
+  strokeWidth: number; // Not used visually but kept for consistency
+  rotation: number;
+  opacity: number; // 0-1, affects entire image
+  zIndex: number; // layer order
+  // Lock info
+  lockedBy: string | null;
+  lockedAt: number | null;
+  lockTimeout: number;
+}
+
+/**
  * Union type for all local shape types
  */
 export type PersistedShape =
   | PersistedRect
   | PersistedCircle
   | PersistedLine
-  | PersistedText;
+  | PersistedText
+  | PersistedImage;
 
 /**
  * Style overrides for draft preview rendering

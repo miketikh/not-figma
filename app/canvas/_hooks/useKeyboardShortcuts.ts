@@ -22,12 +22,14 @@ interface UseKeyboardShortcutsParams {
     properties: Record<string, any>
   ) => void;
   toggleAIChat: () => void;
+  openImageUploadDialog?: () => void;
 }
 
 /**
  * Manages all keyboard shortcuts for the canvas
- * - Tool shortcuts (V, H, R, C, L, T)
+ * - Tool shortcuts (V, H, R, C, L, T, I)
  * - A key for AI Assistant
+ * - I key for Image Upload
  * - Space key for pan mode
  * - Shift key tracking
  * - Escape to deselect/cancel selection
@@ -50,6 +52,7 @@ export function useKeyboardShortcuts({
   cancelSelection,
   updateDefaultShapeProperty,
   toggleAIChat,
+  openImageUploadDialog,
 }: UseKeyboardShortcutsParams) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,6 +88,9 @@ export function useKeyboardShortcuts({
           setActiveTool("text");
           // Reset text content to default when activating text tool
           updateDefaultShapeProperty("text", { content: "Text" });
+          e.preventDefault();
+        } else if (e.key === "i" || e.key === "I") {
+          openImageUploadDialog?.();
           e.preventDefault();
         } else if (e.key === "a" || e.key === "A") {
           toggleAIChat();
@@ -183,5 +189,6 @@ export function useKeyboardShortcuts({
     cancelSelection,
     updateDefaultShapeProperty,
     toggleAIChat,
+    openImageUploadDialog,
   ]);
 }

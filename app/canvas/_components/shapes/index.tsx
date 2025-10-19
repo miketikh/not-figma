@@ -8,11 +8,13 @@ import type {
   PersistedCircle,
   PersistedLine,
   PersistedText,
+  PersistedImage,
 } from "../../_types/shapes";
 import RectangleShape from "./RectangleShape";
 import CircleShape from "./CircleShape";
 import LineShape from "./LineShape";
 import TextShape from "./TextShape";
+import ImageShape from "./ImageShape";
 import type Konva from "konva";
 import { KonvaEventObject } from "konva/lib/Node";
 
@@ -176,6 +178,26 @@ export default function ShapeComponent(props: ShapeComponentProps) {
           shapeRef={shapeRef as (node: Konva.Text | null) => void}
           onRenewLock={onRenewLock}
           onEditRequest={onEditRequest}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+        />
+      );
+
+    case "image":
+      return (
+        <ImageShape
+          shape={object as PersistedImage}
+          isSelected={isSelected}
+          isLocked={isLocked}
+          isSelectable={isSelectable}
+          zoom={zoom}
+          lockingUserColor={lockingUserColor}
+          lockingUserName={lockingUserName}
+          onSelect={onSelect}
+          onTransform={onTransform}
+          onTransformMove={onTransformMove}
+          shapeRef={shapeRef as (node: Konva.Image | null) => void}
+          onRenewLock={onRenewLock}
           canvasWidth={canvasWidth}
           canvasHeight={canvasHeight}
         />

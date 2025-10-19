@@ -10,6 +10,7 @@ import {
   Minus,
   Type,
   Sparkles,
+  ImagePlus,
 } from "lucide-react";
 import {
   Tooltip,
@@ -35,7 +36,11 @@ const TOOLS: ToolButton[] = [
   { id: "text", label: "Text", icon: Type, shortcut: "T" },
 ];
 
-export default function Toolbar() {
+interface ToolbarProps {
+  onImageUploadClick?: () => void;
+}
+
+export default function Toolbar({ onImageUploadClick }: ToolbarProps) {
   const {
     activeTool,
     setActiveTool,
@@ -88,6 +93,29 @@ export default function Toolbar() {
             </div>
           );
         })}
+
+        {/* Upload Image Button */}
+        <Separator orientation="vertical" className="h-full" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onImageUploadClick}
+              className="flex flex-col items-center justify-center px-3 py-2 hover:bg-accent transition-colors"
+            >
+              <div className="flex items-center justify-center w-6 h-6 mb-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  I
+                </span>
+              </div>
+              <div className="flex items-center justify-center w-6 h-6">
+                <ImagePlus className="w-5 h-5" />
+              </div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Upload Image (I)</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* AI Assistant Button */}
         <Separator orientation="vertical" className="h-full" />

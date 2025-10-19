@@ -53,7 +53,7 @@ export interface Canvas {
 export interface BaseCanvasObject {
   // Identity
   id: string;
-  type: "rectangle" | "circle" | "line" | "text";
+  type: "rectangle" | "circle" | "line" | "text" | "image";
   canvasId: string;
 
   // Ownership & Sync
@@ -138,13 +138,28 @@ export interface TextObject extends BaseCanvasObject {
 }
 
 /**
+ * Image object
+ * Represents an uploaded or URL-imported image on the canvas
+ */
+export interface ImageObject extends BaseCanvasObject {
+  type: "image";
+  imageUrl: string; // Firebase Storage download URL or external URL
+  originalWidth: number; // Natural width of the image for aspect ratio
+  originalHeight: number; // Natural height of the image for aspect ratio
+  fileName?: string; // Original file name (optional metadata)
+  fileSize?: number; // File size in bytes (optional metadata)
+  aspectRatioLocked?: boolean; // Whether aspect ratio should be locked during transforms (default true)
+}
+
+/**
  * Union type for any canvas object
  */
 export type CanvasObject =
   | RectangleObject
   | CircleObject
   | LineObject
-  | TextObject;
+  | TextObject
+  | ImageObject;
 
 // ============================================================================
 // Viewport & Canvas State

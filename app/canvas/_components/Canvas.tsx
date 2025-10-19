@@ -12,6 +12,7 @@ import DraftShapeRenderer from "./DraftShapeRenderer";
 import SelectionRectRenderer from "./SelectionRectRenderer";
 import AIChatPanel from "./AIChatPanel";
 import CursorCoordinates from "./CursorCoordinates";
+import { ImageUploadDialog } from "./ImageUploadDialog";
 import { useObjects } from "../_hooks/useObjects";
 import { batchUpdateObjects } from "@/lib/firebase/firestore";
 import { useCursors } from "../_hooks/useCursors";
@@ -34,6 +35,12 @@ import { useTransformBroadcast } from "../_hooks/useTransformBroadcast";
 import { useDebouncedPropertyUpdate } from "../_hooks/useDebouncedPropertyUpdate";
 import { getCursorStyle } from "../_lib/cursor-helpers";
 import { constrainViewport } from "../_lib/viewport-constraints";
+import { useToast } from "@/components/ui/toast";
+import { validateImageUpload } from "@/lib/firebase/storage-validation";
+import { uploadImage, deleteImage } from "@/lib/firebase/storage";
+import { generateObjectId } from "@/app/canvas/_lib/objects";
+import { getImageDimensions, scaleImageToFit } from "@/app/canvas/_lib/image-utils";
+import { Upload } from "lucide-react";
 
 interface CanvasProps {
   canvasId: string;
@@ -78,6 +85,18 @@ export default function Canvas({
   const transformerRef = useRef<Konva.Transformer>(null);
   const shapeRefs = useRef<Map<string, Konva.Shape>>(new Map());
 
+  // Image upload state
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isImageUploadDialogOpen, setIsImageUploadDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [uploadingImages, setUploadingImages] = useState<Set<string>>(
+    new Set()
+  );
+  // Note: uploadingImages will be used in PR #10 to show loading spinners on canvas
+
+  // Track when user is actively transforming an image
+  const [isTransformingImage, setIsTransformingImage] = useState(false);
+
   // Zustand store
   const {
     viewport,
@@ -92,6 +111,7 @@ export default function Canvas({
     clearChatHistory,
   } = useCanvasStore();
   const { user } = useAuth();
+  const { addToast } = useToast();
 
   // Stable callback for Firestore updates
   const handleObjectsUpdate = useCallback(
@@ -130,6 +150,38 @@ export default function Canvas({
     lockManager,
     debounceMs: 300,
   });
+
+  /**
+   * Handle object deletion
+   * For images, also delete from Firebase Storage
+   */
+  const handleObjectDelete = useCallback(
+    async (objectId: string) => {
+      // Find the object to check if it's an image
+      const object = objects.find((obj) => obj.id === objectId);
+
+      if (object && object.type === "image") {
+        // Extract file extension from imageUrl
+        const urlParts = object.imageUrl.split(".");
+        const extension = urlParts[urlParts.length - 1].split("?")[0]; // Remove query params
+
+        try {
+          // Delete from Storage first
+          await deleteImage(canvasId, objectId, extension);
+        } catch (error) {
+          console.error("Error deleting image from storage:", error);
+          // Continue with Firestore deletion even if Storage deletion fails
+        }
+      }
+
+      // Delete from Firestore
+      await deleteObjectFromFirestore(objectId);
+
+      // Remove from selection
+      setSelectedIds((prev) => prev.filter((id) => id !== objectId));
+    },
+    [objects, canvasId, deleteObjectFromFirestore, setSelectedIds]
+  );
 
   // Transform broadcast hook - manages real-time transform broadcasting
   const transformBroadcast = useTransformBroadcast({
@@ -249,6 +301,11 @@ export default function Canvas({
     };
   }, []);
 
+  // Handler to open image upload dialog
+  const openImageUploadDialog = useCallback(() => {
+    setIsImageUploadDialogOpen(true);
+  }, []);
+
   // Keyboard shortcuts hook - manages all keyboard shortcuts
   useKeyboardShortcuts({
     activeTool,
@@ -278,6 +335,7 @@ export default function Canvas({
       }
     },
     toggleAIChat,
+    openImageUploadDialog,
   });
 
   // Stop panning when space released
@@ -352,7 +410,227 @@ export default function Canvas({
     if (constrained.x !== viewport.x || constrained.y !== viewport.y) {
       updateViewport(constrained);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerSize.width, containerSize.height, canvas.width, canvas.height]);
+
+  // Drag-and-drop handlers for image upload
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingFile(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set to false if leaving the container itself, not child elements
+    if (e.currentTarget === e.target) {
+      setIsDraggingFile(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingFile(false);
+
+      if (!user) {
+        addToast({
+          title: "Error",
+          description: "You must be logged in to upload images",
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
+      }
+
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length === 0) return;
+
+      // Calculate drop location from mouse position (account for viewport pan/zoom)
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      const pointerPosition = stage.getPointerPosition();
+      if (!pointerPosition) return;
+
+      // Convert screen coordinates to canvas coordinates
+      const dropX = (pointerPosition.x - viewport.x) / viewport.zoom;
+      const dropY = (pointerPosition.y - viewport.y) / viewport.zoom;
+
+      // Process each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file
+        const validation = await validateImageUpload(file);
+        if (!validation.valid) {
+          addToast({
+            title: "Invalid Image",
+            description: validation.error || "Failed to validate image",
+            variant: "destructive",
+            duration: 5000,
+          });
+          continue;
+        }
+
+        // Generate unique image ID
+        const imageId = generateObjectId();
+
+        try {
+          // Add to uploading set
+          setUploadingImages((prev) => new Set(prev).add(imageId));
+
+          // Get image dimensions
+          const dimensions = await getImageDimensions(file);
+
+          // Upload to Firebase Storage
+          const downloadURL = await uploadImage(file, canvasId, imageId);
+
+          // Scale to reasonable size for initial placement (max 800px)
+          const scaled = scaleImageToFit(
+            dimensions.width,
+            dimensions.height,
+            800,
+            800
+          );
+
+          // Calculate position with cascade offset for multiple files
+          const offsetX = i * 50;
+          const offsetY = i * 50;
+          const x = dropX + offsetX - scaled.width / 2;
+          const y = dropY + offsetY - scaled.height / 2;
+
+          // Create image object using factory pattern (will be implemented in PR #9)
+          // For now, we'll save it directly as we don't have imageFactory yet
+          const imageObject = {
+            id: imageId,
+            type: "image" as const,
+            x,
+            y,
+            width: scaled.width,
+            height: scaled.height,
+            rotation: 0,
+            opacity: 1,
+            zIndex: objects.length,
+            imageUrl: downloadURL,
+            originalWidth: dimensions.width,
+            originalHeight: dimensions.height,
+            fileName: file.name,
+            fileSize: file.size,
+            lockedBy: null,
+            lockedAt: null,
+            lockTimeout: LOCK_TIMEOUT_MS,
+          };
+
+          // Save to Firestore
+          await saveObject(imageObject as any);
+
+          // Remove from uploading set
+          setUploadingImages((prev) => {
+            const next = new Set(prev);
+            next.delete(imageId);
+            return next;
+          });
+
+          // Show success toast
+          addToast({
+            title: "Success",
+            description: `Image "${file.name}" uploaded successfully`,
+            variant: "success",
+            duration: 3000,
+          });
+        } catch (error) {
+          console.error("Error uploading image:", error);
+
+          // Remove from uploading set
+          setUploadingImages((prev) => {
+            const next = new Set(prev);
+            next.delete(imageId);
+            return next;
+          });
+
+          // Show error toast
+          addToast({
+            title: "Upload Failed",
+            description:
+              error instanceof Error
+                ? error.message
+                : "Failed to upload image. Please try again.",
+            variant: "destructive",
+            duration: 5000,
+          });
+        }
+      }
+    },
+    [
+      user,
+      addToast,
+      stageRef,
+      viewport,
+      canvasId,
+      objects.length,
+      saveObject,
+    ]
+  );
+
+  // Handler for image imported from URL via dialog
+  const handleImageImported = useCallback(
+    async (imageData: {
+      id: string;
+      imageUrl: string;
+      originalWidth: number;
+      originalHeight: number;
+      width: number;
+      height: number;
+      x: number;
+      y: number;
+    }) => {
+      if (!user) return;
+
+      try {
+        // Create image object
+        const imageObject = {
+          id: imageData.id,
+          type: "image" as const,
+          x: imageData.x,
+          y: imageData.y,
+          width: imageData.width,
+          height: imageData.height,
+          rotation: 0,
+          opacity: 1,
+          zIndex: objects.length,
+          imageUrl: imageData.imageUrl,
+          originalWidth: imageData.originalWidth,
+          originalHeight: imageData.originalHeight,
+          lockedBy: null,
+          lockedAt: null,
+          lockTimeout: LOCK_TIMEOUT_MS,
+        };
+
+        // Save to Firestore
+        await saveObject(imageObject as any);
+
+        // Show success toast
+        addToast({
+          title: "Success",
+          description: "Image imported from URL successfully",
+          variant: "success",
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error("Error saving imported image:", error);
+        addToast({
+          title: "Error",
+          description: "Failed to save image. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      }
+    },
+    [user, objects.length, saveObject, addToast]
+  );
 
   return (
     <div
@@ -362,6 +640,9 @@ export default function Canvas({
         backgroundColor: "#f3f4f6",
         cursor: getCursorStyle(activeTool, isPanning, spacePressed),
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {/* Konva Stage */}
       {isReady && containerSize.width > 0 && containerSize.height > 0 && (
@@ -542,6 +823,29 @@ export default function Canvas({
             <Transformer
               ref={transformerRef}
               shouldOverdrawWholeArea={!shiftPressed && selectedIds.length > 1}
+              keepRatio={
+                // Enable aspect ratio lock for images based on their aspectRatioLocked property
+                // Shift key temporarily inverts the lock state
+                selectedIds.length === 1 &&
+                objects.find((obj) => obj.id === selectedIds[0])?.type === "image"
+                  ? (() => {
+                      const image = objects.find((obj) => obj.id === selectedIds[0]);
+                      const aspectRatioLocked = image?.type === "image" ? (image.aspectRatioLocked ?? true) : false;
+                      // Shift key inverts the lock state: locked becomes unlocked, unlocked becomes locked
+                      return shiftPressed ? !aspectRatioLocked : aspectRatioLocked;
+                    })()
+                  : false
+              }
+              onTransformStart={() => {
+                // Track if we're transforming an image
+                const selectedObj = objects.find((obj) => obj.id === selectedIds[0]);
+                if (selectedObj?.type === "image") {
+                  setIsTransformingImage(true);
+                }
+              }}
+              onTransformEnd={() => {
+                setIsTransformingImage(false);
+              }}
             />
           )}
 
@@ -560,7 +864,26 @@ export default function Canvas({
       )}
 
       {/* Toolbar (centered bottom) */}
-      {isReady && <Toolbar />}
+      {isReady && <Toolbar onImageUploadClick={openImageUploadDialog} />}
+
+      {/* Aspect Ratio Lock Visual Indicator */}
+      {isReady && isTransformingImage && shiftPressed && selectedIds.length === 1 && (
+        (() => {
+          const selectedImage = objects.find((obj) => obj.id === selectedIds[0]);
+          if (selectedImage?.type !== "image") return null;
+          const aspectRatioLocked = selectedImage.aspectRatioLocked ?? true;
+          // Only show indicator when Shift is actually changing the lock state
+          const message = aspectRatioLocked
+            ? "Aspect ratio unlocked"
+            : "Aspect ratio locked";
+
+          return (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium z-50 pointer-events-none">
+              {message}
+            </div>
+          );
+        })()
+      )}
 
       {/* Properties Panel (right side) */}
       {isReady && (
@@ -568,6 +891,7 @@ export default function Canvas({
           selectedIds={selectedIds}
           objects={objects}
           onUpdate={handlePropertyUpdate}
+          onDelete={handleObjectDelete}
           currentUserId={user?.uid || null}
           activeTool={activeTool}
           defaultShapeProperties={defaultShapeProperties}
@@ -609,11 +933,37 @@ export default function Canvas({
         />
       )}
 
+      {/* Drop Zone Overlay - shown when dragging files over canvas */}
+      {isDraggingFile && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-4 border-4 border-dashed border-blue-500 rounded-lg bg-blue-500/10 backdrop-blur-sm" />
+          <div className="relative flex flex-col items-center gap-4 text-blue-600">
+            <Upload className="h-16 w-16" />
+            <p className="text-2xl font-semibold">Drop image here</p>
+            <p className="text-sm text-blue-600/80">
+              Supports PNG, JPEG, WebP, GIF, SVG (max 5MB)
+            </p>
+          </div>
+        </div>
+      )}
+
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center">
           <p style={{ color: "var(--color-gray-500)" }}>Loading canvas...</p>
         </div>
       )}
+
+      {/* Image Upload Dialog */}
+      <ImageUploadDialog
+        open={isImageUploadDialogOpen}
+        onOpenChange={setIsImageUploadDialogOpen}
+        canvasId={canvasId}
+        viewportCenter={{
+          x: containerSize.width / 2 / viewport.zoom - viewport.x / viewport.zoom,
+          y: containerSize.height / 2 / viewport.zoom - viewport.y / viewport.zoom,
+        }}
+        onImageImported={handleImageImported}
+      />
     </div>
   );
 }

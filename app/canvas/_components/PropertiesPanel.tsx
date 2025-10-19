@@ -15,6 +15,7 @@ interface PropertiesPanelProps {
   selectedIds: string[];
   objects: PersistedShape[];
   onUpdate: (objectId: string, updates: Partial<PersistedShape>) => void;
+  onDelete?: (objectId: string) => void;
   currentUserId: string | null;
   activeTool: CanvasTool;
   defaultShapeProperties: DefaultShapeProperties;
@@ -30,6 +31,7 @@ export default function PropertiesPanel({
   selectedIds,
   objects,
   onUpdate,
+  onDelete,
   currentUserId,
   activeTool,
   defaultShapeProperties,
@@ -289,6 +291,7 @@ export default function PropertiesPanel({
                 onUpdate={(updates: Partial<PersistedShape>) =>
                   onUpdate(selectedObject.id, updates)
                 }
+                onDelete={onDelete ? () => onDelete(selectedObject.id) : undefined}
                 disabled={lockedByOther}
                 canvasWidth={canvasWidth}
                 canvasHeight={canvasHeight}
