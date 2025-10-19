@@ -320,6 +320,19 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
             selectedIds,
             sessionId,
           },
+          // Enable Langfuse observability
+          experimental_telemetry: {
+            isEnabled: true,
+            functionId: "ai-chat-canvas", // Identifier for this AI function
+            metadata: {
+              // Additional metadata to track in Langfuse
+              userId,
+              canvasId,
+              sessionId: sessionId || "no-session",
+              selectedObjectsCount: selectedIds.length,
+              environment: process.env.NODE_ENV || "development",
+            },
+          },
         });
 
         aiResponse = (await Promise.race([apiPromise, timeoutPromise])) as any;
