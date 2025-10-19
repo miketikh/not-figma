@@ -200,9 +200,13 @@ export default function AIChatPanel({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-50 to-blue-50">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🤖</span>
-            <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <img
+              src="/sketchy_transparent_small.png"
+              alt="Sketchy"
+              className="w-20 h-20"
+            />
+            <div className="flex flex-col justify-center">
               <h2 className="font-semibold text-lg leading-tight">Sketchy</h2>
               <p className="text-xs text-gray-500">AI design assistant</p>
             </div>
