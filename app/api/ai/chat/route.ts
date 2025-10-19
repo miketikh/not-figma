@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { generateText } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { aiTools } from "@/app/canvas/_lib/ai-tools";
 import { buildCanvasContext } from "@/app/canvas/_lib/ai-context";
@@ -313,6 +313,7 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
           model: openai("gpt-4.1-mini"),
           messages,
           tools: aiTools,
+          stopWhen: stepCountIs(10), // Enable multi-step agentic tool execution (up to 10 sequential steps)
           experimental_context: {
             userId,
             canvasId,
