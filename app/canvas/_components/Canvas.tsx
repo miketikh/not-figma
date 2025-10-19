@@ -287,19 +287,37 @@ export default function Canvas({
     }
   }, [spacePressed]);
 
-  // Initialize container size
+  // Initialize container size and observe resize changes
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Get container dimensions
-    const containerWidth = width || containerRef.current.clientWidth;
-    const containerHeight = height || containerRef.current.clientHeight;
+    const container = containerRef.current;
 
-    setContainerSize({ width: containerWidth, height: containerHeight });
+    // Function to update container size
+    const updateContainerSize = () => {
+      const containerWidth = width || container.clientWidth;
+      const containerHeight = height || container.clientHeight;
+      setContainerSize({ width: containerWidth, height: containerHeight });
+    };
+
+    // Initial measurement
+    updateContainerSize();
     setIsReady(true);
+
+    // Create ResizeObserver to watch for container size changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      // Use requestAnimationFrame to debounce rapid resize events
+      requestAnimationFrame(() => {
+        updateContainerSize();
+      });
+    });
+
+    // Start observing the container
+    resizeObserver.observe(container);
 
     // Cleanup on unmount
     return () => {
+      resizeObserver.disconnect();
       setIsReady(false);
     };
   }, [width, height]);
