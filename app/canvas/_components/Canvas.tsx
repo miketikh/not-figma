@@ -308,7 +308,12 @@ export default function Canvas({
     const resizeObserver = new ResizeObserver((entries) => {
       // Use requestAnimationFrame to debounce rapid resize events
       requestAnimationFrame(() => {
-        updateContainerSize();
+        for (const entry of entries) {
+          const { width: observedWidth, height: observedHeight } = entry.contentRect;
+          const containerWidth = width || observedWidth;
+          const containerHeight = height || observedHeight;
+          setContainerSize({ width: containerWidth, height: containerHeight });
+        }
       });
     });
 
