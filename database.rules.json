@@ -1,6 +1,32 @@
 {
   "rules": {
-    ".read": "auth != null",
-    ".write": "auth != null"
+    "sessions": {
+      "$canvasId": {
+        "cursors": {
+          ".read": "auth != null",
+          "$userId": {
+            ".write": "$userId === auth.uid"
+          }
+        },
+        "presence": {
+          ".read": "auth != null",
+          "$userId": {
+            ".write": "$userId === auth.uid"
+          }
+        },
+        "activeTransforms": {
+          ".read": "auth != null",
+          "$objectId": {
+            ".write": "auth != null"
+          }
+        },
+        "groupTransforms": {
+          ".read": "auth != null",
+          "$userId": {
+            ".write": "$userId === auth.uid"
+          }
+        }
+      }
+    }
   }
 }

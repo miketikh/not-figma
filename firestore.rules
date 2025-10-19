@@ -2,8 +2,38 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Rules for canvases collection
+    match /canvases/{canvasId} {
+      // Allow read if authenticated and (user is owner OR canvas is public)
+      allow read: if isAuthenticated() &&
+        (resource.data.createdBy == request.auth.uid ||
+         resource.data.isPublic == true);
+
+      // Allow create if authenticated and the createdBy field matches the authenticated user
+      allow create: if isAuthenticated() &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      // Allow update/delete only if user is the owner
+      allow update, delete: if isAuthenticated() &&
+        resource.data.createdBy == request.auth.uid;
+
+      // Rules for nested objects subcollection
+      // IMPORTANT: We cannot use get() here, so we rely on client-side access control
+      // The client should only attempt to read/write objects for canvases they have access to
+      match /objects/{objectId} {
+        // Allow any authenticated user to read objects
+        // Access control is enforced at the canvas level by the client
+        allow read: if isAuthenticated();
+
+        // Allow any authenticated user to write objects
+        // The client ensures users only modify objects on canvases they can access
+        allow write: if isAuthenticated();
+      }
     }
   }
 }
