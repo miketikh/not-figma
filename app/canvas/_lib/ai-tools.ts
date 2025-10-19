@@ -763,16 +763,16 @@ export const updateObject = tool({
           property: "stroke",
         });
       }
-      // Check size update
+      // Check size update (only for objects that have width/height)
       else if (properties.width !== undefined || properties.height !== undefined) {
         const finalWidth =
           properties.width !== undefined
             ? properties.width
-            : existingObject.width;
+            : (existingObject as any).width || 0;
         const finalHeight =
           properties.height !== undefined
             ? properties.height
-            : existingObject.height;
+            : (existingObject as any).height || 0;
 
         message = getUpdateSizeMessage({
           width: finalWidth,
@@ -885,7 +885,7 @@ export const deleteObject = tool({
 
 export const getCanvasObjects = tool({
   description:
-    "Query the current state of the canvas. Use this to see what objects exist, get information about selected objects, or understand the overall canvas layout before making changes.",
+    "Query the current state of the canvas. Use this to find specific objects by type or properties, see what objects exist, or understand the canvas layout. Returns full object details including positions, colors, and text content.",
   inputSchema: z.object({
     filter: z
       .enum(["all", "selected"])
@@ -894,22 +894,30 @@ export const getCanvasObjects = tool({
       .describe(
         "Filter objects: 'all' for all objects, 'selected' for only selected objects"
       ),
+    objectType: z
+      .enum(["rectangle", "circle", "line", "text"])
+      .optional()
+      .describe(
+        "Filter by object type. Leave empty to include all types."
+      ),
+    textContains: z
+      .string()
+      .optional()
+      .describe(
+        "For text objects, filter by text content (case-insensitive partial match). E.g., 'hello' matches 'Hello World'"
+      ),
   }),
-  execute: async ({ filter }, { experimental_context }) => {
+  execute: async ({ filter, objectType, textContains }, { experimental_context }) => {
     try {
       const context = experimental_context as ToolContext;
-      const { userId, canvasId, selectedIds = [] } = context;
+      const { canvasId, selectedIds = [] } = context;
 
-      // Build canvas context
-      const canvasContext = await buildCanvasContext(
-        canvasId,
-        userId,
-        selectedIds
-      );
-
+      // Get all objects from Firestore using server-side helper
+      const { getAllObjectsServerSide } = await import("@/lib/firebase/admin-helpers");
+      const allObjects = await getAllObjectsServerSide(canvasId);
 
       // Handle empty canvas case
-      if (canvasContext.objectCount === 0) {
+      if (allObjects.length === 0) {
         return {
           success: true,
           message: getCanvasEmptyMessage(),
@@ -918,41 +926,83 @@ export const getCanvasObjects = tool({
         };
       }
 
-      // Return based on filter
+      // Start with all objects or selected objects based on filter
+      let filteredObjects = allObjects;
       if (filter === "selected") {
-        if (canvasContext.selectedObjects.length === 0) {
+        const selectedIdsSet = new Set(selectedIds);
+        filteredObjects = allObjects.filter((obj) => selectedIdsSet.has(obj.id));
+
+        if (filteredObjects.length === 0) {
           return {
             success: true,
             message: getNoSelectionMessage(),
             objects: [],
           };
         }
+      }
 
+      // Apply object type filter
+      if (objectType) {
+        filteredObjects = filteredObjects.filter((obj) => obj.type === objectType);
+      }
+
+      // Apply text content filter (case-insensitive)
+      if (textContains) {
+        filteredObjects = filteredObjects.filter((obj) => {
+          if (obj.type === "text") {
+            const textObj = obj as any;
+            const content = textObj.content || "";
+            return content.toLowerCase().includes(textContains.toLowerCase());
+          }
+          return false;
+        });
+      }
+
+      // Build response message
+      let message = "";
+      if (filteredObjects.length === 0) {
+        if (objectType && textContains) {
+          message = `No ${objectType} objects found with text containing "${textContains}"`;
+        } else if (objectType) {
+          message = `No ${objectType} objects found on the canvas`;
+        } else if (textContains) {
+          message = `No text objects found containing "${textContains}"`;
+        } else {
+          message = getCanvasEmptyMessage();
+        }
         return {
           success: true,
-          message: getSelectionCountMessage(
-            canvasContext.selectedObjects.length
-          ),
-          objects: canvasContext.selectedObjects,
+          message,
+          objectCount: 0,
+          objects: [],
         };
       }
 
-      // Return all objects with context summary and friendly count message
-      const countMessage = getObjectCountMessage(canvasContext.objectCount);
-      let message = `${countMessage} ${canvasContext.summary}`;
+      // Success - return filtered objects with details
+      if (objectType && textContains) {
+        message = `Found ${filteredObjects.length} ${objectType} object(s) containing "${textContains}"`;
+      } else if (objectType) {
+        message = `Found ${filteredObjects.length} ${objectType} object(s)`;
+      } else if (textContains) {
+        message = `Found ${filteredObjects.length} text object(s) containing "${textContains}"`;
+      } else if (filter === "selected") {
+        message = getSelectionCountMessage(filteredObjects.length);
+      } else {
+        const countMessage = getObjectCountMessage(allObjects.length);
+        message = countMessage;
 
-      // Check if this is a milestone and append celebration message
-      const milestoneMessage = getMilestoneMessage(canvasContext.objectCount);
-      if (milestoneMessage) {
-        message = `${message} ${milestoneMessage}`;
+        // Check for milestone
+        const milestoneMessage = getMilestoneMessage(allObjects.length);
+        if (milestoneMessage) {
+          message = `${message} ${milestoneMessage}`;
+        }
       }
 
       return {
         success: true,
         message,
-        objectCount: canvasContext.objectCount,
-        selectedObjects: canvasContext.selectedObjects,
-        unselectedCounts: canvasContext.unselectedCounts,
+        objectCount: filteredObjects.length,
+        objects: filteredObjects, // Return full object details
       };
     } catch (error) {
       const errorMessage =

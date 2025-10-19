@@ -260,7 +260,19 @@ The canvas origin (0, 0) is at the TOP-LEFT corner. DIFFERENT SHAPES USE DIFFERE
 - createText: Create text (x,y = top-left corner)
 - updateObject: Modify existing objects (requires object to be unlocked)
 - deleteObject: Delete/remove objects from canvas (requires object to be unlocked)
-- getCanvasObjects: Query canvas state
+- getCanvasObjects: Query canvas to find objects by type (rectangle/circle/line/text) or search text content. Returns full object details including IDs, positions, colors, and text content.
+
+**IMPORTANT - Finding Objects:**
+When the user asks to modify or delete a specific object (e.g., "delete the green text that says circles"), use getCanvasObjects to find it:
+- To find by type and color: Use getCanvasObjects with objectType filter, then check the returned objects for matching color
+- To find text by content: Use getCanvasObjects with objectType="text" and textContains="circles"
+- The tool returns object IDs which you can then use with updateObject or deleteObject
+
+Example flow:
+1. User: "Delete the green text that says 'circles'"
+2. Step 1: Call getCanvasObjects(objectType="text", textContains="circles") → Returns matching text objects with IDs
+3. Step 2: Find the green one from the results (check fill color)
+4. Step 3: Call deleteObject(objectId=found_id)
 
 **Guidelines:**
 1. When users say "make it [color]" or similar, they're referring to selected objects
