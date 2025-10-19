@@ -12,6 +12,7 @@ import {
   lineFactory,
   textFactory,
 } from "./shapes";
+import type { PersistedText } from "../_types/shapes";
 import {
   createObject,
   updateObject as firestoreUpdateObject,
@@ -480,18 +481,28 @@ export const createText = tool({
       // Validate color if provided
       validateColor(fill, "fill");
 
+      // Calculate dynamic width based on content length and font size
+      // Formula: content length × fontSize × average char width multiplier (0.6)
+      // Minimum width of 200px to ensure readability
+      const effectiveFontSize = fontSize || 16;
+      const estimatedWidth = Math.max(
+        200,
+        content.length * effectiveFontSize * 0.6
+      );
+
+      // Build overrides object, only including defined values to preserve factory defaults
+      const overrides: Partial<PersistedText> = { content };
+      if (fontSize !== undefined) overrides.fontSize = fontSize;
+      if (fontFamily !== undefined) overrides.fontFamily = fontFamily;
+      if (fill !== undefined) overrides.fill = fill;
+      if (fontWeight !== undefined) overrides.fontWeight = fontWeight;
+      if (fontStyle !== undefined) overrides.fontStyle = fontStyle;
+      if (textAlign !== undefined) overrides.textAlign = textAlign;
+
       // Create text using shape factory
       const text = textFactory.createDefault(
-        { x, y, width: 100, height: 30 },
-        {
-          content,
-          fontSize,
-          fontFamily,
-          fill,
-          fontWeight,
-          fontStyle,
-          textAlign,
-        },
+        { x, y, width: estimatedWidth, height: 30 },
+        overrides,
         canvasId
       );
 

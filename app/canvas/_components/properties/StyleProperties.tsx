@@ -67,6 +67,9 @@ export default function StyleProperties({
     if (!("fill" in object)) return "#000000";
 
     const fill = object.fill;
+    // Handle undefined or null fill
+    if (!fill || typeof fill !== "string") return "#000000";
+
     if (fill.startsWith("#")) return fill;
     if (fill === "transparent") return "#000000";
     // Try to extract hex from rgba

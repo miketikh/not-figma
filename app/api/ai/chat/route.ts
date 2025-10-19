@@ -15,7 +15,8 @@ import { AIToolResult } from "@/types/ai";
 // Configuration
 // ============================================================================
 
-const API_TIMEOUT_MS = 30000; // 30 seconds timeout for API calls
+// const API_TIMEOUT_MS = 30000; // 30 seconds timeout for API calls
+const API_TIMEOUT_MS = 300000; // 5 minute timeout for API calls
 const MAX_RETRIES = 2; // Maximum number of retries for OpenAI API failures
 
 // ============================================================================
@@ -332,10 +333,12 @@ DO NOT say things like "I created a blue circle..." - just use the tool's messag
         // Race between API call and timeout
         // Using GPT-4 Turbo for fast tool calling. O3-mini is too slow for simple spatial commands (7+ seconds).
         const apiPromise = generateText({
-          model: openai("gpt-4.1-mini"),
+          // model: openai("gpt-4.1-mini"),
+          model: openai("o3-mini"),
           messages,
           tools: aiTools,
-          stopWhen: stepCountIs(10), // Enable multi-step agentic tool execution (up to 10 sequential steps)
+          // stopWhen: stepCountIs(10), // Enable multi-step agentic tool execution (up to 10 sequential steps)
+          stopWhen: stepCountIs(20), // Enable multi-step agentic tool execution (up to 10 sequential steps)
           experimental_context: {
             userId,
             canvasId,

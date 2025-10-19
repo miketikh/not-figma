@@ -13,7 +13,7 @@ import { auth } from "@/lib/firebase/config";
 // Exponential backoff configuration
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000; // 1 second
-const REQUEST_TIMEOUT_MS = 30000; // 30 seconds timeout for requests
+const REQUEST_TIMEOUT_MS = 300000; // 5 minutes timeout for requests (o3-mini needs more time)
 
 interface SendMessageOptions {
   message: string;

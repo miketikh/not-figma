@@ -238,7 +238,7 @@ export default function TextShape({
         strokeWidth={shape.strokeWidth}
         rotation={shape.rotation}
         opacity={shape.opacity ?? 1}
-        wrap="char" // Enable character-level wrapping (breaks mid-word at boundary)
+        wrap="word" // Enable word-level wrapping (breaks at word boundaries, not mid-word)
         draggable={isSelectable}
         listening={isSelectable}
         dragBoundFunc={dragBoundFunc}
