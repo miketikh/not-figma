@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["http://localhost:3000", "https://*.vercel.app"],
+    "origin": ["http://localhost:3000", "https://not-figma.vercel.app"],
     "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
     "maxAgeSeconds": 3600
   }
